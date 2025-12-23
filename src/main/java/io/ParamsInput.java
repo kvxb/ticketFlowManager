@@ -14,7 +14,8 @@ public record ParamsInput (
     String environment,
     String errorCode,
     String uiElementId,
-    String busnessValue,
+    String businessValue,
+    String screenshotUrl,
     int usabilityScore,
     String suggestedFix,
     String customerDemand
