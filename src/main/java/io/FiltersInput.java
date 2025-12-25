@@ -1,6 +1,6 @@
 package io;
 
-public record Filters (
+public record FiltersInput (
     String businessPriority,
     int performanceScoreAbove,
     int performanceScoreBelow,
