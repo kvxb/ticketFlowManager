@@ -3,6 +3,10 @@ package io;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import database.Database;
+import users.User;
+
 import java.util.List;
 import java.io.File;
 import java.io.IOException;
@@ -10,7 +14,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class IOUtil {
-    private static final String INPUT_USERS_FIELD = "input/database/users.json";
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final ObjectWriter WRITER = new ObjectMapper().writer().withDefaultPrettyPrinter();
     private static List<ObjectNode> outputs = new ArrayList<>();
@@ -25,6 +28,13 @@ public class IOUtil {
         File inputFile = new File(inputPath);
 
         return MAPPER.readerForListOf(CommandInput.class)
+                .readValue(inputFile);
+    }
+
+    public static List<User> readUsers() throws IOException {
+        File inputFile = new File(Database.getUsersDb());
+
+        return MAPPER.readerForListOf(User.class)
                 .readValue(inputFile);
     }
 
