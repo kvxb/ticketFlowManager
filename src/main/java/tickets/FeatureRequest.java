@@ -1,6 +1,6 @@
 package tickets;
 
-public class FeatureRequest {
+public class FeatureRequest extends Ticket{
     public enum businessValue {
         S,
         M,

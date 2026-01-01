@@ -1,6 +1,6 @@
 package tickets;
 
-final public class Bug {
+final public class Bug extends Ticket {
     private String expectedBehaviour;
     private String actualBehaviour;
     

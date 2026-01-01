@@ -1,5 +1,5 @@
 package users;
 
-public class Reporter {
+public class Reporter extends User{
 
 }

@@ -1,6 +1,6 @@
 package users;
 
-public class Developer {
+public class Developer extends User{
     private String hireDate;
     // TODO: format yyyy-mm-dd to be respected
     public enum expertiseArea {
