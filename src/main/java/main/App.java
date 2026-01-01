@@ -50,7 +50,6 @@ public class App {
     // tomorrow i cba today
     public static void testingPeriod() {
         // read commands in the 12 days period after the start of this method
-        LocalDate initialDate = currentDate;
         // initialize tickets validate them add them to db
         LocalDate endDate = currentDate.plusDays(12);
         int it = 0;
