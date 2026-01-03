@@ -24,26 +24,6 @@ public abstract class Ticket {
         DB
     }
 
-    private int id;
-    private String type;
-    private String title;
-    private String description;
-    private String reportedBy;
-    private BusinessPriority businessPriority;
-    private Status status;
-    private ExpertiseArea expertiseArea;
-
-    public Ticket(Builder<?> b) {
-        this.id = b.id;
-        this.type = b.type;
-        this.title = b.title;
-        this.businessPriority = b.businessPriority;
-        this.status = b.status;
-        this.expertiseArea = b.expertiseArea;
-        this.description = b.description;
-        this.reportedBy = b.reportedBy;
-    }
-
     public abstract static class Builder<T extends Builder<T>> {
         protected int id;
         protected String type;
@@ -95,8 +75,202 @@ public abstract class Ticket {
         }
 
         
-        protected abstract T self();
-
         public abstract Ticket build();
+
+        public int getId() {
+			return id;
+		}
+
+		public void setId(int id) {
+			this.id = id;
+		}
+
+		public String getType() {
+			return type;
+		}
+
+		public void setType(String type) {
+			this.type = type;
+		}
+
+		public String getTitle() {
+			return title;
+		}
+
+		public void setTitle(String title) {
+			this.title = title;
+		}
+
+		public BusinessPriority getBusinessPriority() {
+			return businessPriority;
+		}
+
+		public void setBusinessPriority(BusinessPriority businessPriority) {
+			this.businessPriority = businessPriority;
+		}
+
+		public Status getStatus() {
+			return status;
+		}
+
+		public void setStatus(Status status) {
+			this.status = status;
+		}
+
+		public ExpertiseArea getExpertiseArea() {
+			return expertiseArea;
+		}
+
+		public void setExpertiseArea(ExpertiseArea expertiseArea) {
+			this.expertiseArea = expertiseArea;
+		}
+
+		public String getDescription() {
+			return description;
+		}
+
+		public void setDescription(String description) {
+			this.description = description;
+		}
+
+		public String getReportedBy() {
+			return reportedBy;
+		}
+
+		public void setReportedBy(String reportedBy) {
+			this.reportedBy = reportedBy;
+		}
+
+		protected abstract T self();
     }
+    private static int ticketId = 0;
+
+	public static int getTicketId() {
+		return ticketId;
+	}
+
+	public static void setTicketId(int ticketId) {
+		Ticket.ticketId = ticketId;
+	}
+    private int id;
+    private String type;
+    private String title;
+    private String description;
+    private String reportedBy;
+    private BusinessPriority businessPriority;
+    private Status status;
+    private String assignedTo;
+    private String assignedAt;
+    private String solvedAt;
+    private String createdAt;
+
+    // TODO imlement the comments part
+
+    private ExpertiseArea expertiseArea;
+
+	public Ticket(Builder<?> b) {
+        this.id = b.id;
+        this.type = b.type;
+        this.title = b.title;
+        this.businessPriority = b.businessPriority;
+        this.status = b.status;
+        this.expertiseArea = b.expertiseArea;
+        this.description = b.description;
+        this.reportedBy = b.reportedBy;
+    }
+	public String getCreatedAt() {
+		return createdAt;
+	}
+
+    public void setCreatedAt(String createdAt) {
+		this.createdAt = createdAt;
+	}
+
+	public String getAssignedTo() {
+		return assignedTo;
+	}
+
+	public void setAssignedTo(String assignedTo) {
+		this.assignedTo = assignedTo;
+	}
+
+	public String getAssignedAt() {
+		return assignedAt;
+	}
+
+	public void setAssignedAt(String assignedAt) {
+		this.assignedAt = assignedAt;
+	}
+
+	public String getSolvedAt() {
+		return solvedAt;
+	}
+
+	public void setSolvedAt(String solvedAt) {
+		this.solvedAt = solvedAt;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getReportedBy() {
+		return reportedBy;
+	}
+
+	public void setReportedBy(String reportedBy) {
+		this.reportedBy = reportedBy;
+	}
+
+	public BusinessPriority getBusinessPriority() {
+		return businessPriority;
+	}
+
+	public void setBusinessPriority(BusinessPriority businessPriority) {
+		this.businessPriority = businessPriority;
+	}
+
+	public Status getStatus() {
+		return status;
+	}
+
+	public void setStatus(Status status) {
+		this.status = status;
+	}
+
+	public ExpertiseArea getExpertiseArea() {
+		return expertiseArea;
+	}
+
+	public void setExpertiseArea(ExpertiseArea expertiseArea) {
+		this.expertiseArea = expertiseArea;
+	}
 }

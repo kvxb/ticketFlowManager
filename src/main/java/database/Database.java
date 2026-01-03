@@ -6,16 +6,16 @@ import tickets.Ticket;
 import tickets.UIFeedback;
 import io.CommandInput;
 import users.User;
-
+import java.util.stream.Collectors;
 import java.util.List;
+import java.util.ArrayList;
 
 public class Database {
     private static final String USERS_DB = "input/database/users.json";
 
-    private static List<User> users; // daken from the db file
-    private static List<Ticket> tickets; // input in testing period
-    private static List<CommandInput> commands;
-    private static int ticketId = 0;
+    private static List<User> users = new ArrayList<>(); // daken from the db file
+    private static List<Ticket> tickets = new ArrayList<>(); // input in testing period
+    private static List<CommandInput> commands = new ArrayList<>();
 
     public static void addTicket(CommandInput command) {
         // im too lazy right now but before you do this func check how the inputs should
@@ -26,7 +26,7 @@ public class Database {
                 switch (command.params().type().toUpperCase()) {
                     case "BUG" -> {
                         Bug bug = new Bug.Builder()
-                                .id(ticketId)
+                                .id(Ticket.getTicketId())
                                 .title(command.params().title())
                                 .businessPriority(Ticket.BusinessPriority.valueOf(
                                         command.params().businessPriority().toUpperCase()))
@@ -47,7 +47,7 @@ public class Database {
                     }
                     case "FEATURE_REQUEST" -> {
                         FeatureRequest fr = new FeatureRequest.Builder()
-                                .id(ticketId)
+                                .id(Ticket.getTicketId())
                                 .title(command.params().title())
                                 .businessPriority(Ticket.BusinessPriority.valueOf(
                                         command.params().businessPriority().toUpperCase()))
@@ -63,7 +63,7 @@ public class Database {
                     }
                     case "UI_FEEDBACK" -> {
                         UIFeedback ui = new UIFeedback.Builder()
-                                .id(ticketId)
+                                .id(Ticket.getTicketId())
                                 .title(command.params().title())
                                 .businessPriority(Ticket.BusinessPriority.valueOf(
                                         command.params().businessPriority().toUpperCase()))
@@ -82,7 +82,8 @@ public class Database {
                     default -> throw new IllegalArgumentException(
                             "Unknown ticket type: " + command.params().type());
                 });
-        ticketId += 1;
+        // IF PROBLEMS IWTH ID FIX THIS
+        Ticket.setTicketId(Ticket.getTicketId() + 1);
     }
 
     public static String getUsersDb() {
@@ -97,8 +98,24 @@ public class Database {
         Database.users = users;
     }
 
-    public static List<Ticket> getTickets() {
+    public static List<Ticket> getTickets(String username) {
+        int lUnderscore = username.lastIndexOf('_');
+        String role = username.substring(lUnderscore + 1);
+        switch (role) {
+            case "manager":
+                return new ArrayList<>(tickets);
+            case "reporter":
+                return tickets.stream()
+                        .filter(ticket -> username.equals(ticket.getReportedBy()))
+                        .collect(Collectors.toList());
+            default:
+                System.out.println("implement the rest (devs i think)");
+        }
         return tickets;
+    }
+
+    public static List<Ticket> getAllTickets() {
+        return new ArrayList<>(tickets);
     }
 
     public static void setTickets(List<Ticket> tickets) {

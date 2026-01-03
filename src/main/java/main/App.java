@@ -56,9 +56,12 @@ public class App {
 
         while(!currentDate.isAfter(endDate)) {
             CommandInput currentCommand = Database.getCommands().get(it);
+            currentDate = currentCommand.time();
             switch(currentCommand.command()) {
                 case "reportTicket":
                     Database.addTicket(currentCommand);
+                case "viewTickets":
+                    IOUtil.viewTickets(currentCommand, Database.getTickets(currentCommand.username()));
             }
         }
     }
@@ -82,6 +85,8 @@ public class App {
             System.out.println("error reading from input file: " + e.getMessage());
             return;
         }
+        
+        currentDate = Database.getCommands().getFirst().time();
 
         // TODO 2: process commands.
         boolean LOOPBACK = true;
@@ -89,6 +94,7 @@ public class App {
             testingPeriod();
             developPeriod();
             verifiyPeriod();
+            LOOPBACK = false;
         }
         // TODO 3: create objectnodes for output, add them to outputs list.
 
