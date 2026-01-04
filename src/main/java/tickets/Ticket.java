@@ -33,9 +33,15 @@ public abstract class Ticket {
         protected ExpertiseArea expertiseArea;
         protected String description;
         protected String reportedBy;
+        protected String createdAt;
 
         public T id(int id) {
             this.id = id;
+            return self();
+        }
+
+        public T createdAt(String createdAt) {
+            this.createdAt = createdAt;
             return self();
         }
 
@@ -177,6 +183,7 @@ public abstract class Ticket {
         this.expertiseArea = b.expertiseArea;
         this.description = b.description;
         this.reportedBy = b.reportedBy;
+        this.createdAt = b.createdAt;
     }
 	public String getCreatedAt() {
 		return createdAt;

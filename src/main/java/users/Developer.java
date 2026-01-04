@@ -3,7 +3,7 @@ package users;
 public class Developer extends User{
     private String hireDate;
     // TODO: format yyyy-mm-dd to be respected
-    public enum expertiseArea {
+    public enum ExpertiseArea {
         FRONTEND,
         BACKEND,
         DEVOPS,
@@ -11,10 +11,13 @@ public class Developer extends User{
         DB,
         FULLSTACK
     }
+    private ExpertiseArea expertiseArea;
 
-    public enum seniority {
+    public enum Seniority {
         JUNIOR,
         MID,
         SENIOR
     }
+
+    private Seniority seniority;
 }

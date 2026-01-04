@@ -5,9 +5,11 @@ import tickets.FeatureRequest;
 import tickets.Ticket;
 import tickets.UIFeedback;
 import io.CommandInput;
+import io.IOUtil;
 import users.User;
 import java.util.stream.Collectors;
 import java.util.List;
+import java.time.LocalDate;
 import java.util.ArrayList;
 
 public class Database {
@@ -17,11 +19,18 @@ public class Database {
     private static List<Ticket> tickets = new ArrayList<>(); // input in testing period
     private static List<CommandInput> commands = new ArrayList<>();
 
-    public static void addTicket(CommandInput command) {
+    public static void addTicket(CommandInput command, LocalDate currentDate) {
         // im too lazy right now but before you do this func check how the inputs should
         // look like, maybe you should link the tickets to an actual person if its
         // mandatory but afaik for bugs its not so you can either create a anon user and
         // add all anoms to him or maybe not link at all i cba this is too boring
+
+        if (!command.params().type().equals("BUG") && command.params().reportedBy().isEmpty()) {
+            // if you need a chain of responsability you can do one here where you pass the
+            // command to a handleCommandError(command) and it figures out the error to
+            // print based on dif things i guess
+            IOUtil.ticketError(command, "ANON");
+        }
         tickets.add(
                 switch (command.params().type().toUpperCase()) {
                     case "BUG" -> {
@@ -44,6 +53,7 @@ public class Database {
                                 .errorCode(command.params().errorCode() != null
                                         ? Integer.parseInt(command.params().errorCode())
                                         : 0)
+                                .createdAt(currentDate.toString())
                                 .build();
                         yield bug;
                     }
@@ -60,6 +70,7 @@ public class Database {
                                         command.params().businessValue().toUpperCase()))
                                 .customerDemand(FeatureRequest.CustomerDemand.valueOf(
                                         command.params().customerDemand().toUpperCase()))
+                                .createdAt(currentDate.toString())
                                 .build();
                         yield fr;
                     }
@@ -78,6 +89,7 @@ public class Database {
                                 .usabilityScore(command.params().usabilityScore())
                                 .screenshotUrl(command.params().screenshotUrl())
                                 .suggestedFix(command.params().suggestedFix())
+                                .createdAt(currentDate.toString())
                                 .build();
                         yield ui;
                     }

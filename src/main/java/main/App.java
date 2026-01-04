@@ -59,7 +59,7 @@ public class App {
             currentDate = currentCommand.time();
             switch(currentCommand.command()) {
                 case "reportTicket":
-                    Database.addTicket(currentCommand);
+                    Database.addTicket(currentCommand, currentDate);
                     break;
                 case "viewTickets":
                     IOUtil.viewTickets(currentCommand, Database.getTickets(currentCommand.username()));
@@ -105,5 +105,6 @@ public class App {
         // TODO 3: create objectnodes for output, add them to outputs list.
 
         IOUtil.writeOutput();
+        System.out.println(outputPath);
     }
 }

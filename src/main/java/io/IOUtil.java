@@ -43,6 +43,8 @@ public class IOUtil {
     public static void viewTickets(CommandInput command, List<Ticket> tickets) {
         ObjectNode commandNode = MAPPER.createObjectNode();
 
+        // TODO: these can be modularized since every output i think has them check it
+        // out
         commandNode.put("command", command.command());
         commandNode.put("username", command.username());
         commandNode.put("timestamp", command.timestamp());
@@ -65,11 +67,30 @@ public class IOUtil {
             ticketNode.put("reportedBy", ticket.getReportedBy() != null ? ticket.getReportedBy() : "");
 
             ArrayNode commentsArray = MAPPER.createArrayNode();
+            ticketNode.set("comments", commentsArray);
             ticketsArray.add(ticketNode);
         }
 
         commandNode.set("tickets", ticketsArray);
         outputs.add(commandNode);
+    }
+
+    public static void ticketError(CommandInput command, String errorType) {
+        ObjectNode error = MAPPER.createObjectNode();
+        error.put("command", command.command());
+        error.put("username", command.username());
+        error.put("timestamp", command.timestamp());
+        switch (errorType) {
+            case "ANON":
+                error.put("error", "Anonymous reports are only allowed for tickets of type BUG.");
+                break;
+            default:
+                error.put("error", "implement");
+                //user does not exist
+                //only testing period
+
+        }
+        outputs.add(error);
     }
 
     // public static void writeAll() throws IOException {
