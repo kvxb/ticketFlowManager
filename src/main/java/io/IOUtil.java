@@ -33,7 +33,7 @@ public class IOUtil {
                 .readValue(inputFile);
     }
 
-    public static List<User> readUsers() throws IOException {
+    public static List<UserInput> readUsers() throws IOException {
         File inputFile = new File(Database.getUsersDb());
 
         return MAPPER.readerForListOf(UserInput.class)

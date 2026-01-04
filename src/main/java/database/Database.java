@@ -41,7 +41,9 @@ public class Database {
                                         command.params().severity().toUpperCase()))
                                 .environment(command.params().environment())
                                 // not verified that it works if somethig break around test this
-                                .errorCode(Integer.parseInt(command.params().errorCode()))
+                                .errorCode(command.params().errorCode() != null
+                                        ? Integer.parseInt(command.params().errorCode())
+                                        : 0)
                                 .build();
                         yield bug;
                     }
