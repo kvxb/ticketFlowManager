@@ -84,8 +84,7 @@ public class App {
     public static void run(final String inputPath, final String outputPath) {
         IOUtil.setPaths(inputPath, outputPath);
         try {
-            // Database.setUsers(IOUtil.readUsers());
-            // uncomment after adding the users code
+            Database.setUsers(IOUtil.readUsers());
             Database.setCommands(IOUtil.readCommands());
         } catch (IOException e) {
             System.out.println("error reading from input file: " + e.getMessage());

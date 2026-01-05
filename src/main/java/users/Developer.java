@@ -20,4 +20,11 @@ public class Developer extends User{
     }
 
     private Seniority seniority;
+
+    public Developer(String username, String email, String role, String hireDate, String expertiseArea, String seniority) {
+        super(username, email, role);
+        this.hireDate = hireDate;
+        this.expertiseArea = ExpertiseArea.valueOf(expertiseArea);
+        this.seniority = Seniority.valueOf(seniority);
+    }
 }

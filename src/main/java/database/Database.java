@@ -6,11 +6,15 @@ import tickets.Ticket;
 import tickets.UIFeedback;
 import io.CommandInput;
 import io.IOUtil;
-import users.User;
+import io.UserInput;
 import java.util.stream.Collectors;
 import java.util.List;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import users.User;
+import users.Manager;
+import users.Developer;
+import users.Reporter;
 
 public class Database {
     private static final String USERS_DB = "input/database/users.json";
@@ -31,6 +35,8 @@ public class Database {
             // print based on dif things i guess
             IOUtil.ticketError(command, "ANON");
         }
+        // either add a null user or check in here for them think abt it 
+        // if (!users.exists(command.username()))
         tickets.add(
                 switch (command.params().type().toUpperCase()) {
                     case "BUG" -> {
@@ -108,8 +114,18 @@ public class Database {
         return users;
     }
 
-    public static void setUsers(List<User> users) {
-        Database.users = users;
+    public static void setUsers(List<UserInput> inputs) {
+        users = inputs.stream()
+                .map(input -> switch (input.role()) {
+                    case "REPORTER" -> new Reporter(input.username(), input.email(), input.role());
+                    case "DEVELOPER" -> new Developer(input.username(), input.email(), input.role(), input.hireDate(),
+                            input.expertiseArea(), input.seniority());
+                    case "MANAGER" -> new Manager(input.username(), input.email(), input.role(), input.hireDate(),
+                            input.subordinates());
+                    default -> throw new IllegalArgumentException("Unknown role");
+
+                })
+                .collect(Collectors.toList());
     }
 
     public static List<Ticket> getTickets(String username) {
