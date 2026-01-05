@@ -81,14 +81,17 @@ public class IOUtil {
         error.put("username", command.username());
         error.put("timestamp", command.timestamp());
         switch (errorType) {
-            case "ANON":
+            case "ANON" ->
                 error.put("error", "Anonymous reports are only allowed for tickets of type BUG.");
-                break;
-            default:
+            case "NUSR" ->
+                error.put("error", "The user " + command.username() +" does not exist.");
+            case "WPER" ->
+                error.put("error", "Tickets can only be reported during testing phases.");
+
+            default ->
                 error.put("error", "implement");
                 //user does not exist
                 //only testing period
-
         }
         outputs.add(error);
     }

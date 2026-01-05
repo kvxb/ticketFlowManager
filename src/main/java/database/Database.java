@@ -23,6 +23,19 @@ public class Database {
     private static List<Ticket> tickets = new ArrayList<>(); // input in testing period
     private static List<CommandInput> commands = new ArrayList<>();
 
+    public static int getSize(String who) {
+        switch (who) {
+            case "users":
+                return users.size();
+            case "tickets":
+                return tickets.size();
+            case "commands":
+                return commands.size();
+            default:
+                return -1;
+        }
+    }
+
     public static void addTicket(CommandInput command, LocalDate currentDate) {
         // im too lazy right now but before you do this func check how the inputs should
         // look like, maybe you should link the tickets to an actual person if its
@@ -34,17 +47,25 @@ public class Database {
             // command to a handleCommandError(command) and it figures out the error to
             // print based on dif things i guess
             IOUtil.ticketError(command, "ANON");
+            return;
         }
-        // either add a null user or check in here for them think abt it 
-        // if (!users.exists(command.username()))
+        // either add a null user or check in here for them think abt it
+        if (!command.params().reportedBy().isEmpty() && !userExists(command.username())) {
+            IOUtil.ticketError(command, "NUSR");
+            return;
+        }
+        //TODO tidy this up
         tickets.add(
                 switch (command.params().type().toUpperCase()) {
                     case "BUG" -> {
                         Bug bug = new Bug.Builder()
                                 .id(Ticket.getTicketId())
                                 .title(command.params().title())
-                                .businessPriority(Ticket.BusinessPriority.valueOf(
-                                        command.params().businessPriority().toUpperCase()))
+                                .businessPriority(
+                                        command.params().reportedBy().isEmpty()
+                                                ? Ticket.BusinessPriority.LOW
+                                                : Ticket.BusinessPriority.valueOf(
+                                                        command.params().businessPriority().toUpperCase()))
                                 .expertiseArea(Ticket.ExpertiseArea.valueOf(
                                         command.params().expertiseArea().toUpperCase()))
                                 .reportedBy(command.params().reportedBy())
@@ -104,6 +125,11 @@ public class Database {
                 });
         // IF PROBLEMS IWTH ID FIX THIS
         Ticket.setTicketId(Ticket.getTicketId() + 1);
+    }
+
+    public static boolean userExists(String username) {
+        return users.stream()
+                .anyMatch(user -> username.equals(user.getUsername()));
     }
 
     public static String getUsersDb() {

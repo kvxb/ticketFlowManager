@@ -14,4 +14,20 @@ public class Manager extends User {
         // be careful is this a move or a copy or whatever when you implement idk if
         // ava even supports move semantics
     }
+
+	public String getHireDate() {
+		return hireDate;
+	}
+
+	public void setHireDate(String hireDate) {
+		this.hireDate = hireDate;
+	}
+
+	public String[] getSubordinates() {
+		return subordinates;
+	}
+
+	public void setSubordinates(String[] subordinates) {
+		this.subordinates = subordinates;
+	}
 }

@@ -33,7 +33,9 @@ public class App {
     private App() {
     }
 
+    // do these rlly need to be satatic?
     private static LocalDate currentDate;
+    private static int it = 0;
 
     /**
      * Runs the application: reads commands from an input file,
@@ -49,15 +51,22 @@ public class App {
     // unless you can make them float as a sort of static class ? think about it
     // tomorrow i cba today
     public static void testingPeriod() {
+        System.out.println("testingPeriod");
         // read commands in the 12 days period after the start of this method
         // initialize tickets validate them add them to db
         LocalDate endDate = currentDate.plusDays(12);
-        int it = 0;
 
-        while(!currentDate.isAfter(endDate)) {
+        // LocalDate futureDate = currentDate;
+
+        while (it < Database.getSize("commands")) {
             CommandInput currentCommand = Database.getCommands().get(it);
             currentDate = currentCommand.time();
-            switch(currentCommand.command()) {
+            // futureDate = Database.getCommands().get(it + 1).time();
+            if (currentDate.isAfter(endDate)) {
+                currentDate = endDate;
+                break;
+            }
+            switch (currentCommand.command()) {
                 case "reportTicket":
                     Database.addTicket(currentCommand, currentDate);
                     break;
@@ -65,21 +74,69 @@ public class App {
                     IOUtil.viewTickets(currentCommand, Database.getTickets(currentCommand.username()));
                     break;
                 default:
-                    System.out.println("zz");
+                    System.out.println("tt");
             }
             it++;
+            System.out.println("testing" + currentDate);
         }
     }
 
     public static void developPeriod() {
-        LocalDate initialDate = currentDate;
+        System.out.println("developPeriod");
+        LocalDate endDate = currentDate.plusDays(12);
+
+        while (it < Database.getSize("commands")) {
+            CommandInput currentCommand = Database.getCommands().get(it);
+            currentDate = currentCommand.time();
+            // futureDate = Database.getCommands().get(it + 1).time();
+            if (currentDate.isAfter(endDate)) {
+                break;
+            }
+            switch (currentCommand.command()) {
+                case "reportTicket":
+                    IOUtil.ticketError(currentCommand, "WPER");
+                    break;
+                case "viewTickets":
+                    IOUtil.viewTickets(currentCommand, Database.getTickets(currentCommand.username()));
+                    break;
+                default:
+                    System.out.println("dd");
+            }
+            it++;
+            System.out.println("develop" + currentDate);
+
+        }
 
     }
 
-    public static void verifiyPeriod() {
-        LocalDate initialDate = currentDate;
-
-    }
+    // public static void verifiyPeriod() {
+    // System.out.println("verifiyPeriod");
+    // LocalDate endDate = currentDate.plusDays(12);
+    //
+    // while (it <= Database.getSize("commands")) {
+    // CommandInput currentCommand = Database.getCommands().get(it);
+    // currentDate = currentCommand.time();
+    // // futureDate = Database.getCommands().get(it + 1).time();
+    // if (currentDate.isAfter(endDate)) {
+    // it--;
+    // break;
+    // }
+    // switch (currentCommand.command()) {
+    // case "reportTicket":
+    // Database.addTicket(currentCommand, currentDate);
+    // break;
+    // case "viewTickets":
+    // IOUtil.viewTickets(currentCommand,
+    // Database.getTickets(currentCommand.username()));
+    // break;
+    // default:
+    // System.out.println("vv");
+    // }
+    // it++;
+    // }
+    // System.out.println("verifiy" + currentDate);
+    //
+    // }
 
     public static void run(final String inputPath, final String outputPath) {
         IOUtil.setPaths(inputPath, outputPath);
@@ -90,7 +147,7 @@ public class App {
             System.out.println("error reading from input file: " + e.getMessage());
             return;
         }
-        
+
         currentDate = Database.getCommands().getFirst().time();
 
         // TODO 2: process commands.
@@ -98,12 +155,12 @@ public class App {
         while (LOOPBACK) {
             testingPeriod();
             developPeriod();
-            verifiyPeriod();
+            // verifiyPeriod();
             LOOPBACK = false;
         }
         // TODO 3: create objectnodes for output, add them to outputs list.
 
         IOUtil.writeOutput();
-        System.out.println(outputPath);
+        System.out.println("END" + outputPath);
     }
 }

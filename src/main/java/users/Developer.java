@@ -27,4 +27,28 @@ public class Developer extends User{
         this.expertiseArea = ExpertiseArea.valueOf(expertiseArea);
         this.seniority = Seniority.valueOf(seniority);
     }
+
+	public String getHireDate() {
+		return hireDate;
+	}
+
+	public void setHireDate(String hireDate) {
+		this.hireDate = hireDate;
+	}
+
+	public ExpertiseArea getExpertiseArea() {
+		return expertiseArea;
+	}
+
+	public void setExpertiseArea(ExpertiseArea expertiseArea) {
+		this.expertiseArea = expertiseArea;
+	}
+
+	public Seniority getSeniority() {
+		return seniority;
+	}
+
+	public void setSeniority(Seniority seniority) {
+		this.seniority = seniority;
+	}
 }
