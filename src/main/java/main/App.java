@@ -99,6 +99,9 @@ public class App {
                 case "viewTickets":
                     IOUtil.viewTickets(currentCommand, Database.getTickets(currentCommand.username()));
                     break;
+                case "createMilestone":
+                    Database.addMilestone(currentCommand, currentDate);
+                    break;
                 default:
                     System.out.println("dd");
             }

@@ -4,6 +4,7 @@ import tickets.Bug;
 import tickets.FeatureRequest;
 import tickets.Ticket;
 import tickets.UIFeedback;
+import milestones.Milestone;
 import io.CommandInput;
 import io.IOUtil;
 import io.UserInput;
@@ -22,6 +23,7 @@ public class Database {
     private static List<User> users = new ArrayList<>(); // daken from the db file
     private static List<Ticket> tickets = new ArrayList<>(); // input in testing period
     private static List<CommandInput> commands = new ArrayList<>();
+    private static List<Milestone> milestones = new ArrayList<>();
 
     public static int getSize(String who) {
         switch (who) {
@@ -34,6 +36,10 @@ public class Database {
             default:
                 return -1;
         }
+    }
+
+    public static void addMilestone(CommandInput command, LocalDate currentDate) {
+        milestones.add(new Milestone(command.username(), command.timestamp(), command.name(), command.blockingFor(), command.dueDate(), command.tickets(), command.assignedDevs()));
     }
 
     public static void addTicket(CommandInput command, LocalDate currentDate) {

@@ -33,6 +33,7 @@ public abstract class Ticket {
         protected ExpertiseArea expertiseArea;
         protected String description;
         protected String reportedBy;
+        // TODO: shouldnt this be a LocalDate?
         protected String createdAt;
 
         public T id(int id) {
