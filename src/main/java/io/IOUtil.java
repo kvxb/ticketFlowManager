@@ -4,16 +4,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-
+import java.lang.Object;
 import database.Database;
+import milestones.Milestone;
+import milestones.Milestone.Repartition;
 import users.User;
 import tickets.Ticket;
-
+import java.util.Arrays;
 import java.util.List;
 import java.io.File;
 import java.io.IOException;
-
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
 public class IOUtil {
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -24,6 +29,10 @@ public class IOUtil {
 
     private IOUtil() {
 
+    }
+
+    public static void clearIO() {
+        outputs.clear();
     }
 
     public static List<CommandInput> readCommands() throws IOException {
@@ -40,6 +49,7 @@ public class IOUtil {
                 .readValue(inputFile);
     }
 
+    // is this move or copy semantics ?
     public static void viewTickets(CommandInput command, List<Ticket> tickets) {
         ObjectNode commandNode = MAPPER.createObjectNode();
 
@@ -75,6 +85,87 @@ public class IOUtil {
         outputs.add(commandNode);
     }
 
+    public static void viewMilestones(CommandInput command, List<Milestone> unsortedMilestones) {
+        List<Milestone> sortedMilestones = unsortedMilestones.stream()
+        .sorted(Comparator
+            .comparing(Milestone::getDueDate)
+            .thenComparing(Milestone::getName))
+        .collect(Collectors.toList());
+
+        ObjectNode commandNode = MAPPER.createObjectNode();
+        commandNode.put("command", command.command());
+        commandNode.put("username", command.username());
+        commandNode.put("timestamp", command.timestamp());
+
+        ArrayNode milestonesArray = MAPPER.createArrayNode();
+
+        // System.out.println("----------------");
+        // System.out.println(milestones.size());
+        // System.out.println("----------------");
+
+        for (Milestone milestone : sortedMilestones) {
+            ObjectNode ticketNode = MAPPER.createObjectNode();
+
+            ticketNode.put("name", milestone.getName());
+            ArrayNode blockingFor = MAPPER.createArrayNode();
+            Arrays.stream(milestone.getBlockingFor())
+                    .forEach(blockingFor::add);
+            ticketNode.set("blockingFor", blockingFor);
+            ticketNode.put("dueDate", milestone.getDueDate());
+            ticketNode.put("createdAt", milestone.getCreatedAt());
+            ArrayNode tickets = MAPPER.createArrayNode();
+            Arrays.stream(milestone.getTickets())
+                    .forEach(tickets::add);
+            ticketNode.set("tickets", tickets);
+            ArrayNode assignedDevs = MAPPER.createArrayNode();
+            Arrays.stream(milestone.getAssignedDevs())
+                    .forEach(assignedDevs::add);
+            ticketNode.set("assignedDevs", assignedDevs);
+
+            ticketNode.put("createdBy", milestone.getOwner());
+            ticketNode.put("status", milestone.getStatus());
+            ticketNode.put("isBlocked", milestone.isBlocked());
+            ticketNode.put("daysUntilDue",
+                    ChronoUnit.DAYS.between(command.time(), LocalDate.parse(milestone.getDueDate())) + 1);
+
+            ticketNode.put("overdueBy", milestone.getOverdueBy());
+            ArrayNode openTickets = MAPPER.createArrayNode();
+            Arrays.stream(milestone.getOpenTickets())
+                    .forEach(openTickets::add);
+            ticketNode.set("openTickets", openTickets);
+            ArrayNode closedTickets = MAPPER.createArrayNode();
+            ticketNode.set("closedTickets", closedTickets);
+            ticketNode.put("completionPercentage", milestone.getCompletionPercentage());
+
+            ArrayNode repartition = Arrays.stream(milestone.getRepartitions())
+                    .filter(rep -> rep != null)
+                    // TODO: make sure these are needed
+                    .filter(rep -> rep.getDev() != null)
+                    .map(rep -> {
+                        ObjectNode devNode = MAPPER.createObjectNode();
+                        devNode.put("developer", rep.getDev());
+
+                        ArrayNode assignedArray = MAPPER.createArrayNode();
+
+                        if (rep.getAssignedTickets() != null) {
+                            rep.getAssignedTickets().forEach(assignedArray::add);
+                        }
+
+                        devNode.set("assignedTickets", assignedArray);
+                        return devNode;
+                    })
+                    .collect(
+                            () -> MAPPER.createArrayNode(),
+                            ArrayNode::add,
+                            ArrayNode::addAll);
+
+            ticketNode.set("repartition", repartition);
+            milestonesArray.add(ticketNode);
+        }
+        commandNode.set("milestones", milestonesArray);
+        outputs.add(commandNode);
+    }
+
     public static void ticketError(CommandInput command, String errorType) {
         ObjectNode error = MAPPER.createObjectNode();
         error.put("command", command.command());
@@ -84,14 +175,14 @@ public class IOUtil {
             case "ANON" ->
                 error.put("error", "Anonymous reports are only allowed for tickets of type BUG.");
             case "NUSR" ->
-                error.put("error", "The user " + command.username() +" does not exist.");
+                error.put("error", "The user " + command.username() + " does not exist.");
             case "WPER" ->
                 error.put("error", "Tickets can only be reported during testing phases.");
 
             default ->
                 error.put("error", "implement");
-                //user does not exist
-                //only testing period
+            // user does not exist
+            // only testing period
         }
         outputs.add(error);
     }

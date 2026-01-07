@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 import java.util.List;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
+
 import users.User;
 import users.Manager;
 import users.Developer;
@@ -38,8 +40,45 @@ public class Database {
         }
     }
 
+    public static void clearDatabase() {
+        users.clear();
+        tickets.clear();
+        commands.clear();
+        milestones.clear();
+        System.out.println("cleared all");
+    }
+
+
+
     public static void addMilestone(CommandInput command, LocalDate currentDate) {
-        milestones.add(new Milestone(command.username(), command.timestamp(), command.name(), command.blockingFor(), command.dueDate(), command.tickets(), command.assignedDevs()));
+        milestones.add(new Milestone(command.username(), command.timestamp(), command.name(), command.blockingFor(),
+                command.dueDate(), command.tickets(), command.assignedDevs()));
+    }
+
+    public static void blockMilestone(String name) {
+        milestones.stream()
+            .filter(milestone -> name.equals(milestone.getName()))
+            .findFirst()
+            .ifPresent(milestone -> milestone.setBlocked(true));
+    }
+
+    public static List<Milestone> getMilestones(String username) {
+        int lUnderscore = username.lastIndexOf('_');
+        String role = username.substring(lUnderscore + 1);
+        switch (role) {
+            case "manager":
+                return milestones.stream()
+                    .filter(milestone -> milestone.getOwner().equals(username))
+                    .collect(Collectors.toList());
+            case "reporter":
+                System.out.println("dont think they can see anything");
+                return List.of();
+            default:
+                return milestones.stream()
+                    .filter(milestone -> Arrays.stream(milestone.getAssignedDevs())
+                    .anyMatch(developer -> developer.equals(username)))
+                    .collect(Collectors.toList());
+        }
     }
 
     public static void addTicket(CommandInput command, LocalDate currentDate) {
@@ -60,7 +99,7 @@ public class Database {
             IOUtil.ticketError(command, "NUSR");
             return;
         }
-        //TODO tidy this up
+        // TODO tidy this up
         tickets.add(
                 switch (command.params().type().toUpperCase()) {
                     case "BUG" -> {

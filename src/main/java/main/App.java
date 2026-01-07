@@ -102,6 +102,9 @@ public class App {
                 case "createMilestone":
                     Database.addMilestone(currentCommand, currentDate);
                     break;
+                case "viewMilestones":
+                    IOUtil.viewMilestones(currentCommand, Database.getMilestones(currentCommand.username()));
+                    break;
                 default:
                     System.out.println("dd");
             }
@@ -142,6 +145,10 @@ public class App {
     // }
 
     public static void run(final String inputPath, final String outputPath) {
+        Database.clearDatabase();
+        IOUtil.clearIO();
+        it = 0;
+
         IOUtil.setPaths(inputPath, outputPath);
         try {
             Database.setUsers(IOUtil.readUsers());
