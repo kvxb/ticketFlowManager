@@ -4,6 +4,7 @@ import tickets.Bug;
 import tickets.FeatureRequest;
 import tickets.Ticket;
 import tickets.UIFeedback;
+import tickets.Ticket.BusinessPriority;
 import milestones.Milestone;
 import io.CommandInput;
 import io.IOUtil;
@@ -11,6 +12,7 @@ import io.UserInput;
 import java.util.stream.Collectors;
 import java.util.List;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -48,18 +50,35 @@ public class Database {
         System.out.println("cleared all");
     }
 
-
-
     public static void addMilestone(CommandInput command, LocalDate currentDate) {
+        if (!command.username().contains("manager")) {
+            if (command.username().contains("reporter")) {
+                IOUtil.milestoneError(command, "WRONG_USER_REPORTER");
+                return;
+            }
+            IOUtil.milestoneError(command, "WRONG_USER_DEVELOPER");
+            return;
+        }
+        for (Milestone milestone : milestones) {
+            for (int commandTicketId : command.tickets()) {
+                for (int milestoneTicketId : milestone.getTickets()) {
+                    if (commandTicketId == milestoneTicketId) {
+                        IOUtil.milestoneError(command, "DUPE_" + milestone.getName() + "_" + commandTicketId);
+                        return;
+                    }
+                }
+            }
+        }
+
         milestones.add(new Milestone(command.username(), command.timestamp(), command.name(), command.blockingFor(),
                 command.dueDate(), command.tickets(), command.assignedDevs()));
     }
 
     public static void blockMilestone(String name) {
         milestones.stream()
-            .filter(milestone -> name.equals(milestone.getName()))
-            .findFirst()
-            .ifPresent(milestone -> milestone.setBlocked(true));
+                .filter(milestone -> name.equals(milestone.getName()))
+                .findFirst()
+                .ifPresent(milestone -> milestone.setBlocked(true));
     }
 
     public static List<Milestone> getMilestones(String username) {
@@ -68,16 +87,16 @@ public class Database {
         switch (role) {
             case "manager":
                 return milestones.stream()
-                    .filter(milestone -> milestone.getOwner().equals(username))
-                    .collect(Collectors.toList());
+                        .filter(milestone -> milestone.getOwner().equals(username))
+                        .collect(Collectors.toList());
             case "reporter":
                 System.out.println("dont think they can see anything");
                 return List.of();
             default:
                 return milestones.stream()
-                    .filter(milestone -> Arrays.stream(milestone.getAssignedDevs())
-                    .anyMatch(developer -> developer.equals(username)))
-                    .collect(Collectors.toList());
+                        .filter(milestone -> Arrays.stream(milestone.getAssignedDevs())
+                                .anyMatch(developer -> developer.equals(username)))
+                        .collect(Collectors.toList());
         }
     }
 
@@ -213,6 +232,47 @@ public class Database {
                 System.out.println("implement the rest (devs i think)");
         }
         return tickets;
+    }
+
+    public static void update(LocalDate date) {
+        milestones.forEach(milestone -> {
+            int timeLeft = (int) ChronoUnit.DAYS.between(date, LocalDate.parse(milestone.getDueDate()));
+            // this should be in the milestone class maybe ? not here idk
+            // like how i do for upPriority() edit: maybe to contorted since in the
+            // milestone class you have to call here to do the actual changes since here lie
+            // the actual tickets
+            if (timeLeft < 0) {
+                milestone.setDaysUntilDue(0);
+                milestone.setOverdueBy(-timeLeft + 1);
+            } else {
+                milestone.setDaysUntilDue(timeLeft + 1);
+                milestone.setOverdueBy(0);
+            }
+
+            int timeSinceCreation = Math.abs((int) ChronoUnit.DAYS.between(LocalDate.parse(milestone.getCreatedAt()), date));
+            // monitor this method since im not sure what consitutes 3 days
+            if ((timeSinceCreation != 0)&& !milestone.isBlocked()) {
+                boolean CRIT = false;
+                if (timeLeft <= 1) {
+                    CRIT = true;
+                }
+                for (int ticketId : milestone.getTickets()) {
+                    for (Ticket ticket : tickets) {
+                        if (ticketId == ticket.getId()) {
+                            if (CRIT) {
+                                // wrap this in a method since i dont think database should be aware of
+                                // businessPriority
+                                ticket.setBusinessPriority(BusinessPriority.CRITICAL);
+                                System.out.println("CRITICAL " + ticket.getId());
+                            }
+                            if (timeSinceCreation % 3 == 0) {
+                                ticket.upPriority();
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 
     public static List<Ticket> getAllTickets() {

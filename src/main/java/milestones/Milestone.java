@@ -53,12 +53,12 @@ public class Milestone {
     private boolean isBlocked;
 
     private int overdueBy;
-
+    private int daysUntilDue;
     private Repartition[] repartitions;
 
-    private String createdAt;
+	private String createdAt;
 
-    // dont know if this field will be needed but might aswell;
+	// dont know if this field will be needed but might aswell;
     private String owner;
 
     public Milestone(String owner, String createdAt, String name, String[] blockingFor, String dueDate, int[] tickets,
@@ -86,6 +86,14 @@ public class Milestone {
             this.repartitions[i] = new Repartition(assignedDevs[i]);
         }
     }
+
+    public int getDaysUntilDue() {
+		return daysUntilDue;
+	}
+
+    public void setDaysUntilDue(int daysUntilDue) {
+		this.daysUntilDue = daysUntilDue;
+	}
 
     public String getStatus() {
         return status;

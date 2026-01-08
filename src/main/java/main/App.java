@@ -66,6 +66,7 @@ public class App {
                 currentDate = endDate;
                 break;
             }
+            Database.update(currentCommand.time());
             switch (currentCommand.command()) {
                 case "reportTicket":
                     Database.addTicket(currentCommand, currentDate);
@@ -83,7 +84,7 @@ public class App {
 
     public static void developPeriod() {
         System.out.println("developPeriod");
-        LocalDate endDate = currentDate.plusDays(12);
+        LocalDate endDate = currentDate.plusDays(100);
 
         while (it < Database.getSize("commands")) {
             CommandInput currentCommand = Database.getCommands().get(it);
@@ -92,6 +93,8 @@ public class App {
             if (currentDate.isAfter(endDate)) {
                 break;
             }
+            Database.update(currentCommand.time());
+
             switch (currentCommand.command()) {
                 case "reportTicket":
                     IOUtil.ticketError(currentCommand, "WPER");
@@ -147,6 +150,7 @@ public class App {
     public static void run(final String inputPath, final String outputPath) {
         Database.clearDatabase();
         IOUtil.clearIO();
+        Ticket.clearTicket();
         it = 0;
 
         IOUtil.setPaths(inputPath, outputPath);

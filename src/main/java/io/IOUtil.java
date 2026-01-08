@@ -12,6 +12,7 @@ import users.User;
 import tickets.Ticket;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -87,10 +88,10 @@ public class IOUtil {
 
     public static void viewMilestones(CommandInput command, List<Milestone> unsortedMilestones) {
         List<Milestone> sortedMilestones = unsortedMilestones.stream()
-        .sorted(Comparator
-            .comparing(Milestone::getDueDate)
-            .thenComparing(Milestone::getName))
-        .collect(Collectors.toList());
+                .sorted(Comparator
+                        .comparing(Milestone::getDueDate)
+                        .thenComparing(Milestone::getName))
+                .collect(Collectors.toList());
 
         ObjectNode commandNode = MAPPER.createObjectNode();
         commandNode.put("command", command.command());
@@ -125,8 +126,7 @@ public class IOUtil {
             ticketNode.put("createdBy", milestone.getOwner());
             ticketNode.put("status", milestone.getStatus());
             ticketNode.put("isBlocked", milestone.isBlocked());
-            ticketNode.put("daysUntilDue",
-                    ChronoUnit.DAYS.between(command.time(), LocalDate.parse(milestone.getDueDate())) + 1);
+            ticketNode.put("daysUntilDue", milestone.getDaysUntilDue());
 
             ticketNode.put("overdueBy", milestone.getOverdueBy());
             ArrayNode openTickets = MAPPER.createArrayNode();
@@ -164,6 +164,37 @@ public class IOUtil {
         }
         commandNode.set("milestones", milestonesArray);
         outputs.add(commandNode);
+    }
+
+    public static void milestoneError(CommandInput command, String errorType) {
+        ObjectNode error = MAPPER.createObjectNode();
+        error.put("command", command.command());
+        error.put("username", command.username());
+        error.put("timestamp", command.timestamp());
+        switch (errorType) {
+            case "ANON":
+                error.put("error", "Anonymous reports are only allowed for tickets of type BUG.");
+                break;
+            case "NUSR":
+                error.put("error", "The user " + command.username() + " does not exist.");
+                break;
+            case "WRONG_USER_DEVELOPER":
+                error.put("error",
+                        "The user does not have permission to execute this command: required role MANAGER; user role DEVELOPER.");
+                break;
+            case "WRONG_USER_REPORTER":
+                error.put("error",
+                        "The user does not have permission to execute this command: required role MANAGER; user role REPORTER.");
+                break;
+            // funky logic should make this more readable
+            default:
+                String[] parts = errorType.split("_");
+                error.put("error", "Tickets " + parts[2] + " already assigned to milestone " + parts[1] + ".");
+                break;
+            // user does not exist
+            // only testing period
+        }
+        outputs.add(error);
     }
 
     public static void ticketError(CommandInput command, String errorType) {
