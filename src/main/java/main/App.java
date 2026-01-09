@@ -55,6 +55,7 @@ public class App {
         // read commands in the 12 days period after the start of this method
         // initialize tickets validate them add them to db
         LocalDate endDate = currentDate.plusDays(12);
+        System.out.println("testing" + currentDate);
 
         // LocalDate futureDate = currentDate;
 
@@ -75,10 +76,9 @@ public class App {
                     IOUtil.viewTickets(currentCommand, Database.getTickets(currentCommand.username()));
                     break;
                 default:
-                    System.out.println("tt");
+                    System.out.println("didnt match command");
             }
             it++;
-            System.out.println("testing" + currentDate);
         }
     }
 
@@ -94,6 +94,7 @@ public class App {
                 break;
             }
             Database.update(currentCommand.time());
+            System.out.println("develop" + currentDate + currentCommand.command());
 
             switch (currentCommand.command()) {
                 case "reportTicket":
@@ -108,11 +109,19 @@ public class App {
                 case "viewMilestones":
                     IOUtil.viewMilestones(currentCommand, Database.getMilestones(currentCommand.username()));
                     break;
+                case "assignTicket":
+                    Database.assignTicket(currentCommand, currentDate);
+                    break;
+                case "viewAssignedTickets":
+                    IOUtil.viewAssignedTickets(currentCommand, Database.getAssignedTickets(currentCommand.username()));
+                    break;
+                case "undoAssignTicket":
+                    Database.undoAssignedTicket(currentCommand);
+                    break;
                 default:
-                    System.out.println("dd");
+                    System.out.println("didnt match command");
             }
             it++;
-            System.out.println("develop" + currentDate);
 
         }
 

@@ -50,6 +50,40 @@ public class IOUtil {
                 .readValue(inputFile);
     }
 
+    public static void viewAssignedTickets(CommandInput command, List<Ticket> tickets) {
+        ObjectNode commandNode = MAPPER.createObjectNode();
+
+        // TODO: these can be modularized since every output i think has them check it
+        // out
+        commandNode.put("command", command.command());
+        commandNode.put("username", command.username());
+        commandNode.put("timestamp", command.timestamp());
+
+        ArrayNode ticketsArray = MAPPER.createArrayNode();
+
+        for (Ticket ticket : tickets) {
+            ObjectNode ticketNode = MAPPER.createObjectNode();
+
+            ticketNode.put("id", ticket.getId());
+            ticketNode.put("type", ticket.getType());
+            ticketNode.put("title", ticket.getTitle());
+            ticketNode.put("businessPriority", ticket.getBusinessPriority().toString());
+            ticketNode.put("status", ticket.getStatus().toString());
+
+            ticketNode.put("createdAt", ticket.getCreatedAt() != null ? ticket.getCreatedAt() : "");
+            ticketNode.put("assignedAt", ticket.getAssignedAt() != null ? ticket.getAssignedAt() : "");
+            ticketNode.put("reportedBy", ticket.getReportedBy() != null ? ticket.getReportedBy() : "");
+
+            ArrayNode commentsArray = MAPPER.createArrayNode();
+            ticketNode.set("comments", commentsArray);
+            ticketsArray.add(ticketNode);
+        }
+
+        commandNode.set("assignedTickets", ticketsArray);
+        outputs.add(commandNode);
+
+    }
+
     // is this move or copy semantics ?
     public static void viewTickets(CommandInput command, List<Ticket> tickets) {
         ObjectNode commandNode = MAPPER.createObjectNode();
@@ -87,6 +121,8 @@ public class IOUtil {
     }
 
     public static void viewMilestones(CommandInput command, List<Milestone> unsortedMilestones) {
+        //TODO move these to the Database function and give them to IOUTIL
+        //look at assignedmmilestone for help im so lazy this cant be
         List<Milestone> sortedMilestones = unsortedMilestones.stream()
                 .sorted(Comparator
                         .comparing(Milestone::getDueDate)

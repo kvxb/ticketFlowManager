@@ -1,10 +1,12 @@
 package database;
 
 import tickets.Bug;
+import java.util.Comparator;
 import tickets.FeatureRequest;
 import tickets.Ticket;
 import tickets.UIFeedback;
 import tickets.Ticket.BusinessPriority;
+import tickets.Ticket.Status;
 import milestones.Milestone;
 import io.CommandInput;
 import io.IOUtil;
@@ -48,6 +50,55 @@ public class Database {
         commands.clear();
         milestones.clear();
         System.out.println("cleared all");
+    }
+
+    public static void assignTicket(CommandInput command, LocalDate date) {
+        Developer dev = (Developer) users.stream()
+                .filter(user -> user.getUsername().equals(command.username()))
+                .findFirst()
+                .orElse(null);
+
+        Milestone mstn = milestones.stream()
+                .filter(milestone -> Arrays.stream(milestone.getTickets())
+                        .anyMatch(id -> id == command.ticketID()))
+                .findFirst()
+                .orElse(null);
+        // might be worth to check after finding the milestone if it actually has the
+        // dev might not be
+
+        // i also use the same in undo so might modularize
+        Ticket tkt = tickets.stream()
+                .filter(ticket -> ticket.getId() == command.ticketID())
+                .findFirst()
+                .orElse(null);
+
+        if (dev.getExpertiseArea().name() != tkt.getExpertiseArea().name()) {
+
+        }
+
+        // dont know how to get the ticket complexity will look later
+        // if(dev.getSeniority() != )
+
+        if (tkt.getStatus() != Status.OPEN) {
+
+        }
+
+        // if(dev nu este repartizat aici)
+        // if(milestonul este blocat nu poti)
+
+        tkt.setStatus(Status.IN_PROGRESS);
+        tkt.setAssignedTo(command.username());
+        tkt.setAssignedAt(date.toString());
+    }
+
+    public static List<Ticket> getAssignedTickets(String username) {
+        return tickets.stream()
+                .filter(ticket -> ticket.getAssignedTo() != null &&
+                        ticket.getAssignedTo().equals(username))
+                .sorted(Comparator
+                        .comparing(Ticket::getBusinessPriority).reversed()
+                        .thenComparing(Ticket::getId))
+                .collect(Collectors.toList());
     }
 
     public static void addMilestone(CommandInput command, LocalDate currentDate) {
@@ -120,11 +171,12 @@ public class Database {
         }
         // TODO tidy this up
         tickets.add(
-                switch (command.params().type().toUpperCase()) {
+                switch (command.params().type()/* .toUpperCase() */ ) {
                     case "BUG" -> {
                         Bug bug = new Bug.Builder()
                                 .id(Ticket.getTicketId())
                                 .title(command.params().title())
+                                .type(command.params().type())
                                 .businessPriority(
                                         command.params().reportedBy().isEmpty()
                                                 ? Ticket.BusinessPriority.LOW
@@ -151,6 +203,7 @@ public class Database {
                     case "FEATURE_REQUEST" -> {
                         FeatureRequest fr = new FeatureRequest.Builder()
                                 .id(Ticket.getTicketId())
+                                .type(command.params().type())
                                 .title(command.params().title())
                                 .businessPriority(Ticket.BusinessPriority.valueOf(
                                         command.params().businessPriority().toUpperCase()))
@@ -168,6 +221,7 @@ public class Database {
                     case "UI_FEEDBACK" -> {
                         UIFeedback ui = new UIFeedback.Builder()
                                 .id(Ticket.getTicketId())
+                                .type(command.params().type())
                                 .title(command.params().title())
                                 .businessPriority(Ticket.BusinessPriority.valueOf(
                                         command.params().businessPriority().toUpperCase()))
@@ -229,9 +283,46 @@ public class Database {
                         .filter(ticket -> username.equals(ticket.getReportedBy()))
                         .collect(Collectors.toList());
             default:
-                System.out.println("implement the rest (devs i think)");
+                // TODO: change this later i dont like it
+                List<Milestone> devMilestones = milestones.stream()
+                        .filter(milestone -> milestone.getAssignedDevs() != null &&
+                                Arrays.stream(milestone.getAssignedDevs())
+                                        .anyMatch(dev -> dev.equals(username)))
+                        .collect(Collectors.toList());
+
+                List<Ticket> result = new ArrayList<>();
+
+                for (Milestone milestone : devMilestones) {
+                    for (int ticketId : milestone.getTickets()) {
+                        for (Ticket ticket : tickets) {
+                            if (ticket.getId() == ticketId && "OPEN".equals(ticket.getStatus().toString())) {
+                                result.add(ticket);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                return result;
+
         }
-        return tickets;
+    }
+
+    public static void undoAssignedTicket(CommandInput command) {
+        Ticket tkt = tickets.stream()
+                .filter(ticket -> ticket.getId() == command.ticketID())
+                .findFirst()
+                .orElse(null);
+
+        if (tkt == null) {
+            System.out.println("didnt find ticket");
+            return;
+            // TODO: add error here
+        }
+        tkt.setAssignedAt(null);
+        tkt.setAssignedTo(null);
+        tkt.setStatus(Ticket.Status.OPEN);
+        System.out.println("finished with ticket" + tkt.getId());
     }
 
     public static void update(LocalDate date) {
@@ -249,9 +340,10 @@ public class Database {
                 milestone.setOverdueBy(0);
             }
 
-            int timeSinceCreation = Math.abs((int) ChronoUnit.DAYS.between(LocalDate.parse(milestone.getCreatedAt()), date));
+            int timeSinceCreation = Math
+                    .abs((int) ChronoUnit.DAYS.between(LocalDate.parse(milestone.getCreatedAt()), date));
             // monitor this method since im not sure what consitutes 3 days
-            if ((timeSinceCreation != 0)&& !milestone.isBlocked()) {
+            if ((timeSinceCreation != 0) && !milestone.isBlocked()) {
                 boolean CRIT = false;
                 if (timeLeft <= 1) {
                     CRIT = true;
@@ -263,7 +355,7 @@ public class Database {
                                 // wrap this in a method since i dont think database should be aware of
                                 // businessPriority
                                 ticket.setBusinessPriority(BusinessPriority.CRITICAL);
-                                System.out.println("CRITICAL " + ticket.getId());
+                                // System.out.println("CRITICAL " + ticket.getId());
                             }
                             if (timeSinceCreation % 3 == 0) {
                                 ticket.upPriority();
