@@ -76,6 +76,14 @@ public class IOUtil {
             ticketNode.put("reportedBy", ticket.getReportedBy() != null ? ticket.getReportedBy() : "");
 
             ArrayNode commentsArray = MAPPER.createArrayNode();
+            ticket.getComments().stream()
+                    .forEach(comment -> {
+                        ObjectNode commentNode = MAPPER.createObjectNode();
+                        commentNode.put("author", comment.getAuthor());
+                        commentNode.put("content", comment.getContent());
+                        commentNode.put("createdAt", comment.getCreatedAt());
+                        commentsArray.add(commentNode);
+                    });
             ticketNode.set("comments", commentsArray);
             ticketsArray.add(ticketNode);
         }
@@ -113,6 +121,14 @@ public class IOUtil {
             ticketNode.put("reportedBy", ticket.getReportedBy() != null ? ticket.getReportedBy() : "");
 
             ArrayNode commentsArray = MAPPER.createArrayNode();
+            ticket.getComments().stream()
+                    .forEach(comment -> {
+                        ObjectNode commentNode = MAPPER.createObjectNode();
+                        commentNode.put("author", comment.getAuthor());
+                        commentNode.put("content", comment.getContent());
+                        commentNode.put("createdAt", comment.getCreatedAt());
+                        commentsArray.add(commentNode);
+                    });
             ticketNode.set("comments", commentsArray);
             ticketsArray.add(ticketNode);
         }

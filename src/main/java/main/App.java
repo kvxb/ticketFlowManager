@@ -96,6 +96,7 @@ public class App {
             Database.update(currentCommand.time());
             System.out.println("develop" + currentDate + currentCommand.command());
 
+            // swtich to ->
             switch (currentCommand.command()) {
                 case "reportTicket":
                     IOUtil.ticketError(currentCommand, "WPER");
@@ -117,6 +118,12 @@ public class App {
                     break;
                 case "undoAssignTicket":
                     Database.undoAssignedTicket(currentCommand);
+                    break;
+                case "addComment":
+                    Database.addComment(currentCommand);
+                    break;
+                case "undoAddComment":
+                    Database.undoAddComment(currentCommand);
                     break;
                 default:
                     System.out.println("didnt match command");

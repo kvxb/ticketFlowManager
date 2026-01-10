@@ -146,13 +146,13 @@ public class Database {
         }
 
         for (int commandTicketId : command.tickets()) {
-            if (getMilestoneNameFromTicketID(commandTicketId)!= null) {
+            if (getMilestoneNameFromTicketID(commandTicketId) != null) {
                 IOUtil.milestoneError(command,
-                        "DUPE_" + getMilestoneNameFromTicketID(commandTicketId)+ "_" + commandTicketId);
+                        "DUPE_" + getMilestoneNameFromTicketID(commandTicketId) + "_" + commandTicketId);
                 return;
             }
         }
-       
+
         milestones.add(new Milestone(command.username(), command.timestamp(), command.name(), command.blockingFor(),
                 command.dueDate(), command.tickets(), command.assignedDevs()));
     }
@@ -355,6 +355,33 @@ public class Database {
         tkt.setAssignedTo(null);
         tkt.setStatus(Ticket.Status.OPEN);
         System.out.println("finished with ticket" + tkt.getId());
+    }
+
+    public static void addComment(CommandInput command) {
+        Ticket ticket = getTicket(command.ticketID());
+
+        if (ticket == null) {
+            // System.out.println("nullcomm");
+            return;
+        }
+
+        // System.out.println("comm");
+
+        ticket.addComment(command.username(), command.comment(), command.timestamp());
+    }
+
+    public static void undoAddComment(CommandInput command) {
+        Ticket ticket = getTicket(command.ticketID());
+        //verifica si daca commentul exista !
+
+        if (ticket == null) {
+            // System.out.println("nullcomm");
+            return;
+        }
+
+        System.out.println("undosuccess");
+
+        ticket.undoAddComment(command.username());
     }
 
     public static void update(LocalDate date) {

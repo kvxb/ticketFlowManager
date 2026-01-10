@@ -1,5 +1,7 @@
 package tickets;
 
+import java.util.ArrayList;
+import java.util.List;
 import io.CommandInput;
 
 public abstract class Ticket {
@@ -8,12 +10,6 @@ public abstract class Ticket {
         MEDIUM,
         HIGH,
         CRITICAL
-    }
-
-    public void assignDeveloper(CommandInput command) {
-        this.setStatus(Status.IN_PROGRESS);
-        this.setAssignedTo(command.username());
-        this.setAssignedAt(command.timestamp());
     }
 
     public enum Status {
@@ -31,6 +27,7 @@ public abstract class Ticket {
         DB
     }
 
+    // maybe get this the fuck out of here
     public abstract static class Builder<T extends Builder<T>> {
         protected int id;
         protected String type;
@@ -157,6 +154,42 @@ public abstract class Ticket {
         protected abstract T self();
     }
 
+    public class Comment {
+        String author;
+        String content;
+        String createdAt;
+
+        public String getAuthor() {
+			return author;
+		}
+
+		public void setAuthor(String author) {
+			this.author = author;
+		}
+
+		public String getContent() {
+			return content;
+		}
+
+		public void setContent(String content) {
+			this.content = content;
+		}
+
+		public String getCreatedAt() {
+			return createdAt;
+		}
+
+		public void setCreatedAt(String createdAt) {
+			this.createdAt = createdAt;
+		}
+
+		public Comment(String author, String content, String createdAt) {
+            this.author = author;
+            this.createdAt = createdAt;
+            this.content = content;
+        }
+    }
+
     private static int ticketId = 0;
 
     public static void clearTicket() {
@@ -182,10 +215,9 @@ public abstract class Ticket {
     private String assignedAt;
     private String solvedAt;
     private String createdAt;
-
-    // TODO imlement the comments part
-
     private ExpertiseArea expertiseArea;
+
+    private List<Comment> comments = new ArrayList<Comment>();
 
     public Ticket(Builder<?> b) {
         this.id = b.id;
@@ -197,6 +229,22 @@ public abstract class Ticket {
         this.description = b.description;
         this.reportedBy = b.reportedBy;
         this.createdAt = b.createdAt;
+    }
+
+    public List<Comment> getComments() {
+        return comments;
+    }
+
+    // TODO imlement the comments part
+
+    public void setComments(List<Comment> comments) {
+        this.comments = comments;
+    }
+
+    public void assignDeveloper(CommandInput command) {
+        this.setStatus(Status.IN_PROGRESS);
+        this.setAssignedTo(command.username());
+        this.setAssignedAt(command.timestamp());
     }
 
     public void upPriority() {
@@ -242,6 +290,24 @@ public abstract class Ticket {
 
     public String getCreatedAt() {
         return createdAt;
+    }
+
+    public void addComment(String author, String comment, String date) {
+        comments.add(new Comment(author, comment, date));
+    }
+
+    public void undoAddComment(String author) {
+        Comment remove = null;
+        for(Comment c : comments) {
+            if(c.author.equals(author)){
+                remove = c;
+                break;
+            }
+        }
+        if(remove != null) {
+            System.out.println("undid comment");
+            comments.remove(remove);
+        }
     }
 
     public void setCreatedAt(String createdAt) {
