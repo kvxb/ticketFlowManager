@@ -14,6 +14,6 @@ public class MilestoneAssignmentHandler extends DeveloperValidationHandler {
 
     @Override
     protected void showError(CommandInput command, int error) {
-        IOUtil.assignError(command, "ASSIGNMENT_");
+        IOUtil.assignError(command, "ASSIGNMENT");
     }
 }

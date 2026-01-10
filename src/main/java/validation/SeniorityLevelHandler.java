@@ -11,9 +11,9 @@ public class SeniorityLevelHandler extends DeveloperValidationHandler {
     @Override
     protected int validate(Developer developer, Ticket ticket, Milestone milestone) {
         int developerLevel = switch (developer.getSeniority().name()) {
-            case "MID" -> 2;
-            case "SENIOR" -> 3;
-            case "JUNIOR" -> 1;
+            case "MID" -> 3;
+            case "SENIOR" -> 4;
+            case "JUNIOR" -> 2;
             default -> -1;
         };
         if (developerLevel == -1) {
@@ -21,7 +21,7 @@ public class SeniorityLevelHandler extends DeveloperValidationHandler {
         }
         int ticketLevel = switch (ticket.getBusinessPriority().name()) {
             case "LOW" -> 1;
-            case "MID" -> 2;
+            case "MEDIUM" -> 2;
             case "HIGH" -> 3;
             case "CRITICAL" -> 4;
             default -> 5;
@@ -31,11 +31,11 @@ public class SeniorityLevelHandler extends DeveloperValidationHandler {
         {
             return 0;
         }
-        return developerLevel*10+ticketLevel;
+        return -1;
     }
 
     @Override
     protected void showError(CommandInput command, int error) {
-        IOUtil.assignError(command, "SENIORITY_" + error);
+        IOUtil.assignError(command, "SENIORITY");
     }
 }

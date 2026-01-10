@@ -53,6 +53,6 @@ public class ExpertiseAreaHandler extends DeveloperValidationHandler {
 
     @Override
     protected void showError(CommandInput command, int error) {
-        IOUtil.assignError(command, "EXPERTISE_" + error);
+        IOUtil.assignError(command, "EXPERTISE");
     }
 }

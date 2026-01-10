@@ -209,25 +209,30 @@ public class IOUtil {
         error.put("command", command.command());
         error.put("username", command.username());
         error.put("timestamp", command.timestamp());
-        if (errorType.startsWith("STATUS")) {
-            error.put("error", "Only OPEN tickets can be assigned.");
-        } else if (errorType.startsWith("SENIORITY")) {
-            error.put("error", "Developer " + command.username() + " cannot assign ticket " + command.ticketID()
-                    + " due to seniority level. Required: " +Database.getTicket(command.ticketID()).getRequiredSeniority()+ "; Current: "
-                    + ((Developer) Database.getUser(command.username())).getSeniority() + ".");
-        } else if (errorType.startsWith("ASSIGNMENT")) {
-            error.put("error", "Developer " + command.username() + " is not assigned to milestone "
-                    + Database.getMilestoneFromTicketID(command.ticketID()) + ".");
-        } else if (errorType.startsWith("LOCKED")) {
-            error.put("error", "Cannot assign ticket " + command.ticketID() + " from blocked milestone "
-                    + Database.getMilestoneFromTicketID(command.ticketID()) + ".");
-        } else if (errorType.startsWith("EXPERTISE")) {
-            error.put("error", "Developer " + command.username() + " cannot assign ticket " + command.ticketID()
-                    + " due to expertise area. Required: "+Database.getTicket(command.ticketID()).getRequiredExpertise() + "; Current: "
-                    + ((Developer) Database.getUser(command.username())).getExpertiseArea() + ".");
-        } else {
-            error.put("error", "Unknown error type: " + errorType);
+
+        switch (errorType) {
+            case "STATUS" ->
+                error.put("error", "Only OPEN tickets can be assigned.");
+            case "SENIORITY" ->
+                error.put("error", "Developer " + command.username() + " cannot assign ticket " + command.ticketID()
+                        + " due to seniority level. Required: "
+                        + Database.getTicket(command.ticketID()).getRequiredSeniority() + "; Current: "
+                        + ((Developer) Database.getUser(command.username())).getSeniority() + ".");
+            case "ASSIGNMENT" ->
+                error.put("error", "Developer " + command.username() + " is not assigned to milestone "
+                        + Database.getMilestoneNameFromTicketID(command.ticketID()) + ".");
+            case "LOCKED" ->
+                error.put("error", "Cannot assign ticket " + command.ticketID() + " from blocked milestone "
+                        + Database.getMilestoneNameFromTicketID(command.ticketID()) + ".");
+            case "EXPERTISE" ->
+                error.put("error", "Developer " + command.username() + " cannot assign ticket " + command.ticketID()
+                        + " due to expertise area. Required: "
+                        + Database.getTicket(command.ticketID()).getRequiredExpertise() + "; Current: "
+                        + ((Developer) Database.getUser(command.username())).getExpertiseArea() + ".");
+            default ->
+                error.put("error", "Unknown error type: " + errorType);
         }
+
         outputs.add(error);
     }
 
@@ -236,29 +241,24 @@ public class IOUtil {
         error.put("command", command.command());
         error.put("username", command.username());
         error.put("timestamp", command.timestamp());
+
         switch (errorType) {
-            case "ANON":
+            case "ANON" ->
                 error.put("error", "Anonymous reports are only allowed for tickets of type BUG.");
-                break;
-            case "NUSR":
+            case "NUSR" ->
                 error.put("error", "The user " + command.username() + " does not exist.");
-                break;
-            case "WRONG_USER_DEVELOPER":
+            case "WRONG_USER_DEVELOPER" ->
                 error.put("error",
                         "The user does not have permission to execute this command: required role MANAGER; user role DEVELOPER.");
-                break;
-            case "WRONG_USER_REPORTER":
+            case "WRONG_USER_REPORTER" ->
                 error.put("error",
                         "The user does not have permission to execute this command: required role MANAGER; user role REPORTER.");
-                break;
-            // funky logic should make this more readable
-            default:
+            default -> {
                 String[] parts = errorType.split("_");
                 error.put("error", "Tickets " + parts[2] + " already assigned to milestone " + parts[1] + ".");
-                break;
-            // user does not exist
-            // only testing period
+            }
         }
+
         outputs.add(error);
     }
 

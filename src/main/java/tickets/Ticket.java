@@ -1,11 +1,19 @@
 package tickets;
 
+import io.CommandInput;
+
 public abstract class Ticket {
     public enum BusinessPriority {
         LOW,
         MEDIUM,
         HIGH,
         CRITICAL
+    }
+
+    public void assignDeveloper(CommandInput command) {
+        this.setStatus(Status.IN_PROGRESS);
+        this.setAssignedTo(command.username());
+        this.setAssignedAt(command.timestamp());
     }
 
     public enum Status {

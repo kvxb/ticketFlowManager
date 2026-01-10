@@ -3,6 +3,8 @@ package milestones;
 import java.time.LocalDate;
 import java.util.Arrays;
 import database.Database;
+import io.CommandInput;
+
 import java.util.List;
 import java.util.ArrayList;
 
@@ -41,6 +43,15 @@ public class Milestone {
             this.assignedTickets = assignedTickets;
         }
 
+    }
+
+    public void assignDeveloper(CommandInput command) {
+        for (Repartition rep : this.getRepartitions()) {
+            if (rep.getDev().equals(command.username())) {
+                rep.getAssignedTickets().add(command.ticketID());
+                break;
+            }
+        }
     }
 
     private String name;

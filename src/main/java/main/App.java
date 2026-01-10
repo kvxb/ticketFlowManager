@@ -70,7 +70,7 @@ public class App {
             Database.update(currentCommand.time());
             switch (currentCommand.command()) {
                 case "reportTicket":
-                    Database.addTicket(currentCommand, currentDate);
+                    Database.addTicket(currentCommand);
                     break;
                 case "viewTickets":
                     IOUtil.viewTickets(currentCommand, Database.getTickets(currentCommand.username()));
@@ -104,13 +104,13 @@ public class App {
                     IOUtil.viewTickets(currentCommand, Database.getTickets(currentCommand.username()));
                     break;
                 case "createMilestone":
-                    Database.addMilestone(currentCommand, currentDate);
+                    Database.addMilestone(currentCommand);
                     break;
                 case "viewMilestones":
                     IOUtil.viewMilestones(currentCommand, Database.getMilestones(currentCommand.username()));
                     break;
                 case "assignTicket":
-                    Database.assignTicket(currentCommand, currentDate);
+                    Database.assignTicket(currentCommand);
                     break;
                 case "viewAssignedTickets":
                     IOUtil.viewAssignedTickets(currentCommand, Database.getAssignedTickets(currentCommand.username()));

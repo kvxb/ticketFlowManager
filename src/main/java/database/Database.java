@@ -46,6 +46,8 @@ public class Database {
                 return tickets.size();
             case "commands":
                 return commands.size();
+            case "milestones":
+                return milestones.size();
             default:
                 return -1;
         }
@@ -56,10 +58,10 @@ public class Database {
         tickets.clear();
         commands.clear();
         milestones.clear();
-        System.out.println("cleared all");
+        // System.out.println("cleared all");
     }
 
-    public static String getMilestoneFromTicketID(int TicketID) {
+    public static String getMilestoneNameFromTicketID(int TicketID) {
         for (Milestone m : milestones) {
             for (int id : m.getTickets()) {
                 if (id == TicketID) {
@@ -70,27 +72,23 @@ public class Database {
         return null;
     }
 
+    public static Milestone getMilestoneFromTicketID(int TicketID) {
+        for (Milestone m : milestones) {
+            for (int id : m.getTickets()) {
+                if (id == TicketID) {
+                    return m;
+                }
+            }
+        }
+        return null;
+    }
+
     // TODO: CHORE: DOESNT command hold the date :): (no need for both parameters
     // rewrite all methods like this one)
-    public static void assignTicket(CommandInput command, LocalDate date) {
-        Developer dev = (Developer) users.stream()
-                .filter(user -> user.getUsername().equals(command.username()))
-                .findFirst()
-                .orElse(null);
-
-        Milestone mstn = milestones.stream()
-                .filter(milestone -> Arrays.stream(milestone.getTickets())
-                        .anyMatch(id -> id == command.ticketID()))
-                .findFirst()
-                .orElse(null);
-        // might be worth to check after finding the milestone if it actually has the
-        // dev might not be
-
-        // i also use the same in undo so might modularize
-        Ticket tkt = tickets.stream()
-                .filter(ticket -> ticket.getId() == command.ticketID())
-                .findFirst()
-                .orElse(null);
+    public static void assignTicket(CommandInput command) {
+        Developer dev = (Developer) getUser(command.username());
+        Milestone mstn = getMilestoneFromTicketID(command.ticketID());
+        Ticket tkt = getTicket(command.ticketID());
 
         DeveloperValidationHandler validateDev = new ExpertiseAreaHandler();
         validateDev.setNext(new SeniorityLevelHandler())
@@ -105,17 +103,8 @@ public class Database {
             return;
         }
 
-        // TODO CHORE: Move this to a method in ticket
-        tkt.setStatus(Status.IN_PROGRESS);
-        tkt.setAssignedTo(command.username());
-        tkt.setAssignedAt(date.toString());
-
-        for (Repartition rep : mstn.getRepartitions()) {
-            if (rep.getDev().equals(command.username())) {
-                rep.getAssignedTickets().add(command.ticketID());
-                break;
-            }
-        }
+        tkt.assignDeveloper(command);
+        mstn.assignDeveloper(command);
     }
 
     public static User getUser(String username) {
@@ -146,7 +135,7 @@ public class Database {
                 .collect(Collectors.toList());
     }
 
-    public static void addMilestone(CommandInput command, LocalDate currentDate) {
+    public static void addMilestone(CommandInput command) {
         if (!command.username().contains("manager")) {
             if (command.username().contains("reporter")) {
                 IOUtil.milestoneError(command, "WRONG_USER_REPORTER");
@@ -155,17 +144,15 @@ public class Database {
             IOUtil.milestoneError(command, "WRONG_USER_DEVELOPER");
             return;
         }
-        for (Milestone milestone : milestones) {
-            for (int commandTicketId : command.tickets()) {
-                for (int milestoneTicketId : milestone.getTickets()) {
-                    if (commandTicketId == milestoneTicketId) {
-                        IOUtil.milestoneError(command, "DUPE_" + milestone.getName() + "_" + commandTicketId);
-                        return;
-                    }
-                }
+
+        for (int commandTicketId : command.tickets()) {
+            if (getMilestoneNameFromTicketID(commandTicketId)!= null) {
+                IOUtil.milestoneError(command,
+                        "DUPE_" + getMilestoneNameFromTicketID(commandTicketId)+ "_" + commandTicketId);
+                return;
             }
         }
-
+       
         milestones.add(new Milestone(command.username(), command.timestamp(), command.name(), command.blockingFor(),
                 command.dueDate(), command.tickets(), command.assignedDevs()));
     }
@@ -196,7 +183,7 @@ public class Database {
         }
     }
 
-    public static void addTicket(CommandInput command, LocalDate currentDate) {
+    public static void addTicket(CommandInput command) {
         // im too lazy right now but before you do this func check how the inputs should
         // look like, maybe you should link the tickets to an actual person if its
         // mandatory but afaik for bugs its not so you can either create a anon user and
@@ -241,7 +228,7 @@ public class Database {
                                 .errorCode(command.params().errorCode() != null
                                         ? Integer.parseInt(command.params().errorCode())
                                         : 0)
-                                .createdAt(currentDate.toString())
+                                .createdAt(command.timestamp())
                                 .build();
                         yield bug;
                     }
@@ -259,7 +246,7 @@ public class Database {
                                         command.params().businessValue().toUpperCase()))
                                 .customerDemand(FeatureRequest.CustomerDemand.valueOf(
                                         command.params().customerDemand().toUpperCase()))
-                                .createdAt(currentDate.toString())
+                                .createdAt(command.timestamp())
                                 .build();
                         yield fr;
                     }
@@ -279,7 +266,7 @@ public class Database {
                                 .usabilityScore(command.params().usabilityScore())
                                 .screenshotUrl(command.params().screenshotUrl())
                                 .suggestedFix(command.params().suggestedFix())
-                                .createdAt(currentDate.toString())
+                                .createdAt(command.timestamp())
                                 .build();
                         yield ui;
                     }
