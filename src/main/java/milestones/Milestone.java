@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import database.Database;
 import java.util.List;
+import java.util.ArrayList;
 
 public class Milestone {
     public class Repartition {
@@ -11,16 +12,17 @@ public class Milestone {
         private List<Integer> assignedTickets;
 
         public Repartition() {
-
+            assignedTickets = new ArrayList<>();
         }
 
         public Repartition(String name) {
+            assignedTickets = new ArrayList<>();
             this.dev = name;
         }
 
         public Repartition(String name, List<Integer> assignedTickets) {
             this.dev = name;
-            this.assignedTickets = assignedTickets;
+            this.assignedTickets = (assignedTickets != null) ? assignedTickets : new ArrayList<>();
         }
 
         public String getDev() {
@@ -56,9 +58,9 @@ public class Milestone {
     private int daysUntilDue;
     private Repartition[] repartitions;
 
-	private String createdAt;
+    private String createdAt;
 
-	// dont know if this field will be needed but might aswell;
+    // dont know if this field will be needed but might aswell;
     private String owner;
 
     public Milestone(String owner, String createdAt, String name, String[] blockingFor, String dueDate, int[] tickets,
@@ -78,22 +80,28 @@ public class Milestone {
         this.openTickets = tickets;
 
         // TODO: if there is not test case where this rule applies delete
-        if (assignedDevs == null) {
+        if (assignedDevs == null || assignedDevs.length == 0) {
             this.repartitions = new Repartition[0];
-        }
-        this.repartitions = new Repartition[assignedDevs.length];
-        for(int i = 0;i < assignedDevs.length;i++) {
-            this.repartitions[i] = new Repartition(assignedDevs[i]);
+        } else {
+            this.repartitions = new Repartition[assignedDevs.length];
+            for (int i = 0; i < assignedDevs.length; i++) {
+                this.repartitions[i] = new Repartition(assignedDevs[i]);
+            }
         }
     }
 
+    public boolean hasDeveloper(String username) {
+        return Arrays.stream(this.assignedDevs)
+                .anyMatch(name -> name.equals(username));
+    }
+
     public int getDaysUntilDue() {
-		return daysUntilDue;
-	}
+        return daysUntilDue;
+    }
 
     public void setDaysUntilDue(int daysUntilDue) {
-		this.daysUntilDue = daysUntilDue;
-	}
+        this.daysUntilDue = daysUntilDue;
+    }
 
     public String getStatus() {
         return status;

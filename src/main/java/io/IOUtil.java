@@ -8,6 +8,7 @@ import java.lang.Object;
 import database.Database;
 import milestones.Milestone;
 import milestones.Milestone.Repartition;
+import users.Developer;
 import users.User;
 import tickets.Ticket;
 import java.util.Arrays;
@@ -121,8 +122,8 @@ public class IOUtil {
     }
 
     public static void viewMilestones(CommandInput command, List<Milestone> unsortedMilestones) {
-        //TODO move these to the Database function and give them to IOUTIL
-        //look at assignedmmilestone for help im so lazy this cant be
+        // TODO move these to the Database function and give them to IOUTIL
+        // look at assignedmmilestone for help im so lazy this cant be
         List<Milestone> sortedMilestones = unsortedMilestones.stream()
                 .sorted(Comparator
                         .comparing(Milestone::getDueDate)
@@ -200,6 +201,34 @@ public class IOUtil {
         }
         commandNode.set("milestones", milestonesArray);
         outputs.add(commandNode);
+    }
+
+    // all these errors can be made into one maybe ?
+    public static void assignError(CommandInput command, String errorType) {
+        ObjectNode error = MAPPER.createObjectNode();
+        error.put("command", command.command());
+        error.put("username", command.username());
+        error.put("timestamp", command.timestamp());
+        if (errorType.startsWith("STATUS")) {
+            error.put("error", "Only OPEN tickets can be assigned.");
+        } else if (errorType.startsWith("SENIORITY")) {
+            error.put("error", "Developer " + command.username() + " cannot assign ticket " + command.ticketID()
+                    + " due to seniority level. Required: " +Database.getTicket(command.ticketID()).getRequiredSeniority()+ "; Current: "
+                    + ((Developer) Database.getUser(command.username())).getSeniority() + ".");
+        } else if (errorType.startsWith("ASSIGNMENT")) {
+            error.put("error", "Developer " + command.username() + " is not assigned to milestone "
+                    + Database.getMilestoneFromTicketID(command.ticketID()) + ".");
+        } else if (errorType.startsWith("LOCKED")) {
+            error.put("error", "Cannot assign ticket " + command.ticketID() + " from blocked milestone "
+                    + Database.getMilestoneFromTicketID(command.ticketID()) + ".");
+        } else if (errorType.startsWith("EXPERTISE")) {
+            error.put("error", "Developer " + command.username() + " cannot assign ticket " + command.ticketID()
+                    + " due to expertise area. Required: "+Database.getTicket(command.ticketID()).getRequiredExpertise() + "; Current: "
+                    + ((Developer) Database.getUser(command.username())).getExpertiseArea() + ".");
+        } else {
+            error.put("error", "Unknown error type: " + errorType);
+        }
+        outputs.add(error);
     }
 
     public static void milestoneError(CommandInput command, String errorType) {

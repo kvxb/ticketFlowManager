@@ -200,6 +200,38 @@ public abstract class Ticket {
         };
     }
 
+    public String getRequiredExpertise() {
+        switch (this.getExpertiseArea()) {
+            case FRONTEND:
+                return "FRONTEND, FULLSTACK, DESIGN";
+            case BACKEND:
+                return "BACKEND, FULLSTACK";
+            case DESIGN:
+                return "DESIGN, FULLSTACK, FRONTEND";
+            case DB:
+                return "BACKEND, DB, FULLSTACK";
+            case DEVOPS:
+                return "DEVOPS, FULLSTACK";
+            default:
+                return "";
+        }
+    }
+
+    public String getRequiredSeniority() {
+        switch (this.getBusinessPriority()) {
+            case LOW:
+                return "JUNIOR, MID, SENIOR";
+            case MEDIUM:
+                return "JUNIOR, MID, SENIOR";
+            case HIGH:
+                return "MID, SENIOR";
+            case CRITICAL:
+                return "SENIOR";
+            default:
+                return "";
+        }
+    }
+
     public String getCreatedAt() {
         return createdAt;
     }

@@ -17,6 +17,13 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import validation.DeveloperValidationHandler;
+import validation.ExpertiseAreaHandler;
+import validation.LockedMilestoneHandler;
+import validation.MilestoneAssignmentHandler;
+import validation.SeniorityLevelHandler;
+import validation.TicketStatusHandler;
+import milestones.Milestone.Repartition;
 
 import users.User;
 import users.Manager;
@@ -52,6 +59,19 @@ public class Database {
         System.out.println("cleared all");
     }
 
+    public static String getMilestoneFromTicketID(int TicketID) {
+        for (Milestone m : milestones) {
+            for (int id : m.getTickets()) {
+                if (id == TicketID) {
+                    return m.getName();
+                }
+            }
+        }
+        return null;
+    }
+
+    // TODO: CHORE: DOESNT command hold the date :): (no need for both parameters
+    // rewrite all methods like this one)
     public static void assignTicket(CommandInput command, LocalDate date) {
         Developer dev = (Developer) users.stream()
                 .filter(user -> user.getUsername().equals(command.username()))
@@ -72,23 +92,48 @@ public class Database {
                 .findFirst()
                 .orElse(null);
 
-        if (dev.getExpertiseArea().name() != tkt.getExpertiseArea().name()) {
+        DeveloperValidationHandler validateDev = new ExpertiseAreaHandler();
+        validateDev.setNext(new SeniorityLevelHandler())
+                .setNext(new TicketStatusHandler())
+                .setNext(new MilestoneAssignmentHandler())
+                .setNext(new LockedMilestoneHandler());
 
+        boolean isDevValid = validateDev.check(dev, tkt, mstn, command);
+
+        if (!isDevValid) {
+            System.out.println("INVALID ASSIGNMENT");
+            return;
         }
 
-        // dont know how to get the ticket complexity will look later
-        // if(dev.getSeniority() != )
-
-        if (tkt.getStatus() != Status.OPEN) {
-
-        }
-
-        // if(dev nu este repartizat aici)
-        // if(milestonul este blocat nu poti)
-
+        // TODO CHORE: Move this to a method in ticket
         tkt.setStatus(Status.IN_PROGRESS);
         tkt.setAssignedTo(command.username());
         tkt.setAssignedAt(date.toString());
+
+        for (Repartition rep : mstn.getRepartitions()) {
+            if (rep.getDev().equals(command.username())) {
+                rep.getAssignedTickets().add(command.ticketID());
+                break;
+            }
+        }
+    }
+
+    public static User getUser(String username) {
+        for (User user : users) {
+            if (user.getUsername().equals(username)) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    public static Ticket getTicket(int id) {
+        for (Ticket t : tickets) {
+            if (t.getId() == id) {
+                return t;
+            }
+        }
+        return null;
     }
 
     public static List<Ticket> getAssignedTickets(String username) {
