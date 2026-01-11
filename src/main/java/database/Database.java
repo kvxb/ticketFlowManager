@@ -17,12 +17,19 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
-import validation.DeveloperValidationHandler;
-import validation.ExpertiseAreaHandler;
-import validation.LockedMilestoneHandler;
-import validation.MilestoneAssignmentHandler;
-import validation.SeniorityLevelHandler;
-import validation.TicketStatusHandler;
+import validation.developerhandlers.DeveloperValidationHandler;
+import validation.developerhandlers.ExpertiseAreaHandler;
+import validation.developerhandlers.LockedMilestoneHandler;
+import validation.developerhandlers.MilestoneAssignmentHandler;
+import validation.developerhandlers.SeniorityLevelHandler;
+import validation.developerhandlers.TicketStatusHandler;
+import validation.commenthandlers.CommentValidationHandler;
+import validation.commenthandlers.TicketExistenceHandler;
+import validation.commenthandlers.AnonymousTicketHandler;
+import validation.commenthandlers.ClosedTicketHandler;
+import validation.commenthandlers.CommentLengthHandler;
+import validation.commenthandlers.DeveloperAssignmentHandler;
+import validation.commenthandlers.ReporterOwnershipHandler;
 import milestones.Milestone.Repartition;
 
 import users.User;
@@ -358,29 +365,37 @@ public class Database {
     }
 
     public static void addComment(CommandInput command) {
+        CommentValidationHandler validateComment = new TicketExistenceHandler();
+        validateComment.setNext(new AnonymousTicketHandler())
+                .setNext(new ClosedTicketHandler())
+                .setNext(new CommentLengthHandler())
+                .setNext(new DeveloperAssignmentHandler())
+                .setNext(new ReporterOwnershipHandler());
+
         Ticket ticket = getTicket(command.ticketID());
 
-        if (ticket == null) {
-            // System.out.println("nullcomm");
+        boolean isValid = validateComment.validate(command);
+        if (!isValid) {
             return;
         }
-
-        // System.out.println("comm");
-
         ticket.addComment(command.username(), command.comment(), command.timestamp());
     }
 
     public static void undoAddComment(CommandInput command) {
         Ticket ticket = getTicket(command.ticketID());
-        //verifica si daca commentul exista !
+        // verifica si daca commentul exista !
 
         if (ticket == null) {
             // System.out.println("nullcomm");
             return;
         }
-
-        System.out.println("undosuccess");
-
+        if (ticket.getReportedBy().isEmpty()) {
+            IOUtil.commentError(command, "ANON");
+            return;
+        }
+        // if (ticket.isWasError()) {
+        //     IOUtil.commentError(command, "UNDO");
+        // }
         ticket.undoAddComment(command.username());
     }
 

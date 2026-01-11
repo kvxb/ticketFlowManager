@@ -252,6 +252,38 @@ public class IOUtil {
         outputs.add(error);
     }
 
+    public static void commentError(CommandInput command, String errorType) {
+        ObjectNode error = MAPPER.createObjectNode();
+        error.put("command", command.command());
+        error.put("username", command.username());
+        error.put("timestamp", command.timestamp());
+        Ticket tkt = Database.getTicket(command.ticketID());
+        String message;
+        switch (errorType) {
+            case "ANON" ->
+                message = "Comments are not allowed on anonymous tickets.";
+            case "CLOSED" ->
+                message = "CLOSED";
+            case "MIN_LENGTH" ->
+                message = "Comment must be at least 10 characters long.";
+            case "ASSIGNMENT_DEVELOPER" ->
+                message = "Ticket " + command.ticketID() + " is not assigned to the developer " + command.username()
+                        + ".";
+            case "ASSIGNMENT_REPORTER" ->
+                message = "Reporter " + command.username() + " cannot comment on ticket " + command.ticketID() + ".";
+            // case "UNDO" ->
+            //     // what happens if we do two undos ? what should happen and what happens
+            //     message = tkt.getErrorMessage();
+            default ->
+                message = "DEFAULT";
+
+        }
+        error.put("error", message);
+
+
+        outputs.add(error);
+    }
+
     public static void milestoneError(CommandInput command, String errorType) {
         ObjectNode error = MAPPER.createObjectNode();
         error.put("command", command.command());

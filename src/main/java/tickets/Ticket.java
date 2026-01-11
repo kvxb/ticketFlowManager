@@ -159,7 +159,13 @@ public abstract class Ticket {
         String content;
         String createdAt;
 
-        public String getAuthor() {
+        public Comment(String author, String content, String createdAt) {
+            this.author = author;
+            this.createdAt = createdAt;
+            this.content = content;
+        }
+
+		public String getAuthor() {
 			return author;
 		}
 
@@ -182,12 +188,6 @@ public abstract class Ticket {
 		public void setCreatedAt(String createdAt) {
 			this.createdAt = createdAt;
 		}
-
-		public Comment(String author, String content, String createdAt) {
-            this.author = author;
-            this.createdAt = createdAt;
-            this.content = content;
-        }
     }
 
     private static int ticketId = 0;
@@ -216,10 +216,9 @@ public abstract class Ticket {
     private String solvedAt;
     private String createdAt;
     private ExpertiseArea expertiseArea;
-
     private List<Comment> comments = new ArrayList<Comment>();
 
-    public Ticket(Builder<?> b) {
+	public Ticket(Builder<?> b) {
         this.id = b.id;
         this.type = b.type;
         this.title = b.title;
@@ -301,7 +300,6 @@ public abstract class Ticket {
         for(Comment c : comments) {
             if(c.author.equals(author)){
                 remove = c;
-                break;
             }
         }
         if(remove != null) {
