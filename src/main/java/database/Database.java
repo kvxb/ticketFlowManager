@@ -484,6 +484,30 @@ public class Database {
         }
     }
 
+    public static void undoChangeStatus(CommandInput command) {
+        Ticket ticket = getTicket(command.ticketID());
+
+        if (!ticket.getAssignedTo().equals(command.username())) {
+            IOUtil.changeError(command, "ASSIGNMENT");
+            return;
+        }
+
+        Status currentStatus = ticket.getStatus();
+
+        switch (currentStatus.name()) {
+            case "RESOLVED":
+                ticket.changeStatus(Ticket.Status.IN_PROGRESS, command.username(), command.timestamp());
+                break;
+            case "CLOSED":
+                ticket.changeStatus(Ticket.Status.RESOLVED, command.username(), command.timestamp());
+                Milestone milestone = getMilestoneFromTicketID(command.ticketID());
+                milestone.undoChangeStatusOfTicket(command.ticketID());
+                break;
+            default:
+                break;
+        }
+    }
+
     public static TicketHistory getTicketHistory(int id) {
         Ticket ticket = getTicket(id);
         return ticket.getTicketHistory();
@@ -492,6 +516,13 @@ public class Database {
     public static void update(LocalDate date) {
         milestones.forEach(milestone -> {
             int timeLeft = (int) ChronoUnit.DAYS.between(date, LocalDate.parse(milestone.getDueDate()));
+
+            if (milestone.getCompletionPercentage() == 1.0) {
+                milestone.setStatus("COMPLETED");
+            }
+            if (milestone.getStatus().equals("COMPLETED")) {
+                return;
+            }
             // this should be in the milestone class maybe ? not here idk
             // like how i do for upPriority() edit: maybe to contorted since in the
             // milestone class you have to call here to do the actual changes since here lie

@@ -131,6 +131,9 @@ public class App {
                 case "viewTicketHistory":
                     IOUtil.viewTicketHistory(currentCommand, Database.getTicketsConcerningUser(currentCommand.username()));
                     break;
+                case "undoChangeStatus":
+                    Database.undoChangeStatus(currentCommand);
+                    break;
                 default:
                     System.out.println("didnt match command");
             }

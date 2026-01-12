@@ -60,6 +60,14 @@ public class Milestone {
         this.updateCompletionPercentage();
     }
 
+    public void undoChangeStatusOfTicket(int id) {
+        if (closedTickets.contains(id)) {
+            openTickets.add(id);
+            closedTickets.remove(Integer.valueOf(id));
+        }
+        this.updateCompletionPercentage();
+    }
+
     public void updateCompletionPercentage() {
         this.completionPercentage = MathUtil.round(getNumberOfTickets("CLOSED") / getNumberOfTickets("ALL"));
     }
