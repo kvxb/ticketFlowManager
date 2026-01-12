@@ -232,13 +232,13 @@ public class IOUtil {
         ArrayNode ticketHistoryArray = MAPPER.createArrayNode();
 
         for (Ticket ticket : userTickets) {
-            String lastUndoTimestamp = null;
+            String deassignTimestamp = null;
 
             if (ticket.getTicketHistory() != null) {
                 for (Ticket.Action action : ticket.getTicketHistory().getActions()) {
-                    if ("UNDO_ASSIGN_TICKET".equals(action.getAction()) &&
+                    if ("DE-ASSIGNED".equals(action.getAction()) &&
                             command.username().equals(action.getBy())) {
-                        lastUndoTimestamp = action.getTimestamp();
+                        deassignTimestamp = action.getTimestamp();
                     }
                 }
             }
@@ -252,32 +252,46 @@ public class IOUtil {
 
             if (ticket.getTicketHistory() != null && ticket.getTicketHistory().getActions() != null) {
                 for (Ticket.Action action : ticket.getTicketHistory().getActions()) {
-                    if (lastUndoTimestamp == null ||
-                            action.getTimestamp().compareTo(lastUndoTimestamp) <= 0) {
+                    boolean includeAction = true;
 
-                        ObjectNode actionNode = MAPPER.createObjectNode();
+                    if (deassignTimestamp != null) {
+                        int timestampComparison = action.getTimestamp().compareTo(deassignTimestamp);
 
-                        if (action.getMilestone() != null && !action.getMilestone().isEmpty()) {
-                            actionNode.put("milestone", action.getMilestone());
+                        if (timestampComparison > 0) {
+                            includeAction = false;
+                        } else if (timestampComparison == 0) {
+                            if (!"DE-ASSIGNED".equals(action.getAction())) {
+                                includeAction = false;
+                            }
                         }
-
-                        if (action.getFrom() != null) {
-                            actionNode.put("from", action.getFrom().toString());
-                        }
-
-                        if (action.getTo() != null) {
-                            actionNode.put("to", action.getTo().toString());
-                        }
-
-                        if (action.getBy() != null && !action.getBy().isEmpty()) {
-                            actionNode.put("by", action.getBy());
-                        }
-
-                        actionNode.put("timestamp", action.getTimestamp());
-                        actionNode.put("action", action.getAction());
-
-                        actionsArray.add(actionNode);
                     }
+
+                    if (!includeAction) {
+                        continue;
+                    }
+
+                    ObjectNode actionNode = MAPPER.createObjectNode();
+
+                    if (action.getMilestone() != null && !action.getMilestone().isEmpty()) {
+                        actionNode.put("milestone", action.getMilestone());
+                    }
+
+                    if (action.getFrom() != null) {
+                        actionNode.put("from", action.getFrom().toString());
+                    }
+
+                    if (action.getTo() != null) {
+                        actionNode.put("to", action.getTo().toString());
+                    }
+
+                    if (action.getBy() != null && !action.getBy().isEmpty()) {
+                        actionNode.put("by", action.getBy());
+                    }
+
+                    actionNode.put("timestamp", action.getTimestamp());
+                    actionNode.put("action", action.getAction());
+
+                    actionsArray.add(actionNode);
                 }
             }
 
@@ -287,8 +301,8 @@ public class IOUtil {
 
             if (ticket.getComments() != null) {
                 for (Ticket.Comment comment : ticket.getComments()) {
-                    if (lastUndoTimestamp == null ||
-                            comment.getCreatedAt().compareTo(lastUndoTimestamp) <= 0) {
+                    if (deassignTimestamp == null ||
+                            comment.getCreatedAt().compareTo(deassignTimestamp) < 0) {
 
                         ObjectNode commentNode = MAPPER.createObjectNode();
                         commentNode.put("author", comment.getAuthor());
@@ -345,13 +359,13 @@ public class IOUtil {
         error.put("command", command.command());
         error.put("username", command.username());
         error.put("timestamp", command.timestamp());
-        Ticket tkt = Database.getTicket(command.ticketID());
+        // Ticket tkt = Database.getTicket(command.ticketID());
         String message;
         switch (errorType) {
             case "ANON" ->
                 message = "Comments are not allowed on anonymous tickets.";
             case "CLOSED" ->
-                message = "CLOSED";
+                message = "Reporters cannot comment on CLOSED tickets.";
             case "MIN_LENGTH" ->
                 message = "Comment must be at least 10 characters long.";
             case "ASSIGNMENT_DEVELOPER" ->

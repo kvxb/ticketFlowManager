@@ -384,6 +384,19 @@ public abstract class Ticket {
         this.assignedAt = command.timestamp();
     }
 
+    public void undoAssignDeveloper(CommandInput command) {
+        Action assignAction = new Action(command.username(), command.timestamp(), "DE-ASSIGNED");
+        ticketHistory.getActions().add(assignAction);
+
+        Action statusAction = new Action(Status.IN_PROGRESS, Status.OPEN,
+                command.username(), command.timestamp(), "STATUS_CHANGED");
+        ticketHistory.getActions().add(statusAction);
+
+        this.status = Status.OPEN;
+        this.assignedTo = null;
+        this.assignedAt = null;
+    }
+
     public void changeStatus(Status newStatus, String by, String timestamp) {
         if (this.ticketHistory != null) {
             Action statusAction = new Action(this.status, newStatus, by, timestamp, "STATUS_CHANGED");

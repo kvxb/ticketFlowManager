@@ -1,5 +1,5 @@
 package database;
-
+//TODO make this a singleton :(
 import tickets.Bug;
 import java.util.Comparator;
 import tickets.FeatureRequest;
@@ -112,6 +112,24 @@ public class Database {
 
         tkt.assignDeveloper(command);
         mstn.assignDeveloper(command);
+    }
+
+    public static void undoAssignedTicket(CommandInput command) {
+        Ticket tkt = tickets.stream()
+                .filter(ticket -> ticket.getId() == command.ticketID())
+                .findFirst()
+                .orElse(null);
+
+        if (tkt == null) {
+            System.out.println("didnt find ticket");
+            return;
+            // TODO: add error here
+        }
+        
+        tkt.undoAssignDeveloper(command);
+        //TODO: is a milestone update not needed here ???? it for sure is 
+        // but everything at its time
+        System.out.println("finished with ticket" + tkt.getId());
     }
 
     public static User getUser(String username) {
@@ -408,24 +426,8 @@ public class Database {
         }
     }
 
-    public static void undoAssignedTicket(CommandInput command) {
-        Ticket tkt = tickets.stream()
-                .filter(ticket -> ticket.getId() == command.ticketID())
-                .findFirst()
-                .orElse(null);
-
-        if (tkt == null) {
-            System.out.println("didnt find ticket");
-            return;
-            // TODO: add error here
-        }
-        tkt.setAssignedAt(null);
-        tkt.setAssignedTo(null);
-        tkt.setStatus(Ticket.Status.OPEN);
-        System.out.println("finished with ticket" + tkt.getId());
-    }
-
     public static void addComment(CommandInput command) {
+        // System.out.println("entered add comment");
         CommentValidationHandler validateComment = new TicketExistenceHandler();
         validateComment.setNext(new AnonymousTicketHandler())
                 .setNext(new ClosedTicketHandler())
@@ -437,9 +439,13 @@ public class Database {
 
         boolean isValid = validateComment.validate(command);
         if (!isValid) {
+            // System.out.println("not valid");
+
             return;
         }
         ticket.addComment(command.username(), command.comment(), command.timestamp());
+        // System.out.println("exited peacefully");
+
     }
 
     public static void undoAddComment(CommandInput command) {

@@ -10,15 +10,16 @@ public class ClosedTicketHandler extends CommentValidationHandler {
     @Override
     protected boolean appliesTo(CommandInput command) {
         User user = Database.getUser(command.username());
-        return user.getRole().name().equals("Reporter") ;
+        return user.getRole().name().equals("REPORTER");
     }
-    
+
     @Override
     protected boolean validateCondition(CommandInput command) {
         Ticket ticket = Database.getTicket(command.ticketID());
-        return ticket.getStatus().name().equals("CLOSED");
+        System.out.println(ticket.getStatus().name());
+        return !ticket.getStatus().name().equals("CLOSED");
     }
-    
+
     @Override
     protected void showError(CommandInput command) {
         IOUtil.commentError(command, "CLOSED");

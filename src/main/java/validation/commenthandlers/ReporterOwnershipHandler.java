@@ -11,7 +11,7 @@ public class ReporterOwnershipHandler extends CommentValidationHandler {
     @Override
     protected boolean appliesTo(CommandInput command) {
         User user = Database.getUser(command.username());
-        return user instanceof Reporter;
+        return user.getRole().name().equals("REPORTER");
     }
 
     @Override

@@ -11,7 +11,7 @@ public class DeveloperAssignmentHandler extends CommentValidationHandler {
     @Override
     protected boolean appliesTo(CommandInput command) {
         User user = Database.getUser(command.username());
-        return user instanceof Developer;
+        return user.getRole().name().equals("DEVELOPER");
     }
     
     @Override
