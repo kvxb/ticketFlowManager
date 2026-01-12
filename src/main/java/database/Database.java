@@ -11,6 +11,7 @@ import milestones.Milestone;
 import io.CommandInput;
 import io.IOUtil;
 import io.UserInput;
+import tickets.Ticket.TicketHistory;
 import java.util.stream.Collectors;
 import java.util.List;
 import java.time.LocalDate;
@@ -31,6 +32,7 @@ import validation.commenthandlers.CommentLengthHandler;
 import validation.commenthandlers.DeveloperAssignmentHandler;
 import validation.commenthandlers.ReporterOwnershipHandler;
 import milestones.Milestone.Repartition;
+import java.util.Collections;
 
 import users.User;
 import users.Manager;
@@ -90,8 +92,6 @@ public class Database {
         return null;
     }
 
-    // TODO: CHORE: DOESNT command hold the date :): (no need for both parameters
-    // rewrite all methods like this one)
     public static void assignTicket(CommandInput command) {
         Developer dev = (Developer) getUser(command.username());
         Milestone mstn = getMilestoneFromTicketID(command.ticketID());
@@ -162,6 +162,78 @@ public class Database {
 
         milestones.add(new Milestone(command.username(), command.timestamp(), command.name(), command.blockingFor(),
                 command.dueDate(), command.tickets(), command.assignedDevs()));
+        Milestone milestone = milestones.getLast();
+        for (int ticketId : milestone.getOpenTickets()) {
+            Ticket ticket = getTicket(ticketId);
+            ticket.addActionMilestone(milestone.getName(), milestone.getOwner(), milestone.getCreatedAt());
+        }
+    }
+
+    public static List<Ticket> getTicketsConcerningUser(String username) {
+        List<Ticket> filteredTickets = new ArrayList<>();
+        User user = getUser(username);
+
+        for (Ticket ticket : tickets) {
+            boolean shouldAddTicket = false;
+
+            switch (user.getRole().name()) {
+                case "DEVELOPER":
+                    if (ticket.getTicketHistory() != null) {
+                        for (Ticket.Action action : ticket.getTicketHistory().getActions()) {
+                            if (username.equals(action.getBy())) {
+                                shouldAddTicket = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!shouldAddTicket && ticket.getComments() != null) {
+                        for (Ticket.Comment comment : ticket.getComments()) {
+                            if (username.equals(comment.getAuthor())) {
+                                shouldAddTicket = true;
+                                break;
+                            }
+                        }
+                    }
+                    break;
+
+                case "MANAGER":
+                    List<Milestone> managerMilestones = getMilestonesFromUser(username);
+
+                    for (Milestone milestone : managerMilestones) {
+                        if (milestone.containsTicket(ticket.getId())) {
+                            shouldAddTicket = true;
+                            break;
+                        }
+                    }
+                    break;
+            }
+
+            if (shouldAddTicket) {
+                filteredTickets.add(ticket);
+            }
+        }
+
+        Collections.sort(filteredTickets, (t1, t2) -> {
+            int dateCompare = t1.getCreatedAt().compareTo(t2.getCreatedAt());
+            if (dateCompare != 0)
+                return dateCompare;
+            return Integer.compare(t1.getId(), t2.getId());
+        });
+
+        return filteredTickets;
+    }
+
+    public static List<Milestone> getMilestonesFromUser(String user) {
+        List<Milestone> userMilestones = new ArrayList<>();
+
+        for (Milestone milestone : milestones) {
+            if (milestone.getOwner().equals(user)) {
+                userMilestones.add(milestone);
+            }
+        }
+
+        return userMilestones;
     }
 
     public static void blockMilestone(String name) {
@@ -191,24 +263,14 @@ public class Database {
     }
 
     public static void addTicket(CommandInput command) {
-        // im too lazy right now but before you do this func check how the inputs should
-        // look like, maybe you should link the tickets to an actual person if its
-        // mandatory but afaik for bugs its not so you can either create a anon user and
-        // add all anoms to him or maybe not link at all i cba this is too boring
-
         if (!command.params().type().equals("BUG") && command.params().reportedBy().isEmpty()) {
-            // if you need a chain of responsability you can do one here where you pass the
-            // command to a handleCommandError(command) and it figures out the error to
-            // print based on dif things i guess
             IOUtil.ticketError(command, "ANON");
             return;
         }
-        // either add a null user or check in here for them think abt it
         if (!command.params().reportedBy().isEmpty() && !userExists(command.username())) {
             IOUtil.ticketError(command, "NUSR");
             return;
         }
-        // TODO tidy this up
         tickets.add(
                 switch (command.params().type()/* .toUpperCase() */ ) {
                     case "BUG" -> {
@@ -280,7 +342,6 @@ public class Database {
                     default -> throw new IllegalArgumentException(
                             "Unknown ticket type: " + command.params().type());
                 });
-        // IF PROBLEMS IWTH ID FIX THIS
         Ticket.setTicketId(Ticket.getTicketId() + 1);
     }
 
@@ -394,9 +455,38 @@ public class Database {
             return;
         }
         // if (ticket.isWasError()) {
-        //     IOUtil.commentError(command, "UNDO");
+        // IOUtil.commentError(command, "UNDO");
         // }
         ticket.undoAddComment(command.username());
+    }
+
+    public static void changeStatus(CommandInput command) {
+        Ticket ticket = getTicket(command.ticketID());
+
+        if (!ticket.getAssignedTo().equals(command.username())) {
+            IOUtil.changeError(command, "ASSIGNMENT");
+            return;
+        }
+
+        Status oldStatus = ticket.getStatus();
+
+        switch (oldStatus.name()) {
+            case "IN_PROGRESS":
+                ticket.changeStatus(Ticket.Status.RESOLVED, command.username(), command.timestamp());
+                break;
+            case "RESOLVED":
+                ticket.changeStatus(Ticket.Status.CLOSED, command.username(), command.timestamp());
+                Milestone milestone = getMilestoneFromTicketID(command.ticketID());
+                milestone.changeStatusOfTicket(command.ticketID());
+                break;
+            default:
+                break;
+        }
+    }
+
+    public static TicketHistory getTicketHistory(int id) {
+        Ticket ticket = getTicket(id);
+        return ticket.getTicketHistory();
     }
 
     public static void update(LocalDate date) {

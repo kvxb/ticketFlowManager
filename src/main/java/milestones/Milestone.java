@@ -1,12 +1,11 @@
 package milestones;
 
-import java.time.LocalDate;
 import java.util.Arrays;
 import database.Database;
 import io.CommandInput;
-
 import java.util.List;
 import java.util.ArrayList;
+import mathutils.MathUtil;
 
 public class Milestone {
     public class Repartition {
@@ -42,7 +41,6 @@ public class Milestone {
         public void setAssignedTickets(List<Integer> assignedTickets) {
             this.assignedTickets = assignedTickets;
         }
-
     }
 
     public void assignDeveloper(CommandInput command) {
@@ -54,12 +52,37 @@ public class Milestone {
         }
     }
 
+    public void changeStatusOfTicket(int id) {
+        if (openTickets.contains(id)) {
+            openTickets.remove(Integer.valueOf(id));
+            closedTickets.add(id);
+        }
+        this.updateCompletionPercentage();
+    }
+
+    public void updateCompletionPercentage() {
+        this.completionPercentage = MathUtil.round(getNumberOfTickets("CLOSED") / getNumberOfTickets("ALL"));
+    }
+
+    public double getNumberOfTickets(String typeOf) {
+        switch (typeOf) {
+            case "OPEN":
+                return (double) openTickets.size();
+            case "CLOSED":
+                return (double) closedTickets.size();
+            case "ALL":
+                return (double) (openTickets.size() + closedTickets.size());
+            default:
+                return 0;
+        }
+    }
+
     private String name;
     private String[] blockingFor;
     private String dueDate;
     private int[] tickets;
-    private int[] openTickets;
-    private int[] closedTickets;
+    private List<Integer> openTickets = new ArrayList<>();
+    private List<Integer> closedTickets = new ArrayList<>();
     private double completionPercentage;
     private String[] assignedDevs;
     private String status;
@@ -70,8 +93,6 @@ public class Milestone {
     private Repartition[] repartitions;
 
     private String createdAt;
-
-    // dont know if this field will be needed but might aswell;
     private String owner;
 
     public Milestone(String owner, String createdAt, String name, String[] blockingFor, String dueDate, int[] tickets,
@@ -88,9 +109,11 @@ public class Milestone {
         this.tickets = tickets;
         this.assignedDevs = assignedDevs;
         this.status = "ACTIVE";
-        this.openTickets = tickets;
 
-        // TODO: if there is not test case where this rule applies delete
+        for (int ticketId : tickets) {
+            openTickets.add(ticketId);
+        }
+
         if (assignedDevs == null || assignedDevs.length == 0) {
             this.repartitions = new Repartition[0];
         } else {
@@ -99,6 +122,15 @@ public class Milestone {
                 this.repartitions[i] = new Repartition(assignedDevs[i]);
             }
         }
+    }
+
+    public boolean containsTicket(int id) {
+        for (int ticketId : tickets) {
+            if (ticketId == id) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean hasDeveloper(String username) {
@@ -178,19 +210,19 @@ public class Milestone {
         this.owner = owner;
     }
 
-    public int[] getOpenTickets() {
+    public List<Integer> getOpenTickets() {
         return openTickets;
     }
 
-    public void setOpenTickets(int[] openTickets) {
+    public void setOpenTickets(List<Integer> openTickets) {
         this.openTickets = openTickets;
     }
 
-    public int[] getClosedTickets() {
+    public List<Integer> getClosedTickets() {
         return closedTickets;
     }
 
-    public void setClosedTickets(int[] closedTickets) {
+    public void setClosedTickets(List<Integer> closedTickets) {
         this.closedTickets = closedTickets;
     }
 
@@ -225,5 +257,4 @@ public class Milestone {
     public void setRepartitions(Repartition[] repartitions) {
         this.repartitions = repartitions;
     }
-
 }

@@ -2,6 +2,7 @@ package tickets;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import io.CommandInput;
 
 public abstract class Ticket {
@@ -154,6 +155,125 @@ public abstract class Ticket {
         protected abstract T self();
     }
 
+    public class Action {
+        String milestone;
+        String by;
+        String timestamp;
+        String action;
+        Status from;
+        Status to;
+
+        public Action(String milestone, String by, String timestamp, String action) {
+            this.milestone = milestone;
+            this.by = by;
+            this.timestamp = timestamp;
+            this.action = action;
+        }
+
+        public Action(Status from, Status to, String by, String timestamp, String action) {
+            this.from = from;
+            this.to = to;
+            this.by = by;
+            this.timestamp = timestamp;
+            this.action = action;
+        }
+
+        public Action(String by, String timestamp, String action) {
+            this.by = by;
+            this.timestamp = timestamp;
+            this.action = action;
+        }
+
+        public String getMilestone() {
+            return milestone;
+        }
+
+        public void setMilestone(String milestone) {
+            this.milestone = milestone;
+        }
+
+        public String getBy() {
+            return by;
+        }
+
+        public void setBy(String by) {
+            this.by = by;
+        }
+
+        public String getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(String timestamp) {
+            this.timestamp = timestamp;
+        }
+
+        public String getAction() {
+            return action;
+        }
+
+        public void setAction(String action) {
+            this.action = action;
+        }
+
+        public Status getFrom() {
+            return from;
+        }
+
+        public void setFrom(Status from) {
+            this.from = from;
+        }
+
+        public Status getTo() {
+            return to;
+        }
+
+        public void setTo(Status to) {
+            this.to = to;
+        }
+    }
+
+    public class TicketHistory {
+
+        int id;
+        String title;
+        Status status;
+        private List<Action> actions = new ArrayList<Action>();
+
+        public int getId() {
+            return id;
+        }
+
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public Status getStatus() {
+            return status;
+        }
+
+        public void setStatus(Status status) {
+            this.status = status;
+        }
+
+        public List<Action> getActions() {
+            return actions;
+        }
+
+        public void setActions(List<Action> actions) {
+            this.actions = actions;
+        }
+
+    }
+
     public class Comment {
         String author;
         String content;
@@ -165,29 +285,29 @@ public abstract class Ticket {
             this.content = content;
         }
 
-		public String getAuthor() {
-			return author;
-		}
+        public String getAuthor() {
+            return author;
+        }
 
-		public void setAuthor(String author) {
-			this.author = author;
-		}
+        public void setAuthor(String author) {
+            this.author = author;
+        }
 
-		public String getContent() {
-			return content;
-		}
+        public String getContent() {
+            return content;
+        }
 
-		public void setContent(String content) {
-			this.content = content;
-		}
+        public void setContent(String content) {
+            this.content = content;
+        }
 
-		public String getCreatedAt() {
-			return createdAt;
-		}
+        public String getCreatedAt() {
+            return createdAt;
+        }
 
-		public void setCreatedAt(String createdAt) {
-			this.createdAt = createdAt;
-		}
+        public void setCreatedAt(String createdAt) {
+            this.createdAt = createdAt;
+        }
     }
 
     private static int ticketId = 0;
@@ -217,8 +337,9 @@ public abstract class Ticket {
     private String createdAt;
     private ExpertiseArea expertiseArea;
     private List<Comment> comments = new ArrayList<Comment>();
+    private TicketHistory ticketHistory;
 
-	public Ticket(Builder<?> b) {
+    public Ticket(Builder<?> b) {
         this.id = b.id;
         this.type = b.type;
         this.title = b.title;
@@ -228,6 +349,16 @@ public abstract class Ticket {
         this.description = b.description;
         this.reportedBy = b.reportedBy;
         this.createdAt = b.createdAt;
+
+        this.ticketHistory = new TicketHistory();
+        this.ticketHistory.setId(this.id);
+        this.ticketHistory.setTitle(this.title);
+        this.ticketHistory.setStatus(this.status);
+
+    }
+
+    public void addActionMilestone(String milestone, String by, String timestamp) {
+        ticketHistory.actions.add(new Action(milestone, by, timestamp, "ADDED_TO_MILESTONE"));
     }
 
     public List<Comment> getComments() {
@@ -241,9 +372,24 @@ public abstract class Ticket {
     }
 
     public void assignDeveloper(CommandInput command) {
-        this.setStatus(Status.IN_PROGRESS);
-        this.setAssignedTo(command.username());
-        this.setAssignedAt(command.timestamp());
+        Action assignAction = new Action(command.username(), command.timestamp(), "ASSIGNED");
+        ticketHistory.getActions().add(assignAction);
+
+        Action statusAction = new Action(Status.OPEN, Status.IN_PROGRESS,
+                command.username(), command.timestamp(), "STATUS_CHANGED");
+        ticketHistory.getActions().add(statusAction);
+
+        this.status = Status.IN_PROGRESS;
+        this.assignedTo = command.username();
+        this.assignedAt = command.timestamp();
+    }
+
+    public void changeStatus(Status newStatus, String by, String timestamp) {
+        if (this.ticketHistory != null) {
+            Action statusAction = new Action(this.status, newStatus, by, timestamp, "STATUS_CHANGED");
+            this.ticketHistory.getActions().add(statusAction);
+        }
+        this.status = newStatus;
     }
 
     public void upPriority() {
@@ -297,12 +443,12 @@ public abstract class Ticket {
 
     public void undoAddComment(String author) {
         Comment remove = null;
-        for(Comment c : comments) {
-            if(c.author.equals(author)){
+        for (Comment c : comments) {
+            if (c.author.equals(author)) {
                 remove = c;
             }
         }
-        if(remove != null) {
+        if (remove != null) {
             System.out.println("undid comment");
             comments.remove(remove);
         }
@@ -398,5 +544,13 @@ public abstract class Ticket {
 
     public void setExpertiseArea(ExpertiseArea expertiseArea) {
         this.expertiseArea = expertiseArea;
+    }
+
+    public TicketHistory getTicketHistory() {
+        return ticketHistory;
+    }
+
+    public void setTicketHistory(TicketHistory ticketHistory) {
+        this.ticketHistory = ticketHistory;
     }
 }

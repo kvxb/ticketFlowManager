@@ -14,6 +14,7 @@ import tickets.Ticket;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.awt.Desktop.Action;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -21,6 +22,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.stream.Collectors;
+import tickets.Ticket.TicketHistory;
 
 public class IOUtil {
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -183,10 +185,12 @@ public class IOUtil {
 
             ticketNode.put("overdueBy", milestone.getOverdueBy());
             ArrayNode openTickets = MAPPER.createArrayNode();
-            Arrays.stream(milestone.getOpenTickets())
+            milestone.getOpenTickets().stream()
                     .forEach(openTickets::add);
             ticketNode.set("openTickets", openTickets);
             ArrayNode closedTickets = MAPPER.createArrayNode();
+            milestone.getClosedTickets().stream()
+                    .forEach(closedTickets::add);
             ticketNode.set("closedTickets", closedTickets);
             ticketNode.put("completionPercentage", milestone.getCompletionPercentage());
 
@@ -216,6 +220,90 @@ public class IOUtil {
             milestonesArray.add(ticketNode);
         }
         commandNode.set("milestones", milestonesArray);
+        outputs.add(commandNode);
+    }
+
+    public static void viewTicketHistory(CommandInput command, List<Ticket> userTickets) {
+        ObjectNode commandNode = MAPPER.createObjectNode();
+        commandNode.put("command", command.command());
+        commandNode.put("username", command.username());
+        commandNode.put("timestamp", command.timestamp());
+
+        ArrayNode ticketHistoryArray = MAPPER.createArrayNode();
+
+        for (Ticket ticket : userTickets) {
+            String lastUndoTimestamp = null;
+
+            if (ticket.getTicketHistory() != null) {
+                for (Ticket.Action action : ticket.getTicketHistory().getActions()) {
+                    if ("UNDO_ASSIGN_TICKET".equals(action.getAction()) &&
+                            command.username().equals(action.getBy())) {
+                        lastUndoTimestamp = action.getTimestamp();
+                    }
+                }
+            }
+
+            ObjectNode ticketNode = MAPPER.createObjectNode();
+            ticketNode.put("id", ticket.getId());
+            ticketNode.put("title", ticket.getTitle());
+            ticketNode.put("status", ticket.getStatus().toString());
+
+            ArrayNode actionsArray = MAPPER.createArrayNode();
+
+            if (ticket.getTicketHistory() != null && ticket.getTicketHistory().getActions() != null) {
+                for (Ticket.Action action : ticket.getTicketHistory().getActions()) {
+                    if (lastUndoTimestamp == null ||
+                            action.getTimestamp().compareTo(lastUndoTimestamp) <= 0) {
+
+                        ObjectNode actionNode = MAPPER.createObjectNode();
+
+                        if (action.getMilestone() != null && !action.getMilestone().isEmpty()) {
+                            actionNode.put("milestone", action.getMilestone());
+                        }
+
+                        if (action.getFrom() != null) {
+                            actionNode.put("from", action.getFrom().toString());
+                        }
+
+                        if (action.getTo() != null) {
+                            actionNode.put("to", action.getTo().toString());
+                        }
+
+                        if (action.getBy() != null && !action.getBy().isEmpty()) {
+                            actionNode.put("by", action.getBy());
+                        }
+
+                        actionNode.put("timestamp", action.getTimestamp());
+                        actionNode.put("action", action.getAction());
+
+                        actionsArray.add(actionNode);
+                    }
+                }
+            }
+
+            ticketNode.set("actions", actionsArray);
+
+            ArrayNode commentsArray = MAPPER.createArrayNode();
+
+            if (ticket.getComments() != null) {
+                for (Ticket.Comment comment : ticket.getComments()) {
+                    if (lastUndoTimestamp == null ||
+                            comment.getCreatedAt().compareTo(lastUndoTimestamp) <= 0) {
+
+                        ObjectNode commentNode = MAPPER.createObjectNode();
+                        commentNode.put("author", comment.getAuthor());
+                        commentNode.put("content", comment.getContent());
+                        commentNode.put("createdAt", comment.getCreatedAt());
+                        commentsArray.add(commentNode);
+                    }
+                }
+            }
+
+            ticketNode.set("comments", commentsArray);
+            ticketHistoryArray.add(ticketNode);
+        }
+
+        commandNode.set("ticketHistory", ticketHistoryArray);
         outputs.add(commandNode);
     }
 
@@ -272,14 +360,13 @@ public class IOUtil {
             case "ASSIGNMENT_REPORTER" ->
                 message = "Reporter " + command.username() + " cannot comment on ticket " + command.ticketID() + ".";
             // case "UNDO" ->
-            //     // what happens if we do two undos ? what should happen and what happens
-            //     message = tkt.getErrorMessage();
+            // // what happens if we do two undos ? what should happen and what happens
+            // message = tkt.getErrorMessage();
             default ->
                 message = "DEFAULT";
 
         }
         error.put("error", message);
-
 
         outputs.add(error);
     }
@@ -304,6 +391,24 @@ public class IOUtil {
             default -> {
                 String[] parts = errorType.split("_");
                 error.put("error", "Tickets " + parts[2] + " already assigned to milestone " + parts[1] + ".");
+            }
+        }
+
+        outputs.add(error);
+    }
+
+    public static void changeError(CommandInput command, String errorType) {
+        ObjectNode error = MAPPER.createObjectNode();
+        error.put("command", command.command());
+        error.put("username", command.username());
+        error.put("timestamp", command.timestamp());
+
+        switch (errorType) {
+            case "ASSIGNMENT" ->
+                error.put("error",
+                        "Ticket " + command.ticketID() + " is not assigned to developer " + command.username() + ".");
+            default -> {
+                error.put("error", "DEFAULT");
             }
         }
 

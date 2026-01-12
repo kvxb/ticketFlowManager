@@ -125,6 +125,12 @@ public class App {
                 case "undoAddComment":
                     Database.undoAddComment(currentCommand);
                     break;
+                case "changeStatus":
+                    Database.changeStatus(currentCommand);
+                    break;
+                case "viewTicketHistory":
+                    IOUtil.viewTicketHistory(currentCommand, Database.getTicketsConcerningUser(currentCommand.username()));
+                    break;
                 default:
                     System.out.println("didnt match command");
             }
