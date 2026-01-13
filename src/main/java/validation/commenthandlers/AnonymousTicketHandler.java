@@ -13,7 +13,7 @@ public class AnonymousTicketHandler extends CommentValidationHandler {
     
     @Override
     protected boolean validateCondition(CommandInput command) {
-        Ticket ticket = Database.getTicket(command.ticketID());
+        Ticket ticket = db.getTicket(command.ticketID());
         return !ticket.getReportedBy().isEmpty();
     }
     

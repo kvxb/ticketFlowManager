@@ -312,6 +312,12 @@ public abstract class Ticket {
 
     private static int ticketId = 0;
 
+    public static int getNextTicketId() {
+        int answer = ticketId;
+        ticketId++;
+        return answer;
+    }
+
     public static void clearTicket() {
         ticketId = 0;
     }
@@ -465,6 +471,16 @@ public abstract class Ticket {
             System.out.println("undid comment");
             comments.remove(remove);
         }
+    }
+
+    private List<String> matchingWords = new ArrayList<>();
+
+    public List<String> getMatchingWords() {
+        return matchingWords;
+    }
+
+    public void setMatchingWords(List<String> matchingWords) {
+        this.matchingWords = matchingWords;
     }
 
     public void setCreatedAt(String createdAt) {

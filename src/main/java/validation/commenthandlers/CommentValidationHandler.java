@@ -1,9 +1,11 @@
 package validation.commenthandlers;
 
 import io.CommandInput;
+import database.Database;
 
 public abstract class CommentValidationHandler {
     protected CommentValidationHandler next;
+    protected Database db = Database.getInstance();
 
     public CommentValidationHandler setNext(CommentValidationHandler next) {
         this.next = next;

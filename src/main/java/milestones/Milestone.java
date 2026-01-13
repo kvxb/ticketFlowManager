@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import mathutils.MathUtil;
 
 public class Milestone {
+    private Database db = Database.getInstance();
     public class Repartition {
         private String dev;
         private List<Integer> assignedTickets;
@@ -111,7 +112,7 @@ public class Milestone {
         this.blockingFor = blockingFor;
         if (blockingFor != null) {
             Arrays.stream(blockingFor)
-                    .forEach(milestone -> Database.blockMilestone(milestone));
+                    .forEach(milestone -> db.blockMilestone(milestone));
         }
         this.dueDate = dueDate;
         this.tickets = tickets;

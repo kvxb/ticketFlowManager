@@ -1,9 +1,13 @@
 package database;
+
 //TODO make this a singleton :(
 import tickets.Bug;
+import java.util.Set;
 import java.util.Comparator;
+import java.util.HashSet;
 import tickets.FeatureRequest;
 import tickets.Ticket;
+import io.FiltersInput;
 import tickets.UIFeedback;
 import tickets.Ticket.BusinessPriority;
 import tickets.Ticket.Status;
@@ -33,21 +37,35 @@ import validation.commenthandlers.DeveloperAssignmentHandler;
 import validation.commenthandlers.ReporterOwnershipHandler;
 import milestones.Milestone.Repartition;
 import java.util.Collections;
-
+import java.util.Map;
+import java.util.HashMap;
+import search.filters.FilterContext;
+import search.filters.impl.BusinessPriorityFilter;
+import search.filters.impl.TypeFilter;
+import search.filters.impl.CreatedAtFilter;
+import search.filters.impl.CreatedBeforeFilter;
+import search.filters.impl.CreatedAfterFilter;
+import search.filters.impl.KeywordsFilter;
+import search.filters.impl.AvailableForAssignmentFilter;
+import search.filters.impl.ExpertiseAreaFilter;
+import search.filters.impl.SeniorityFilter;
+import search.filters.impl.PerformanceScoreAboveFilter;
+import search.filters.impl.PerformanceScoreBelowFilter;
 import users.User;
 import users.Manager;
 import users.Developer;
 import users.Reporter;
 
 public class Database {
-    private static final String USERS_DB = "input/database/users.json";
+    private static Database instance;
+    private final String USERS_DB = "input/database/users.json";
 
-    private static List<User> users = new ArrayList<>(); // daken from the db file
-    private static List<Ticket> tickets = new ArrayList<>(); // input in testing period
-    private static List<CommandInput> commands = new ArrayList<>();
-    private static List<Milestone> milestones = new ArrayList<>();
+    private List<User> users = new ArrayList<>(); // daken from the db file
+    private List<Ticket> tickets = new ArrayList<>(); // input in testing period
+    private List<CommandInput> commands = new ArrayList<>();
+    private List<Milestone> milestones = new ArrayList<>();
 
-    public static int getSize(String who) {
+    public int getSize(String who) {
         switch (who) {
             case "users":
                 return users.size();
@@ -62,7 +80,7 @@ public class Database {
         }
     }
 
-    public static void clearDatabase() {
+    public void clearDatabase() {
         users.clear();
         tickets.clear();
         commands.clear();
@@ -70,7 +88,7 @@ public class Database {
         // System.out.println("cleared all");
     }
 
-    public static String getMilestoneNameFromTicketID(int TicketID) {
+    public String getMilestoneNameFromTicketID(int TicketID) {
         for (Milestone m : milestones) {
             for (int id : m.getTickets()) {
                 if (id == TicketID) {
@@ -81,7 +99,7 @@ public class Database {
         return null;
     }
 
-    public static Milestone getMilestoneFromTicketID(int TicketID) {
+    public Milestone getMilestoneFromTicketID(int TicketID) {
         for (Milestone m : milestones) {
             for (int id : m.getTickets()) {
                 if (id == TicketID) {
@@ -92,7 +110,7 @@ public class Database {
         return null;
     }
 
-    public static void assignTicket(CommandInput command) {
+    public void assignTicket(CommandInput command) {
         Developer dev = (Developer) getUser(command.username());
         Milestone mstn = getMilestoneFromTicketID(command.ticketID());
         Ticket tkt = getTicket(command.ticketID());
@@ -114,7 +132,7 @@ public class Database {
         mstn.assignDeveloper(command);
     }
 
-    public static void undoAssignedTicket(CommandInput command) {
+    public void undoAssignedTicket(CommandInput command) {
         Ticket tkt = tickets.stream()
                 .filter(ticket -> ticket.getId() == command.ticketID())
                 .findFirst()
@@ -125,14 +143,14 @@ public class Database {
             return;
             // TODO: add error here
         }
-        
+
         tkt.undoAssignDeveloper(command);
-        //TODO: is a milestone update not needed here ???? it for sure is 
+        // TODO: is a milestone update not needed here ???? it for sure is
         // but everything at its time
         System.out.println("finished with ticket" + tkt.getId());
     }
 
-    public static User getUser(String username) {
+    public User getUser(String username) {
         for (User user : users) {
             if (user.getUsername().equals(username)) {
                 return user;
@@ -141,7 +159,7 @@ public class Database {
         return null;
     }
 
-    public static Ticket getTicket(int id) {
+    public Ticket getTicket(int id) {
         for (Ticket t : tickets) {
             if (t.getId() == id) {
                 return t;
@@ -150,7 +168,7 @@ public class Database {
         return null;
     }
 
-    public static List<Ticket> getAssignedTickets(String username) {
+    public List<Ticket> getAssignedTickets(String username) {
         return tickets.stream()
                 .filter(ticket -> ticket.getAssignedTo() != null &&
                         ticket.getAssignedTo().equals(username))
@@ -160,7 +178,7 @@ public class Database {
                 .collect(Collectors.toList());
     }
 
-    public static void addMilestone(CommandInput command) {
+    public void addMilestone(CommandInput command) {
         if (!command.username().contains("manager")) {
             if (command.username().contains("reporter")) {
                 IOUtil.milestoneError(command, "WRONG_USER_REPORTER");
@@ -187,7 +205,7 @@ public class Database {
         }
     }
 
-    public static List<Ticket> getTicketsConcerningUser(String username) {
+    public List<Ticket> getTicketsConcerningUser(String username) {
         List<Ticket> filteredTickets = new ArrayList<>();
         User user = getUser(username);
 
@@ -242,7 +260,7 @@ public class Database {
         return filteredTickets;
     }
 
-    public static List<Milestone> getMilestonesFromUser(String user) {
+    public List<Milestone> getMilestonesFromUser(String user) {
         List<Milestone> userMilestones = new ArrayList<>();
 
         for (Milestone milestone : milestones) {
@@ -254,14 +272,24 @@ public class Database {
         return userMilestones;
     }
 
-    public static void blockMilestone(String name) {
+    private List<Milestone> getMilestonesForDeveloper(String username) {
+        List<Milestone> devMilestones = new ArrayList<>();
+        for (Milestone milestone : milestones) {
+            if (Arrays.asList(milestone.getAssignedDevs()).contains(username)) {
+                devMilestones.add(milestone);
+            }
+        }
+        return devMilestones;
+    }
+
+    public void blockMilestone(String name) {
         milestones.stream()
                 .filter(milestone -> name.equals(milestone.getName()))
                 .findFirst()
                 .ifPresent(milestone -> milestone.setBlocked(true));
     }
 
-    public static List<Milestone> getMilestones(String username) {
+    public List<Milestone> getMilestones(String username) {
         int lUnderscore = username.lastIndexOf('_');
         String role = username.substring(lUnderscore + 1);
         switch (role) {
@@ -280,7 +308,7 @@ public class Database {
         }
     }
 
-    public static void addTicket(CommandInput command) {
+    public void addTicket(CommandInput command) {
         if (!command.params().type().equals("BUG") && command.params().reportedBy().isEmpty()) {
             IOUtil.ticketError(command, "ANON");
             return;
@@ -363,20 +391,20 @@ public class Database {
         Ticket.setTicketId(Ticket.getTicketId() + 1);
     }
 
-    public static boolean userExists(String username) {
+    public boolean userExists(String username) {
         return users.stream()
                 .anyMatch(user -> username.equals(user.getUsername()));
     }
 
-    public static String getUsersDb() {
+    public String getUsersDb() {
         return USERS_DB;
     }
 
-    public static List<User> getUsers() {
+    public List<User> getUsers() {
         return users;
     }
 
-    public static void setUsers(List<UserInput> inputs) {
+    public void setUsers(List<UserInput> inputs) {
         users = inputs.stream()
                 .map(input -> switch (input.role()) {
                     case "REPORTER" -> new Reporter(input.username(), input.email(), input.role());
@@ -390,7 +418,7 @@ public class Database {
                 .collect(Collectors.toList());
     }
 
-    public static List<Ticket> getTickets(String username) {
+    public List<Ticket> getTickets(String username) {
         int lUnderscore = username.lastIndexOf('_');
         String role = username.substring(lUnderscore + 1);
         switch (role) {
@@ -426,7 +454,7 @@ public class Database {
         }
     }
 
-    public static void addComment(CommandInput command) {
+    public void addComment(CommandInput command) {
         // System.out.println("entered add comment");
         CommentValidationHandler validateComment = new TicketExistenceHandler();
         validateComment.setNext(new AnonymousTicketHandler())
@@ -448,7 +476,7 @@ public class Database {
 
     }
 
-    public static void undoAddComment(CommandInput command) {
+    public void undoAddComment(CommandInput command) {
         Ticket ticket = getTicket(command.ticketID());
         // verifica si daca commentul exista !
 
@@ -466,7 +494,7 @@ public class Database {
         ticket.undoAddComment(command.username());
     }
 
-    public static void changeStatus(CommandInput command) {
+    public void changeStatus(CommandInput command) {
         Ticket ticket = getTicket(command.ticketID());
 
         if (!ticket.getAssignedTo().equals(command.username())) {
@@ -490,7 +518,7 @@ public class Database {
         }
     }
 
-    public static void undoChangeStatus(CommandInput command) {
+    public void undoChangeStatus(CommandInput command) {
         Ticket ticket = getTicket(command.ticketID());
 
         if (!ticket.getAssignedTo().equals(command.username())) {
@@ -514,12 +542,12 @@ public class Database {
         }
     }
 
-    public static TicketHistory getTicketHistory(int id) {
+    public TicketHistory getTicketHistory(int id) {
         Ticket ticket = getTicket(id);
         return ticket.getTicketHistory();
     }
 
-    public static void update(LocalDate date) {
+    public void update(LocalDate date) {
         milestones.forEach(milestone -> {
             int timeLeft = (int) ChronoUnit.DAYS.between(date, LocalDate.parse(milestone.getDueDate()));
 
@@ -568,20 +596,183 @@ public class Database {
         });
     }
 
-    public static List<Ticket> getAllTickets() {
+    public List<Developer> getAllDevelopers() {
+        List<Developer> developers = new ArrayList<Developer>();
+        for (User user : users) {
+            if (user.getRole().name().equals("DEVELOPER")) {
+                developers.add((Developer) user);
+            }
+        }
+        return developers;
+    }
+
+    public List<?> getSearchResults(CommandInput command) {
+        User user = getUser(command.username());
+        FiltersInput filters = command.filters();
+        String searchType = filters.searchType();
+
+        if ("DEVELOPER".equals(searchType)) {
+            if (!"MANAGER".equals(user.getRole().name())) {
+                return new ArrayList<>();
+            }
+
+            List<Developer> allDevelopers = getAllDevelopers();
+            return filterDevelopers((Manager) user, allDevelopers, filters);
+
+        } else {
+            List<Ticket> allTickets = getAllTickets();
+            return filterTickets(user, allTickets, filters);
+        }
+    }
+
+    private List<Ticket> filterTickets(User user, List<Ticket> allTickets, FiltersInput filters) {
+        List<Ticket> accessibleTickets = new ArrayList<>();
+
+        if ("MANAGER".equals(user.getRole().name())) {
+            accessibleTickets.addAll(allTickets);
+        } else if ("DEVELOPER".equals(user.getRole().name())) {
+            Developer dev = (Developer) user;
+            List<Milestone> devMilestones = getMilestonesForDeveloper(dev.getUsername());
+
+            for (Milestone milestone : devMilestones) {
+                for (int ticketId : milestone.getTickets()) {
+                    for (Ticket ticket : allTickets) {
+                        if (ticket.getId() == ticketId &&
+                                ticket.getStatus() == Ticket.Status.OPEN) {
+
+                            boolean alreadyAdded = false;
+                            for (Ticket addedTicket : accessibleTickets) {
+                                if (addedTicket.getId() == ticketId) {
+                                    alreadyAdded = true;
+                                    break;
+                                }
+                            }
+
+                            if (!alreadyAdded) {
+                                accessibleTickets.add(ticket);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        } else {
+            return new ArrayList<>();
+        }
+
+        FilterContext<Ticket> context = new FilterContext<>();
+
+        context.addStrategy("businessPriority", new BusinessPriorityFilter());
+        context.addStrategy("type", new TypeFilter());
+        context.addStrategy("createdAt", new CreatedAtFilter());
+        context.addStrategy("createdBefore", new CreatedBeforeFilter());
+        context.addStrategy("createdAfter", new CreatedAfterFilter());
+        context.addStrategy("keywords", new KeywordsFilter());
+
+        if ("DEVELOPER".equals(user.getRole().name())) {
+            Developer dev = (Developer) user;
+            context.addStrategy("availableForAssignment", new AvailableForAssignmentFilter(dev));
+        }
+
+        Map<String, String> filterMap = convertToMap(filters);
+        List<Ticket> filtered = context.applyFilters(accessibleTickets, filterMap);
+
+        filtered.sort(Comparator
+                .comparing(Ticket::getCreatedAt)
+                .thenComparing(Ticket::getId));
+
+        return filtered;
+    }
+
+    private List<Developer> filterDevelopers(Manager manager, List<Developer> allDevelopers,
+            FiltersInput filters) {
+        List<Developer> subordinates = new ArrayList<>();
+        List<String> subordinateUsernames = Arrays.asList(manager.getSubordinates());
+
+        for (Developer dev : allDevelopers) {
+            if (subordinateUsernames.contains(dev.getUsername())) {
+                subordinates.add(dev);
+            }
+        }
+
+        FilterContext<Developer> context = new FilterContext<>();
+
+        context.addStrategy("expertiseArea", new ExpertiseAreaFilter());
+        context.addStrategy("seniority", new SeniorityFilter());
+        context.addStrategy("performanceScoreAbove", new PerformanceScoreAboveFilter());
+        context.addStrategy("performanceScoreBelow", new PerformanceScoreBelowFilter());
+
+        Map<String, String> filterMap = convertToMap(filters);
+        List<Developer> filtered = context.applyFilters(subordinates, filterMap);
+
+        filtered.sort(Comparator.comparing(Developer::getUsername));
+
+        return filtered;
+    }
+
+    private Map<String, String> convertToMap(FiltersInput filters) {
+        Map<String, String> map = new HashMap<>();
+
+        if (filters.businessPriority() != null) {
+            map.put("businessPriority", filters.businessPriority());
+        }
+        if (filters.type() != null) {
+            map.put("type", filters.type());
+        }
+        if (filters.createdAt() != null) {
+            map.put("createdAt", filters.createdAt());
+        }
+        if (filters.createdBefore() != null) {
+            map.put("createdBefore", filters.createdBefore());
+        }
+        if (filters.createdAfter() != null) {
+            map.put("createdAfter", filters.createdAfter());
+        }
+        if (filters.availableForAssignment() != null) {
+            map.put("availableForAssignment", String.valueOf(filters.availableForAssignment()));
+        }
+        if (filters.keywords() != null && filters.keywords().length > 0) {
+            map.put("keywords", Arrays.toString(filters.keywords()));
+        }
+        if (filters.expertiseArea() != null) {
+            map.put("expertiseArea", filters.expertiseArea());
+        }
+        if (filters.seniority() != null) {
+            map.put("seniority", filters.seniority());
+        }
+        if (filters.performanceScoreAbove() > 0) {
+            map.put("performanceScoreAbove", String.valueOf(filters.performanceScoreAbove()));
+        }
+        if (filters.performanceScoreBelow() > 0) {
+            map.put("performanceScoreBelow", String.valueOf(filters.performanceScoreBelow()));
+        }
+
+        return map;
+    }
+
+    public List<Ticket> getAllTickets() {
         return new ArrayList<>(tickets);
     }
 
-    public static void setTickets(List<Ticket> tickets) {
-        Database.tickets = tickets;
+    public void setTickets(List<Ticket> tickets) {
+        this.tickets = tickets;
     }
 
-    public static List<CommandInput> getCommands() {
+    public List<CommandInput> getCommands() {
         return commands;
     }
 
-    public static void setCommands(List<CommandInput> commands) {
-        Database.commands = commands;
+    public void setCommands(List<CommandInput> commands) {
+        this.commands = commands;
     }
 
+    private Database() {
+    }
+
+    public static Database getInstance() {
+        if (instance == null) {
+            instance = new Database();
+        }
+        return instance;
+    }
 }

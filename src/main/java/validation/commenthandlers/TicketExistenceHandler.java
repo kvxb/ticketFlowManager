@@ -1,7 +1,6 @@
 package validation.commenthandlers;
 
 import io.CommandInput;
-import database.Database;
 
 public class TicketExistenceHandler extends CommentValidationHandler {
     @Override
@@ -11,7 +10,7 @@ public class TicketExistenceHandler extends CommentValidationHandler {
     
     @Override
     protected boolean validateCondition(CommandInput command) {
-        return Database.getTicket(command.ticketID()) != null;
+        return db.getTicket(command.ticketID()) != null;
     }
     
     @Override

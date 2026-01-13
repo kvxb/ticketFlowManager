@@ -3,7 +3,6 @@ package io;
 import java.time.LocalDate;
 
 public record CommandInput(
-        String name,
         String command,
         String username,
         String timestamp,
@@ -15,7 +14,9 @@ public record CommandInput(
         int ticketID,
         String comment,
         FiltersInput filters,
-        ParamsInput params
+        ParamsInput params,
+        String name
+
 ) {
     public CommandInput {
         if (timestamp == null) {

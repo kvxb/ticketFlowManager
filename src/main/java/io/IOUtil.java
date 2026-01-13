@@ -30,6 +30,7 @@ public class IOUtil {
     private static List<ObjectNode> outputs = new ArrayList<>();
     private static String inputPath;
     private static String outputPath;
+    private static Database db = Database.getInstance();
 
     private IOUtil() {
 
@@ -47,10 +48,69 @@ public class IOUtil {
     }
 
     public static List<UserInput> readUsers() throws IOException {
-        File inputFile = new File(Database.getUsersDb());
+        File inputFile = new File(db.getUsersDb());
 
         return MAPPER.readerForListOf(UserInput.class)
                 .readValue(inputFile);
+    }
+
+    public static void outputSearch(CommandInput command, List<?> results) {
+        if (command.filters() == null) {
+            System.out.println("ERROR: filters is null for search command!");
+            return;
+        }
+        ObjectNode commandNode = MAPPER.createObjectNode();
+        commandNode.put("command", command.command());
+        commandNode.put("username", command.username());
+        commandNode.put("timestamp", command.timestamp());
+        commandNode.put("searchType", command.filters().searchType());
+
+        ArrayNode resultsArray = MAPPER.createArrayNode();
+
+        if ("DEVELOPER".equals(command.filters().searchType())) {
+            for (Object obj : results) {
+                Developer dev = (Developer) obj;
+                ObjectNode devNode = MAPPER.createObjectNode();
+                devNode.put("username", dev.getUsername());
+                devNode.put("expertiseArea", dev.getExpertiseArea().toString());
+                devNode.put("seniority", dev.getSeniority().toString());
+                devNode.put("performanceScore", dev.getPerformanceScore());
+                devNode.put("hireDate", dev.getHireDate().toString());
+                resultsArray.add(devNode);
+            }
+        } else {
+            boolean hasKeywordsFilter = command.filters().keywords() != null &&
+                    command.filters().keywords().length > 0;
+
+            for (Object obj : results) {
+                Ticket ticket = (Ticket) obj;
+                ObjectNode ticketNode = MAPPER.createObjectNode();
+                ticketNode.put("id", ticket.getId());
+                ticketNode.put("type", ticket.getType().toString());
+                ticketNode.put("title", ticket.getTitle());
+                ticketNode.put("businessPriority", ticket.getBusinessPriority().toString());
+                ticketNode.put("status", ticket.getStatus().toString());
+                ticketNode.put("createdAt", ticket.getCreatedAt());
+                ticketNode.put("solvedAt", ticket.getSolvedAt() != null ? ticket.getSolvedAt() : "");
+                ticketNode.put("reportedBy", ticket.getReportedBy());
+
+                if (hasKeywordsFilter &&
+                        ticket.getMatchingWords() != null &&
+                        !ticket.getMatchingWords().isEmpty()) {
+
+                    ArrayNode matchingWordsArray = MAPPER.createArrayNode();
+                    for (String word : ticket.getMatchingWords()) {
+                        matchingWordsArray.add(word);
+                    }
+                    ticketNode.set("matchingWords", matchingWordsArray);
+                }
+
+                resultsArray.add(ticketNode);
+            }
+        }
+
+        commandNode.set("results", resultsArray);
+        outputs.add(commandNode);
     }
 
     public static void viewAssignedTickets(CommandInput command, List<Ticket> tickets) {
@@ -140,7 +200,7 @@ public class IOUtil {
     }
 
     public static void viewMilestones(CommandInput command, List<Milestone> unsortedMilestones) {
-        // TODO move these to the Database function and give them to IOUTIL
+        // TODO move these to the db.function and give them to IOUTIL
         // look at assignedmmilestone for help im so lazy this cant be
         List<Milestone> sortedMilestones = unsortedMilestones.stream()
                 .sorted(Comparator
@@ -334,19 +394,19 @@ public class IOUtil {
             case "SENIORITY" ->
                 error.put("error", "Developer " + command.username() + " cannot assign ticket " + command.ticketID()
                         + " due to seniority level. Required: "
-                        + Database.getTicket(command.ticketID()).getRequiredSeniority() + "; Current: "
-                        + ((Developer) Database.getUser(command.username())).getSeniority() + ".");
+                        + db.getTicket(command.ticketID()).getRequiredSeniority() + "; Current: "
+                        + ((Developer) db.getUser(command.username())).getSeniority() + ".");
             case "ASSIGNMENT" ->
                 error.put("error", "Developer " + command.username() + " is not assigned to milestone "
-                        + Database.getMilestoneNameFromTicketID(command.ticketID()) + ".");
+                        + db.getMilestoneNameFromTicketID(command.ticketID()) + ".");
             case "LOCKED" ->
                 error.put("error", "Cannot assign ticket " + command.ticketID() + " from blocked milestone "
-                        + Database.getMilestoneNameFromTicketID(command.ticketID()) + ".");
+                        + db.getMilestoneNameFromTicketID(command.ticketID()) + ".");
             case "EXPERTISE" ->
                 error.put("error", "Developer " + command.username() + " cannot assign ticket " + command.ticketID()
                         + " due to expertise area. Required: "
-                        + Database.getTicket(command.ticketID()).getRequiredExpertise() + "; Current: "
-                        + ((Developer) Database.getUser(command.username())).getExpertiseArea() + ".");
+                        + db.getTicket(command.ticketID()).getRequiredExpertise() + "; Current: "
+                        + ((Developer) db.getUser(command.username())).getExpertiseArea() + ".");
             default ->
                 error.put("error", "Unknown error type: " + errorType);
         }
@@ -359,7 +419,7 @@ public class IOUtil {
         error.put("command", command.command());
         error.put("username", command.username());
         error.put("timestamp", command.timestamp());
-        // Ticket tkt = Database.getTicket(command.ticketID());
+        // Ticket tkt = db.getTicket(command.ticketID());
         String message;
         switch (errorType) {
             case "ANON" ->

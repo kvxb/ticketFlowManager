@@ -16,9 +16,9 @@ public class SeniorityLevelHandler extends DeveloperValidationHandler {
             case "JUNIOR" -> 2;
             default -> -1;
         };
-        if (developerLevel == -1) {
-            System.out.println("IMPLEMENT: SeniorityLevelHandler");
-        }
+        // if (developerLevel == -1) {
+        //     System.out.println("IMPLEMENT: SeniorityLevelHandler");
+        // }
         int ticketLevel = switch (ticket.getBusinessPriority().name()) {
             case "LOW" -> 1;
             case "MEDIUM" -> 2;
@@ -26,7 +26,6 @@ public class SeniorityLevelHandler extends DeveloperValidationHandler {
             case "CRITICAL" -> 4;
             default -> 5;
         };
-        // TODO: tweak these im not sure where to find the actual matching
         if (developerLevel >= ticketLevel)
         {
             return 0;

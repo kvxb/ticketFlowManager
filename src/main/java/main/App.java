@@ -19,8 +19,6 @@ import javax.xml.crypto.Data;
 import java.time.LocalDate;
 import tickets.Ticket;
 
-import database.Database;
-
 /*
 https://www.baeldung.com/jackson-annotations
  */
@@ -36,6 +34,7 @@ public class App {
     // do these rlly need to be satatic?
     private static LocalDate currentDate;
     private static int it = 0;
+    private static Database db = Database.getInstance();
 
     /**
      * Runs the application: reads commands from an input file,
@@ -59,21 +58,26 @@ public class App {
 
         // LocalDate futureDate = currentDate;
 
-        while (it < Database.getSize("commands")) {
-            CommandInput currentCommand = Database.getCommands().get(it);
+        while (it < db.getSize("commands")) {
+            CommandInput currentCommand = db.getCommands().get(it);
             currentDate = currentCommand.time();
-            // futureDate = Database.getCommands().get(it + 1).time();
+            // futureDate = db.getCommands().get(it + 1).time();
             if (currentDate.isAfter(endDate)) {
                 currentDate = endDate;
                 break;
             }
-            Database.update(currentCommand.time());
+            db.update(currentCommand.time());
+            System.out.println("testing" + currentDate + currentCommand.command());
+
             switch (currentCommand.command()) {
                 case "reportTicket":
-                    Database.addTicket(currentCommand);
+                    db.addTicket(currentCommand);
                     break;
                 case "viewTickets":
-                    IOUtil.viewTickets(currentCommand, Database.getTickets(currentCommand.username()));
+                    IOUtil.viewTickets(currentCommand, db.getTickets(currentCommand.username()));
+                    break;
+                case "search":
+                    IOUtil.outputSearch(currentCommand, db.getSearchResults(currentCommand));
                     break;
                 default:
                     System.out.println("didnt match command");
@@ -86,14 +90,14 @@ public class App {
         System.out.println("developPeriod");
         LocalDate endDate = currentDate.plusDays(100);
 
-        while (it < Database.getSize("commands")) {
-            CommandInput currentCommand = Database.getCommands().get(it);
+        while (it < db.getSize("commands")) {
+            CommandInput currentCommand = db.getCommands().get(it);
             currentDate = currentCommand.time();
-            // futureDate = Database.getCommands().get(it + 1).time();
+            // futureDate = db.getCommands().get(it + 1).time();
             if (currentDate.isAfter(endDate)) {
                 break;
             }
-            Database.update(currentCommand.time());
+            db.update(currentCommand.time());
             System.out.println("develop" + currentDate + currentCommand.command());
 
             // swtich to ->
@@ -102,37 +106,40 @@ public class App {
                     IOUtil.ticketError(currentCommand, "WPER");
                     break;
                 case "viewTickets":
-                    IOUtil.viewTickets(currentCommand, Database.getTickets(currentCommand.username()));
+                    IOUtil.viewTickets(currentCommand, db.getTickets(currentCommand.username()));
                     break;
                 case "createMilestone":
-                    Database.addMilestone(currentCommand);
+                    db.addMilestone(currentCommand);
                     break;
                 case "viewMilestones":
-                    IOUtil.viewMilestones(currentCommand, Database.getMilestones(currentCommand.username()));
+                    IOUtil.viewMilestones(currentCommand, db.getMilestones(currentCommand.username()));
                     break;
                 case "assignTicket":
-                    Database.assignTicket(currentCommand);
+                    db.assignTicket(currentCommand);
                     break;
                 case "viewAssignedTickets":
-                    IOUtil.viewAssignedTickets(currentCommand, Database.getAssignedTickets(currentCommand.username()));
+                    IOUtil.viewAssignedTickets(currentCommand, db.getAssignedTickets(currentCommand.username()));
                     break;
                 case "undoAssignTicket":
-                    Database.undoAssignedTicket(currentCommand);
+                    db.undoAssignedTicket(currentCommand);
                     break;
                 case "addComment":
-                    Database.addComment(currentCommand);
+                    db.addComment(currentCommand);
                     break;
                 case "undoAddComment":
-                    Database.undoAddComment(currentCommand);
+                    db.undoAddComment(currentCommand);
                     break;
                 case "changeStatus":
-                    Database.changeStatus(currentCommand);
+                    db.changeStatus(currentCommand);
                     break;
                 case "viewTicketHistory":
-                    IOUtil.viewTicketHistory(currentCommand, Database.getTicketsConcerningUser(currentCommand.username()));
+                    IOUtil.viewTicketHistory(currentCommand, db.getTicketsConcerningUser(currentCommand.username()));
                     break;
                 case "undoChangeStatus":
-                    Database.undoChangeStatus(currentCommand);
+                    db.undoChangeStatus(currentCommand);
+                    break;
+                case "search":
+                    IOUtil.outputSearch(currentCommand, db.getSearchResults(currentCommand));
                     break;
                 default:
                     System.out.println("didnt match command");
@@ -147,21 +154,21 @@ public class App {
     // System.out.println("verifiyPeriod");
     // LocalDate endDate = currentDate.plusDays(12);
     //
-    // while (it <= Database.getSize("commands")) {
-    // CommandInput currentCommand = Database.getCommands().get(it);
+    // while (it <= db.getSize("commands")) {
+    // CommandInput currentCommand = db.getCommands().get(it);
     // currentDate = currentCommand.time();
-    // // futureDate = Database.getCommands().get(it + 1).time();
+    // // futureDate = db.getCommands().get(it + 1).time();
     // if (currentDate.isAfter(endDate)) {
     // it--;
     // break;
     // }
     // switch (currentCommand.command()) {
     // case "reportTicket":
-    // Database.addTicket(currentCommand, currentDate);
+    // db.addTicket(currentCommand, currentDate);
     // break;
     // case "viewTickets":
     // IOUtil.viewTickets(currentCommand,
-    // Database.getTickets(currentCommand.username()));
+    // db.getTickets(currentCommand.username()));
     // break;
     // default:
     // System.out.println("vv");
@@ -173,21 +180,21 @@ public class App {
     // }
 
     public static void run(final String inputPath, final String outputPath) {
-        Database.clearDatabase();
+        db.clearDatabase();
         IOUtil.clearIO();
         Ticket.clearTicket();
         it = 0;
 
         IOUtil.setPaths(inputPath, outputPath);
         try {
-            Database.setUsers(IOUtil.readUsers());
-            Database.setCommands(IOUtil.readCommands());
+            db.setUsers(IOUtil.readUsers());
+            db.setCommands(IOUtil.readCommands());
         } catch (IOException e) {
             System.out.println("error reading from input file: " + e.getMessage());
             return;
         }
 
-        currentDate = Database.getCommands().getFirst().time();
+        currentDate = db.getCommands().getFirst().time();
 
         // TODO 2: process commands.
         boolean LOOPBACK = true;

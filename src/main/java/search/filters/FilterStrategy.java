@@ -1,9 +1,7 @@
 package search.filters;
 
-import tickets.Ticket;
-import users.User;
+import java.util.List;
 
-public interface FilterStrategy {
-    boolean apply(Ticket ticket, User currentUser);
-    String getFilterType();
+public interface FilterStrategy<T> {
+    List<T> filter(List<T> items, String filterValue);
 }
