@@ -6,6 +6,13 @@ import java.util.List;
 import io.CommandInput;
 
 public abstract class Ticket {
+
+    public abstract double getImpact();
+
+    public abstract double getRisk();
+
+    public abstract double getEfficiency();
+
     public enum BusinessPriority {
         LOW,
         MEDIUM,
@@ -335,7 +342,7 @@ public abstract class Ticket {
     private String title;
     private String description;
     private String reportedBy;
-    private BusinessPriority businessPriority;
+    protected BusinessPriority businessPriority;
     private Status status;
     private String assignedTo;
     private String assignedAt;
@@ -409,6 +416,9 @@ public abstract class Ticket {
             this.ticketHistory.getActions().add(statusAction);
         }
         this.status = newStatus;
+        if(status.name().equals("RESOLVED")) {
+            solvedAt = timestamp;
+        }
     }
 
     public void upPriority() {

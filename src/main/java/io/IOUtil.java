@@ -170,6 +170,105 @@ public class IOUtil {
 
     }
 
+    public static void generateTicketRiskReport(CommandInput command, List<Object> reportData) {
+        ObjectNode commandNode = MAPPER.createObjectNode();
+        commandNode.put("command", command.command());
+        commandNode.put("username", command.username());
+        commandNode.put("timestamp", command.timestamp());
+
+        ObjectNode reportNode = MAPPER.createObjectNode();
+
+        reportNode.put("totalTickets", ((Number) reportData.get(0)).intValue());
+
+        ObjectNode ticketsByTypeNode = MAPPER.createObjectNode();
+        ticketsByTypeNode.put("BUG", ((Number) reportData.get(1)).intValue());
+        ticketsByTypeNode.put("FEATURE_REQUEST", ((Number) reportData.get(2)).intValue());
+        ticketsByTypeNode.put("UI_FEEDBACK", ((Number) reportData.get(3)).intValue());
+        reportNode.set("ticketsByType", ticketsByTypeNode);
+
+        ObjectNode ticketsByPriorityNode = MAPPER.createObjectNode();
+        ticketsByPriorityNode.put("LOW", ((Number) reportData.get(4)).intValue());
+        ticketsByPriorityNode.put("MEDIUM", ((Number) reportData.get(5)).intValue());
+        ticketsByPriorityNode.put("HIGH", ((Number) reportData.get(6)).intValue());
+        ticketsByPriorityNode.put("CRITICAL", ((Number) reportData.get(7)).intValue());
+        reportNode.set("ticketsByPriority", ticketsByPriorityNode);
+
+        ObjectNode riskByTypeNode = MAPPER.createObjectNode();
+        riskByTypeNode.put("BUG", (String) reportData.get(8));
+        riskByTypeNode.put("FEATURE_REQUEST", (String) reportData.get(9));
+        riskByTypeNode.put("UI_FEEDBACK", (String) reportData.get(10));
+        reportNode.set("riskByType", riskByTypeNode);
+
+        commandNode.set("report", reportNode);
+        outputs.add(commandNode);
+    }
+
+    public static void generateResolutionEfficiencyReport(CommandInput command, List<Number> reportData) {
+        ObjectNode commandNode = MAPPER.createObjectNode();
+        commandNode.put("command", command.command());
+        commandNode.put("username", command.username());
+        commandNode.put("timestamp", command.timestamp());
+
+        ObjectNode reportNode = MAPPER.createObjectNode();
+
+        reportNode.put("totalTickets", reportData.get(0).intValue());
+
+        ObjectNode ticketsByTypeNode = MAPPER.createObjectNode();
+        ticketsByTypeNode.put("BUG", reportData.get(1).intValue());
+        ticketsByTypeNode.put("FEATURE_REQUEST", reportData.get(2).intValue());
+        ticketsByTypeNode.put("UI_FEEDBACK", reportData.get(3).intValue());
+        reportNode.set("ticketsByType", ticketsByTypeNode);
+
+        ObjectNode ticketsByPriorityNode = MAPPER.createObjectNode();
+        ticketsByPriorityNode.put("LOW", reportData.get(4).intValue());
+        ticketsByPriorityNode.put("MEDIUM", reportData.get(5).intValue());
+        ticketsByPriorityNode.put("HIGH", reportData.get(6).intValue());
+        ticketsByPriorityNode.put("CRITICAL", reportData.get(7).intValue());
+        reportNode.set("ticketsByPriority", ticketsByPriorityNode);
+
+        ObjectNode customerImpactByTypeNode = MAPPER.createObjectNode();
+        customerImpactByTypeNode.put("BUG", reportData.get(8).doubleValue());
+        customerImpactByTypeNode.put("FEATURE_REQUEST", reportData.get(9).doubleValue());
+        customerImpactByTypeNode.put("UI_FEEDBACK", reportData.get(10).doubleValue());
+        reportNode.set("efficiencyByType", customerImpactByTypeNode);
+
+        commandNode.set("report", reportNode);
+        outputs.add(commandNode);
+    }
+
+    public static void generateCustomerImpactReport(CommandInput command, List<Number> reportData) {
+        ObjectNode commandNode = MAPPER.createObjectNode();
+        commandNode.put("command", command.command());
+        commandNode.put("username", command.username());
+        commandNode.put("timestamp", command.timestamp());
+
+        ObjectNode reportNode = MAPPER.createObjectNode();
+
+        reportNode.put("totalTickets", reportData.get(0).intValue());
+
+        ObjectNode ticketsByTypeNode = MAPPER.createObjectNode();
+        ticketsByTypeNode.put("BUG", reportData.get(1).intValue());
+        ticketsByTypeNode.put("FEATURE_REQUEST", reportData.get(2).intValue());
+        ticketsByTypeNode.put("UI_FEEDBACK", reportData.get(3).intValue());
+        reportNode.set("ticketsByType", ticketsByTypeNode);
+
+        ObjectNode ticketsByPriorityNode = MAPPER.createObjectNode();
+        ticketsByPriorityNode.put("LOW", reportData.get(4).intValue());
+        ticketsByPriorityNode.put("MEDIUM", reportData.get(5).intValue());
+        ticketsByPriorityNode.put("HIGH", reportData.get(6).intValue());
+        ticketsByPriorityNode.put("CRITICAL", reportData.get(7).intValue());
+        reportNode.set("ticketsByPriority", ticketsByPriorityNode);
+
+        ObjectNode customerImpactByTypeNode = MAPPER.createObjectNode();
+        customerImpactByTypeNode.put("BUG", reportData.get(8).doubleValue());
+        customerImpactByTypeNode.put("FEATURE_REQUEST", reportData.get(9).doubleValue());
+        customerImpactByTypeNode.put("UI_FEEDBACK", reportData.get(10).doubleValue());
+        reportNode.set("customerImpactByType", customerImpactByTypeNode);
+
+        commandNode.set("report", reportNode);
+        outputs.add(commandNode);
+    }
+
     // is this move or copy semantics ?
     public static void viewTickets(CommandInput command, List<Ticket> tickets) {
         ObjectNode commandNode = MAPPER.createObjectNode();

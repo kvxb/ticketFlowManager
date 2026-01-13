@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.Comparator;
 import java.util.HashSet;
 import tickets.FeatureRequest;
+import mathutils.MathUtil;
 import tickets.Ticket;
 import io.FiltersInput;
 import tickets.UIFeedback;
@@ -614,6 +615,261 @@ public class Database {
                 }
             }
         });
+    }
+
+    // TODO CHORE: DUPLICATE CODE FOR THESE FUCKASS STATS
+    public List<Number> getCustomerImpact() {
+        List<Number> report = new ArrayList<>();
+
+        int totalTickets = 0;
+
+        int bugCount = 0;
+        int featureRequestCount = 0;
+        int uiFeedbackCount = 0;
+
+        int lowPriority = 0;
+        int mediumPriority = 0;
+        int highPriority = 0;
+        int criticalPriority = 0;
+
+        double bugImpact = 0.0;
+        double featureRequestImpact = 0.0;
+        double uiFeedbackImpact = 0.0;
+
+        for (Ticket ticket : tickets) {
+            if (ticket.getStatus().name().equals("RESOLVED")) {
+                continue;
+            }
+            if (ticket.getStatus().name().equals("CLOSED")) {
+                continue;
+            }
+            totalTickets++;
+            String type = ticket.getType();
+            String priority = ticket.getBusinessPriority().name();
+            double impact = ticket.getImpact();
+
+            switch (type) {
+                case "BUG":
+                    bugCount++;
+                    bugImpact += impact;
+                    break;
+                case "FEATURE_REQUEST":
+                    featureRequestCount++;
+                    featureRequestImpact += impact;
+                    break;
+                case "UI_FEEDBACK":
+                    uiFeedbackCount++;
+                    uiFeedbackImpact += impact;
+                    break;
+            }
+
+            switch (priority) {
+                case "LOW":
+                    lowPriority++;
+                    break;
+                case "MEDIUM":
+                    mediumPriority++;
+                    break;
+                case "HIGH":
+                    highPriority++;
+                    break;
+                case "CRITICAL":
+                    criticalPriority++;
+                    break;
+            }
+        }
+        report.add(totalTickets);
+
+        report.add(bugCount);
+        report.add(featureRequestCount);
+        report.add(uiFeedbackCount);
+
+        report.add(lowPriority);
+        report.add(mediumPriority);
+        report.add(highPriority);
+        report.add(criticalPriority);
+
+        report.add(MathUtil.round(MathUtil.average(bugImpact, bugCount)));
+        report.add(MathUtil.round(MathUtil.average(featureRequestImpact, featureRequestCount)));
+        report.add(MathUtil.round(MathUtil.average(uiFeedbackImpact, uiFeedbackCount)));
+
+        return report;
+    }
+
+    public List<Number> getResolutionEfficiency() {
+        List<Number> report = new ArrayList<>();
+
+        int totalTickets = 0;
+
+        int bugCount = 0;
+        int featureRequestCount = 0;
+        int uiFeedbackCount = 0;
+
+        int lowPriority = 0;
+        int mediumPriority = 0;
+        int highPriority = 0;
+        int criticalPriority = 0;
+
+        double bugImpact = 0.0;
+        double featureRequestImpact = 0.0;
+        double uiFeedbackImpact = 0.0;
+
+        for (Ticket ticket : tickets) {
+            if (ticket.getStatus().name().equals("OPEN")) {
+                continue;
+            }
+            if (ticket.getStatus().name().equals("IN_PROGRESS")) {
+                continue;
+            }
+            totalTickets++;
+            String type = ticket.getType();
+            String priority = ticket.getBusinessPriority().name();
+            double impact = ticket.getEfficiency();
+
+            switch (type) {
+                case "BUG":
+                    bugCount++;
+                    bugImpact += impact;
+                    break;
+                case "FEATURE_REQUEST":
+                    featureRequestCount++;
+                    featureRequestImpact += impact;
+                    break;
+                case "UI_FEEDBACK":
+                    uiFeedbackCount++;
+                    uiFeedbackImpact += impact;
+                    break;
+            }
+
+            switch (priority) {
+                case "LOW":
+                    lowPriority++;
+                    break;
+                case "MEDIUM":
+                    mediumPriority++;
+                    break;
+                case "HIGH":
+                    highPriority++;
+                    break;
+                case "CRITICAL":
+                    criticalPriority++;
+                    break;
+            }
+        }
+        report.add(totalTickets);
+
+        report.add(bugCount);
+        report.add(featureRequestCount);
+        report.add(uiFeedbackCount);
+
+        report.add(lowPriority);
+        report.add(mediumPriority);
+        report.add(highPriority);
+        report.add(criticalPriority);
+
+        report.add(MathUtil.round(MathUtil.average(bugImpact, bugCount)));
+        report.add(MathUtil.round(MathUtil.average(featureRequestImpact, featureRequestCount)));
+        report.add(MathUtil.round(MathUtil.average(uiFeedbackImpact, uiFeedbackCount)));
+
+        return report;
+    }
+
+    public List<Object> getTicketRisk() {
+        List<Object> report = new ArrayList<>();
+
+        int totalTickets = 0;
+
+        int bugCount = 0;
+        int featureRequestCount = 0;
+        int uiFeedbackCount = 0;
+
+        int lowPriority = 0;
+        int mediumPriority = 0;
+        int highPriority = 0;
+        int criticalPriority = 0;
+
+        double bugImpact = 0.0;
+        double featureRequestImpact = 0.0;
+        double uiFeedbackImpact = 0.0;
+
+        for (Ticket ticket : tickets) {
+            if (ticket.getStatus().name().equals("RESOLVED")) {
+                continue;
+            }
+            if (ticket.getStatus().name().equals("CLOSED")) {
+                continue;
+            }
+            totalTickets++;
+            String type = ticket.getType();
+            String priority = ticket.getBusinessPriority().name();
+            double impact = ticket.getRisk();
+
+            switch (type) {
+                case "BUG":
+                    bugCount++;
+                    bugImpact += impact;
+                    break;
+                case "FEATURE_REQUEST":
+                    featureRequestCount++;
+                    featureRequestImpact += impact;
+                    break;
+                case "UI_FEEDBACK":
+                    uiFeedbackCount++;
+                    uiFeedbackImpact += impact;
+                    break;
+            }
+
+            switch (priority) {
+                case "LOW":
+                    lowPriority++;
+                    break;
+                case "MEDIUM":
+                    mediumPriority++;
+                    break;
+                case "HIGH":
+                    highPriority++;
+                    break;
+                case "CRITICAL":
+                    criticalPriority++;
+                    break;
+            }
+        }
+        report.add(totalTickets);
+
+        report.add(bugCount);
+        report.add(featureRequestCount);
+        report.add(uiFeedbackCount);
+
+        report.add(lowPriority);
+        report.add(mediumPriority);
+        report.add(highPriority);
+        report.add(criticalPriority);
+
+        bugImpact = (MathUtil.round(MathUtil.average(bugImpact, bugCount)));
+        featureRequestImpact = (MathUtil.round(MathUtil.average(featureRequestImpact, featureRequestCount)));
+        uiFeedbackImpact = (MathUtil.round(MathUtil.average(uiFeedbackImpact, uiFeedbackCount)));
+
+        String bugRiskLevel = getRiskLevel(bugImpact);
+        String featureRequestRiskLevel = getRiskLevel(featureRequestImpact);
+        String uiFeedbackRiskLevel = getRiskLevel(uiFeedbackImpact);
+
+        report.add(bugRiskLevel);
+        report.add(featureRequestRiskLevel);
+        report.add(uiFeedbackRiskLevel);
+
+        return report;
+    }
+
+    private String getRiskLevel(double impact) {
+        if (impact >= 0 && impact <= 24)
+            return "NEGLIGIBLE";
+        if (impact >= 25 && impact <= 49)
+            return "MODERATE";
+        if (impact >= 50 && impact <= 74)
+            return "SIGNIFICANT";
+        if (impact >= 75 && impact <= 100)
+            return "MAJOR";
+        return "NEGLIGIBLE";
     }
 
     public List<Developer> getAllDevelopers() {

@@ -1,6 +1,10 @@
 package tickets;
 
 import tickets.FeatureRequest.BusinessValue;
+import mathutils.MathUtil;
+import java.time.temporal.ChronoUnit;
+
+import java.time.LocalDate;
 
 public class UIFeedback extends Ticket {
     private String uiElementId;
@@ -13,6 +17,49 @@ public class UIFeedback extends Ticket {
         M,
         L,
         XL
+    }
+
+    @Override
+    public double getImpact() {
+        double businessScore = switch (businessValue.name()) {
+            case "S" -> 1.0;
+            case "M" -> 3.0;
+            case "L" -> 6.0;
+            case "XL" -> 10.0;
+            default -> -1.0;
+        };
+
+        return MathUtil.normalize(businessScore * usabilityScore, 100);
+    }
+
+    @Override
+    public double getRisk() {
+        double businessScore = switch (businessValue.name()) {
+            case "S" -> 1.0;
+            case "M" -> 3.0;
+            case "L" -> 6.0;
+            case "XL" -> 10.0;
+            default -> -1.0;
+        };
+
+        return MathUtil.normalize(businessScore * (11 - usabilityScore), 100);
+    }
+
+    @Override
+    public double getEfficiency() {
+        double businessScore = switch (businessValue.name()) {
+            case "S" -> 1.0;
+            case "M" -> 3.0;
+            case "L" -> 6.0;
+            case "XL" -> 10.0;
+            default -> -1.0;
+        };
+
+        int daysToResolve = -(int) ChronoUnit.DAYS.between(LocalDate.parse(this.getSolvedAt()),
+                LocalDate.parse(this.getAssignedAt()));
+        daysToResolve++;
+
+        return MathUtil.normalize(((businessScore + usabilityScore) / daysToResolve), 20);
     }
 
     private BusinessValue businessValue;

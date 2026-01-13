@@ -14,8 +14,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.crypto.Data;
-
 import java.time.LocalDate;
 import tickets.Ticket;
 import users.Developer;
@@ -147,6 +145,16 @@ public class App {
                     List<String> notifications = dev.getNotifications();
                     IOUtil.outputNotifications(currentCommand, notifications);
                     dev.clearNotifications();
+                    break;
+                case "generateCustomerImpactReport":
+                    IOUtil.generateCustomerImpactReport(currentCommand, db.getCustomerImpact());
+                    break;
+                case "generateTicketRiskReport":
+                    IOUtil.generateTicketRiskReport(currentCommand, db.getTicketRisk());
+                    break;
+                case "generateResolutionEfficiencyReport":
+                    IOUtil.generateResolutionEfficiencyReport(currentCommand, db.getResolutionEfficiency());
+                    break;
                 default:
                     System.out.println("didnt match command");
             }
