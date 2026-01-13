@@ -113,6 +113,21 @@ public class IOUtil {
         outputs.add(commandNode);
     }
 
+    public static void outputNotifications(CommandInput command, List<String> notifications) {
+        ObjectNode commandNode = MAPPER.createObjectNode();
+        commandNode.put("command", command.command());
+        commandNode.put("username", command.username());
+        commandNode.put("timestamp", command.timestamp());
+
+        ArrayNode notificationsArray = MAPPER.createArrayNode();
+        for (String notification : notifications) {
+            notificationsArray.add(notification);
+        }
+
+        commandNode.set("notifications", notificationsArray);
+        outputs.add(commandNode);
+    }
+
     public static void viewAssignedTickets(CommandInput command, List<Ticket> tickets) {
         ObjectNode commandNode = MAPPER.createObjectNode();
 

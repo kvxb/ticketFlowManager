@@ -18,6 +18,7 @@ import javax.xml.crypto.Data;
 
 import java.time.LocalDate;
 import tickets.Ticket;
+import users.Developer;
 
 /*
 https://www.baeldung.com/jackson-annotations
@@ -141,6 +142,11 @@ public class App {
                 case "search":
                     IOUtil.outputSearch(currentCommand, db.getSearchResults(currentCommand));
                     break;
+                case "viewNotifications":
+                    Developer dev = (Developer) db.getUser(currentCommand.username());
+                    List<String> notifications = dev.getNotifications();
+                    IOUtil.outputNotifications(currentCommand, notifications);
+                    dev.clearNotifications();
                 default:
                     System.out.println("didnt match command");
             }

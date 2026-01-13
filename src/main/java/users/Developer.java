@@ -1,9 +1,26 @@
 package users;
 
+import notifications.Observer;
 import tickets.Ticket;
+import java.util.List;
+import java.util.ArrayList;
 
-public class Developer extends User {
+public class Developer extends User implements Observer {
     private String hireDate;
+    private List<String> notifications = new ArrayList<>();
+
+    @Override
+    public void update(String message) {
+        notifications.add(message);
+    }
+
+    public List<String> getNotifications() {
+        return new ArrayList<>(notifications);
+    }
+
+    public void clearNotifications() {
+        notifications.clear();
+    }
 
     // TODO: format yyyy-mm-dd to be respected
     public enum ExpertiseArea {
@@ -23,7 +40,7 @@ public class Developer extends User {
         SENIOR
     }
 
-    /**NOT YET IMPLEMENTED**/
+    /** NOT YET IMPLEMENTED **/
     public double getPerformanceScore() {
         return 0.0;
     }

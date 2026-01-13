@@ -6,9 +6,61 @@ import io.CommandInput;
 import java.util.List;
 import java.util.ArrayList;
 import mathutils.MathUtil;
+import notifications.Subject;
+import notifications.Observer;
+import java.time.LocalDate;
 
-public class Milestone {
+public class Milestone implements Subject {
     private Database db = Database.getInstance();
+    private List<Observer> observers = new ArrayList<>();
+
+    @Override
+    public void addObserver(Observer observer) {
+        observers.add(observer);
+    }
+
+    @Override
+    public void removeObserver(Observer observer) {
+        observers.remove(observer);
+    }
+
+    private boolean sentNotificationDueTomorrow = false;
+
+    @Override
+    public void notifyObservers(String message) {
+        for (Observer observer : observers) {
+            observer.update(message);
+        }
+    }
+
+    public void notifyCreated() {
+        String message = "New milestone " + this.name +
+                " has been created with due date " + this.dueDate + ".";
+        notifyObservers(message);
+    }
+
+    public void notifyDueTomorrow() {
+        if (sentNotificationDueTomorrow) {
+            return;
+        }
+        String message = "Milestone " + this.name +
+                " is due tomorrow. All unresolved tickets are now CRITICAL.";
+        notifyObservers(message);
+        sentNotificationDueTomorrow = true;
+    }
+
+    public void notifyUnblocked(int ticketId) {
+        String message = "Milestone " + this.name +
+                " is now unblocked as ticket " + ticketId + " has been CLOSED.";
+        notifyObservers(message);
+    }
+
+    public void notifyUnblockedAfterDue() {
+        String message = "Milestone " + this.name +
+                " was unblocked after due date. All active tickets are now CRITICAL.";
+        notifyObservers(message);
+    }
+
     public class Repartition {
         private String dev;
         private List<Integer> assignedTickets;
@@ -69,8 +121,27 @@ public class Milestone {
         this.updateCompletionPercentage();
     }
 
+    // TODO: this is runnign on assumption that a milestone cant be blocke by two
+    // other at the same time which is wrong fix later
     public void updateCompletionPercentage() {
         this.completionPercentage = MathUtil.round(getNumberOfTickets("CLOSED") / getNumberOfTickets("ALL"));
+        if (completionPercentage == 1.0) {
+            for (String milestoneName : blockingFor) {
+                Milestone blockedMilestone = db.getMilestoneFromName(milestoneName);
+                blockedMilestone.setBlocked(false);
+
+                //TODO dont we already have overdueBy and stuff like that for this ?
+                // LocalDate dueDate = LocalDate.parse(blockedMilestone.getDueDate());
+                // LocalDate currentDate = LocalDate.parse(this.createdAt);
+
+                if (this.overdueBy > 0) {
+                    blockedMilestone.notifyUnblockedAfterDue();
+                } else {
+                    //TODO keep the last ticket to be resolved;
+                    blockedMilestone.notifyUnblocked(-100);
+                }
+            }
+        }
     }
 
     public double getNumberOfTickets(String typeOf) {

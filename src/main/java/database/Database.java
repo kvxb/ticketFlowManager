@@ -203,6 +203,23 @@ public class Database {
             Ticket ticket = getTicket(ticketId);
             ticket.addActionMilestone(milestone.getName(), milestone.getOwner(), milestone.getCreatedAt());
         }
+        for (String devUsername : milestone.getAssignedDevs()) {
+            User user = getUser(devUsername);
+            if (user instanceof Developer) {
+                Developer dev = (Developer) user;
+                milestone.addObserver(dev);
+            }
+        }
+        milestone.notifyCreated();
+    }
+
+    public Milestone getMilestoneFromName(String name) {
+        for (Milestone milestone : milestones) {
+            if (milestone.getName().equals(name)) {
+                return milestone;
+            }
+        }
+        return null;
     }
 
     public List<Ticket> getTicketsConcerningUser(String username) {
@@ -576,6 +593,9 @@ public class Database {
                 boolean CRIT = false;
                 if (timeLeft <= 1) {
                     CRIT = true;
+                    if (timeLeft == 1) {
+                        milestone.notifyDueTomorrow();
+                    }
                 }
                 for (int ticketId : milestone.getTickets()) {
                     for (Ticket ticket : tickets) {
