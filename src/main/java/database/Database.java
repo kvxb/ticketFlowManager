@@ -774,6 +774,136 @@ public class Database {
         return report;
     }
 
+    public List<Object> getAppStability() {
+        List<Object> report = new ArrayList<>();
+
+        int totalOpenTickets = 0;
+        int bugCount = 0;
+        int featureRequestCount = 0;
+        int uiFeedbackCount = 0;
+
+        int lowPriority = 0;
+        int mediumPriority = 0;
+        int highPriority = 0;
+        int criticalPriority = 0;
+
+        double bugImpact = 0.0;
+        double featureRequestImpact = 0.0;
+        double uiFeedbackImpact = 0.0;
+
+        double bugRiskScore = 0.0;
+        double featureRequestRiskScore = 0.0;
+        double uiFeedbackRiskScore = 0.0;
+
+        for (Ticket ticket : tickets) {
+            if (!ticket.getStatus().name().equals("OPEN") &&
+                    !ticket.getStatus().name().equals("IN_PROGRESS")) {
+                continue;
+            }
+
+            totalOpenTickets++;
+            String type = ticket.getType();
+            String priority = ticket.getBusinessPriority().name();
+
+            switch (type) {
+                case "BUG":
+                    bugCount++;
+                    bugImpact += ticket.getImpact();
+                    bugRiskScore += ticket.getRisk();
+                    break;
+                case "FEATURE_REQUEST":
+                    featureRequestCount++;
+                    featureRequestImpact += ticket.getImpact();
+                    featureRequestRiskScore += ticket.getRisk();
+                    break;
+                case "UI_FEEDBACK":
+                    uiFeedbackCount++;
+                    uiFeedbackImpact += ticket.getImpact();
+                    uiFeedbackRiskScore += ticket.getRisk();
+                    break;
+            }
+
+            switch (priority) {
+                case "LOW":
+                    lowPriority++;
+                    break;
+                case "MEDIUM":
+                    mediumPriority++;
+                    break;
+                case "HIGH":
+                    highPriority++;
+                    break;
+                case "CRITICAL":
+                    criticalPriority++;
+                    break;
+            }
+        }
+
+        report.add(totalOpenTickets);
+
+        report.add(bugCount);
+        report.add(featureRequestCount);
+        report.add(uiFeedbackCount);
+
+        report.add(lowPriority);
+        report.add(mediumPriority);
+        report.add(highPriority);
+        report.add(criticalPriority);
+
+        double avgBugRisk = bugCount > 0 ? bugRiskScore / bugCount : 0;
+        double avgFeatureRisk = featureRequestCount > 0 ? featureRequestRiskScore / featureRequestCount : 0;
+        double avgUIRisk = uiFeedbackCount > 0 ? uiFeedbackRiskScore / uiFeedbackCount : 0;
+
+        String bugRiskLevel = getRiskLevel(avgBugRisk);
+        String featureRiskLevel = getRiskLevel(avgFeatureRisk);
+        String uiRiskLevel = getRiskLevel(avgUIRisk);
+
+        report.add(bugRiskLevel);
+        report.add(featureRiskLevel);
+        report.add(uiRiskLevel);
+
+        double avgBugImpact = bugCount > 0 ? bugImpact / bugCount : 0;
+        double avgFeatureImpact = featureRequestCount > 0 ? featureRequestImpact / featureRequestCount : 0;
+        double avgUIImpact = uiFeedbackCount > 0 ? uiFeedbackImpact / uiFeedbackCount : 0;
+
+        report.add(MathUtil.round(avgBugImpact));
+        report.add(MathUtil.round(avgFeatureImpact));
+        report.add(MathUtil.round(avgUIImpact));
+
+        String appStability = determineStability(bugRiskLevel, featureRiskLevel, uiRiskLevel,
+                avgBugImpact, avgFeatureImpact, avgUIImpact);
+        report.add(appStability);
+
+        return report;
+    }
+
+    private String determineStability(String bugRisk, String featureRisk, String uiRisk,
+            double bugImpact, double featureImpact, double uiImpact) {
+
+        boolean hasSignificantRisk = bugRisk.equals("SIGNIFICANT") ||
+                bugRisk.equals("MAJOR") ||
+                featureRisk.equals("SIGNIFICANT") ||
+                featureRisk.equals("MAJOR") ||
+                uiRisk.equals("SIGNIFICANT") ||
+                uiRisk.equals("MAJOR");
+
+        boolean allNegligible = bugRisk.equals("NEGLIGIBLE") &&
+                featureRisk.equals("NEGLIGIBLE") &&
+                uiRisk.equals("NEGLIGIBLE");
+
+        boolean allImpactBelow50 = bugImpact < 50 && featureImpact < 50 && uiImpact < 50;
+
+        if (hasSignificantRisk) {
+            return "UNSTABLE";
+        }
+
+        if (allNegligible && allImpactBelow50) {
+            return "STABLE";
+        }
+
+        return "PARTIALLY STABLE";
+    }
+
     public List<Object> getTicketRisk() {
         List<Object> report = new ArrayList<>();
 

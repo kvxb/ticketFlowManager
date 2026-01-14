@@ -155,6 +155,9 @@ public class App {
                 case "generateResolutionEfficiencyReport":
                     IOUtil.generateResolutionEfficiencyReport(currentCommand, db.getResolutionEfficiency());
                     break;
+                case "appStabilityReport":
+                    IOUtil.generateAppStabilityReport(currentCommand, db.getAppStability());
+                    break;
                 default:
                     System.out.println("didnt match command");
             }

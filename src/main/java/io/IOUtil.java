@@ -170,6 +170,47 @@ public class IOUtil {
 
     }
 
+    public static void generateAppStabilityReport(CommandInput command, List<Object> reportData) {
+        ObjectNode commandNode = MAPPER.createObjectNode();
+        commandNode.put("command", command.command());
+        commandNode.put("username", command.username());
+        commandNode.put("timestamp", command.timestamp());
+
+        ObjectNode reportNode = MAPPER.createObjectNode();
+
+        reportNode.put("totalOpenTickets", ((Number) reportData.get(0)).intValue());
+
+        ObjectNode openTicketsByTypeNode = MAPPER.createObjectNode();
+        openTicketsByTypeNode.put("BUG", ((Number) reportData.get(1)).intValue());
+        openTicketsByTypeNode.put("FEATURE_REQUEST", ((Number) reportData.get(2)).intValue());
+        openTicketsByTypeNode.put("UI_FEEDBACK", ((Number) reportData.get(3)).intValue());
+        reportNode.set("openTicketsByType", openTicketsByTypeNode);
+
+        ObjectNode openTicketsByPriorityNode = MAPPER.createObjectNode();
+        openTicketsByPriorityNode.put("LOW", ((Number) reportData.get(4)).intValue());
+        openTicketsByPriorityNode.put("MEDIUM", ((Number) reportData.get(5)).intValue());
+        openTicketsByPriorityNode.put("HIGH", ((Number) reportData.get(6)).intValue());
+        openTicketsByPriorityNode.put("CRITICAL", ((Number) reportData.get(7)).intValue());
+        reportNode.set("openTicketsByPriority", openTicketsByPriorityNode);
+
+        ObjectNode riskByTypeNode = MAPPER.createObjectNode();
+        riskByTypeNode.put("BUG", (String) reportData.get(8));
+        riskByTypeNode.put("FEATURE_REQUEST", (String) reportData.get(9));
+        riskByTypeNode.put("UI_FEEDBACK", (String) reportData.get(10));
+        reportNode.set("riskByType", riskByTypeNode);
+
+        ObjectNode impactByTypeNode = MAPPER.createObjectNode();
+        impactByTypeNode.put("BUG", ((Number) reportData.get(11)).doubleValue());
+        impactByTypeNode.put("FEATURE_REQUEST", ((Number) reportData.get(12)).doubleValue());
+        impactByTypeNode.put("UI_FEEDBACK", ((Number) reportData.get(13)).doubleValue());
+        reportNode.set("impactByType", impactByTypeNode);
+
+        reportNode.put("appStability", (String) reportData.get(14));
+
+        commandNode.set("report", reportNode);
+        outputs.add(commandNode);
+    }
+
     public static void generateTicketRiskReport(CommandInput command, List<Object> reportData) {
         ObjectNode commandNode = MAPPER.createObjectNode();
         commandNode.put("command", command.command());
