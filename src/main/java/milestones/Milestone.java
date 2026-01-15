@@ -62,6 +62,29 @@ public class Milestone implements Subject {
         notifyObservers(message);
     }
 
+    public void removeTicketFromDev(CommandInput command) {
+        int ticketId = command.ticketID();
+        String username = command.username();
+
+        for (Repartition rep : this.getRepartitions()) {
+            if (rep.getDev() != null && rep.getDev().equals(username)) {
+                List<Integer> assignedTickets = rep.getAssignedTickets();
+                if (assignedTickets != null) {
+                    assignedTickets.removeIf(id -> id == ticketId);
+                }
+                break;
+            }
+        }
+
+        // if (!openTickets.contains(ticketId)) {
+        //     openTickets.add(ticketId);
+        // }
+        //
+        // closedTickets.removeIf(id -> id == ticketId);
+        //
+        // this.updateCompletionPercentage(command.time());
+    }
+
     public class Repartition {
         private String dev;
         private List<Integer> assignedTickets;
@@ -106,11 +129,16 @@ public class Milestone implements Subject {
         }
     }
 
+    private int lastTicket = -1;
+
     public void changeStatusOfTicket(CommandInput command) {
         int id = command.ticketID();
         if (openTickets.contains(id)) {
             openTickets.remove(Integer.valueOf(id));
             closedTickets.add(id);
+        }
+        if (openTickets.isEmpty()) {
+            lastTicket = id;
         }
         this.updateCompletionPercentage(command.time());
     }
@@ -127,14 +155,14 @@ public class Milestone implements Subject {
     private LocalDate unlockedDate;
 
     public LocalDate getUnlockedDate() {
-		return unlockedDate;
-	}
+        return unlockedDate;
+    }
 
-	public void setUnlockedDate(LocalDate unlockedDate) {
-		this.unlockedDate = unlockedDate;
-	}
+    public void setUnlockedDate(LocalDate unlockedDate) {
+        this.unlockedDate = unlockedDate;
+    }
 
-	// TODO: this is runnign on assumption that a milestone cant be blocke by two
+    // TODO: this is runnign on assumption that a milestone cant be blocke by two
     // other at the same time which is wrong fix later
     public void updateCompletionPercentage(LocalDate time) {
         this.completionPercentage = MathUtil.round(getNumberOfTickets("CLOSED") / getNumberOfTickets("ALL"));
@@ -152,7 +180,7 @@ public class Milestone implements Subject {
                     blockedMilestone.notifyUnblockedAfterDue();
                 } else {
                     // TODO keep the last ticket to be resolved;
-                    blockedMilestone.notifyUnblocked(-100);
+                    blockedMilestone.notifyUnblocked(lastTicket);
                 }
             }
         }
@@ -193,7 +221,7 @@ public class Milestone implements Subject {
             String[] assignedDevs) {
         this.owner = owner;
         this.createdAt = createdAt;
-        
+
         this.name = name;
         this.blockingFor = blockingFor;
         if (blockingFor != null) {

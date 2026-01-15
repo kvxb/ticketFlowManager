@@ -65,6 +65,11 @@ public class Database {
     private List<Ticket> tickets = new ArrayList<>(); // input in testing period
     private List<CommandInput> commands = new ArrayList<>();
     private List<Milestone> milestones = new ArrayList<>();
+    private LocalDate lastUpdate;
+
+    public void setLastUpdate(LocalDate lastUpdate) {
+        this.lastUpdate = lastUpdate;
+    }
 
     public int getSize(String who) {
         switch (who) {
@@ -135,9 +140,11 @@ public class Database {
 
         tkt.assignDeveloper(command);
         mstn.assignDeveloper(command);
+        dev.assignToTicket(command.ticketID());
     }
 
     public void undoAssignedTicket(CommandInput command) {
+        // TODO chore can change this with the method created later right ?
         Ticket tkt = tickets.stream()
                 .filter(ticket -> ticket.getId() == command.ticketID())
                 .findFirst()
@@ -149,7 +156,12 @@ public class Database {
             // TODO: add error here
         }
 
+        Milestone milestone = getMilestoneFromTicketID(command.ticketID());
+        Developer dev = (Developer) getUser(command.username());
+
+        dev.deassignFromTicket(command.ticketID());
         tkt.undoAssignDeveloper(command);
+        milestone.removeTicketFromDev(command);
         // TODO: is a milestone update not needed here ???? it for sure is
         // but everything at its time
         System.out.println("finished with ticket" + tkt.getId());
@@ -496,8 +508,11 @@ public class Database {
             return;
         }
         ticket.addComment(command.username(), command.comment(), command.timestamp());
-        // System.out.println("exited peacefully");
 
+        Developer developer = (Developer) getUser(ticket.getAssignedTo());
+        developer.incrementCommentCount(ticket.getId());
+
+        // System.out.println("exited peacefully");
     }
 
     public void undoAddComment(CommandInput command) {
@@ -580,6 +595,14 @@ public class Database {
     }
 
     public void update(LocalDate date) {
+        for (LocalDate time = lastUpdate; !time.isAfter(date); time = time.plusDays(1)) {
+            // System.out.println("UPDATE MADE AT: " + time.toString());
+            miniUpdate(time);
+        }
+        lastUpdate = date;
+    }
+
+    public void miniUpdate(LocalDate date) {
         milestones.forEach(milestone -> {
             int timeLeft = (int) ChronoUnit.DAYS.between(date, LocalDate.parse(milestone.getDueDate()));
 
@@ -601,6 +624,10 @@ public class Database {
                 milestone.setOverdueBy(0);
             }
 
+            if (date.equals(lastUpdate)) {
+                return;
+            }
+
             // int timeSinceCreation = Math
             // .abs((int) ChronoUnit.DAYS.between(LocalDate.parse(milestone.getCreatedAt()),
             // date));
@@ -609,11 +636,13 @@ public class Database {
                 if (milestone.getUnlockedDate() != null) {
                     timeSinceCreation = Math
                             .abs((int) ChronoUnit.DAYS.between((milestone.getUnlockedDate()),
-                                    date));
+                                    date))
+                            + 1;
                 } else {
                     timeSinceCreation = Math
                             .abs((int) ChronoUnit.DAYS.between((LocalDate.parse(milestone.getCreatedAt())),
-                                    date));
+                                    date))
+                            + 1; // i added 1's and nothing happened this is insane
                 }
 
             }

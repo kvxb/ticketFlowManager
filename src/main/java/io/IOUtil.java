@@ -427,10 +427,12 @@ public class IOUtil {
             ticketNode.put("overdueBy", milestone.getOverdueBy());
             ArrayNode openTickets = MAPPER.createArrayNode();
             milestone.getOpenTickets().stream()
+                    .sorted()
                     .forEach(openTickets::add);
             ticketNode.set("openTickets", openTickets);
             ArrayNode closedTickets = MAPPER.createArrayNode();
             milestone.getClosedTickets().stream()
+                    .sorted()
                     .forEach(closedTickets::add);
             ticketNode.set("closedTickets", closedTickets);
             ticketNode.put("completionPercentage", milestone.getCompletionPercentage());
@@ -446,7 +448,7 @@ public class IOUtil {
                         ArrayNode assignedArray = MAPPER.createArrayNode();
 
                         if (rep.getAssignedTickets() != null) {
-                            rep.getAssignedTickets().forEach(assignedArray::add);
+                            rep.getAssignedTickets().stream().sorted().forEach(assignedArray::add);
                         }
 
                         devNode.set("assignedTickets", assignedArray);
@@ -464,6 +466,9 @@ public class IOUtil {
         outputs.add(commandNode);
     }
 
+    // i dont have the slightest trust in this code i wrote the spaghetti monsster
+    // of implemenations
+    // if anything is wrong its here
     public static void viewTicketHistory(CommandInput command, List<Ticket> userTickets) {
         ObjectNode commandNode = MAPPER.createObjectNode();
         commandNode.put("command", command.command());
@@ -473,17 +478,6 @@ public class IOUtil {
         ArrayNode ticketHistoryArray = MAPPER.createArrayNode();
 
         for (Ticket ticket : userTickets) {
-            String deassignTimestamp = null;
-
-            if (ticket.getTicketHistory() != null) {
-                for (Ticket.Action action : ticket.getTicketHistory().getActions()) {
-                    if ("DE-ASSIGNED".equals(action.getAction()) &&
-                            command.username().equals(action.getBy())) {
-                        deassignTimestamp = action.getTimestamp();
-                    }
-                }
-            }
-
             ObjectNode ticketNode = MAPPER.createObjectNode();
             ticketNode.put("id", ticket.getId());
             ticketNode.put("title", ticket.getTitle());
@@ -492,22 +486,38 @@ public class IOUtil {
             ArrayNode actionsArray = MAPPER.createArrayNode();
 
             if (ticket.getTicketHistory() != null && ticket.getTicketHistory().getActions() != null) {
+                boolean stopOutput = false;
+
                 for (Ticket.Action action : ticket.getTicketHistory().getActions()) {
-                    boolean includeAction = true;
-
-                    if (deassignTimestamp != null) {
-                        int timestampComparison = action.getTimestamp().compareTo(deassignTimestamp);
-
-                        if (timestampComparison > 0) {
-                            includeAction = false;
-                        } else if (timestampComparison == 0) {
-                            if (!"DE-ASSIGNED".equals(action.getAction())) {
-                                includeAction = false;
-                            }
-                        }
+                    if (stopOutput) {
+                        break;
                     }
 
-                    if (!includeAction) {
+                    if ("DE-ASSIGNED".equals(action.getAction()) &&
+                            command.username().equals(action.getBy())) {
+                        ObjectNode actionNode = MAPPER.createObjectNode();
+
+                        if (action.getMilestone() != null && !action.getMilestone().isEmpty()) {
+                            actionNode.put("milestone", action.getMilestone());
+                        }
+
+                        if (action.getFrom() != null) {
+                            actionNode.put("from", action.getFrom().toString());
+                        }
+
+                        if (action.getTo() != null) {
+                            actionNode.put("to", action.getTo().toString());
+                        }
+
+                        if (action.getBy() != null && !action.getBy().isEmpty()) {
+                            actionNode.put("by", action.getBy());
+                        }
+
+                        actionNode.put("timestamp", action.getTimestamp());
+                        actionNode.put("action", action.getAction());
+                        actionsArray.add(actionNode);
+
+                        stopOutput = true;
                         continue;
                     }
 
@@ -531,7 +541,6 @@ public class IOUtil {
 
                     actionNode.put("timestamp", action.getTimestamp());
                     actionNode.put("action", action.getAction());
-
                     actionsArray.add(actionNode);
                 }
             }
@@ -541,10 +550,24 @@ public class IOUtil {
             ArrayNode commentsArray = MAPPER.createArrayNode();
 
             if (ticket.getComments() != null) {
-                for (Ticket.Comment comment : ticket.getComments()) {
-                    if (deassignTimestamp == null ||
-                            comment.getCreatedAt().compareTo(deassignTimestamp) < 0) {
+                User user = db.getUser(command.username());
 
+                if (user.getRole().name().equals("MANAGER")) {
+                    for (Ticket.Comment comment : ticket.getComments()) {
+                        ObjectNode commentNode = MAPPER.createObjectNode();
+                        commentNode.put("author", comment.getAuthor());
+                        commentNode.put("content", comment.getContent());
+                        commentNode.put("createdAt", comment.getCreatedAt());
+                        commentsArray.add(commentNode);
+                    }
+                } else if (user.getRole().name().equals("DEVELOPER")) {
+                    Developer currentDev = (Developer) user;
+                    int allowedCommentCount = currentDev.getCommentCountForTicket(ticket.getId());
+                    List<Ticket.Comment> sortedComments = new ArrayList<>(ticket.getComments());
+                    sortedComments.sort(Comparator.comparing(Ticket.Comment::getCreatedAt));
+
+                    for (int i = 0; i < Math.min(allowedCommentCount, sortedComments.size()); i++) {
+                        Ticket.Comment comment = sortedComments.get(i);
                         ObjectNode commentNode = MAPPER.createObjectNode();
                         commentNode.put("author", comment.getAuthor());
                         commentNode.put("content", comment.getContent());

@@ -218,6 +218,7 @@ public class App {
         }
 
         currentDate = db.getCommands().getFirst().time();
+        db.setLastUpdate(currentDate);
 
         // TODO 2: process commands.
         testingPeriod();

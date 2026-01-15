@@ -9,8 +9,39 @@ import database.Database;
 import notifications.Observer;
 import tickets.Ticket;
 import java.time.temporal.TemporalAdjusters;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 public class Developer extends User implements Observer {
+
+    private Map<Integer, Integer> ticketCommentStats = new HashMap<>();
+    private Set<Integer> currentlyAssignedTickets = new HashSet<>();
+
+    public void assignToTicket(int ticketId) {
+        currentlyAssignedTickets.add(ticketId);
+        ticketCommentStats.putIfAbsent(ticketId, 0);
+    }
+
+    public void deassignFromTicket(int ticketId) {
+        currentlyAssignedTickets.remove(ticketId);
+    }
+
+    public void incrementCommentCount(int ticketId) {
+        if (currentlyAssignedTickets.contains(ticketId)) {
+            ticketCommentStats.put(ticketId, ticketCommentStats.getOrDefault(ticketId, 0) + 1);
+        }
+    }
+
+    public int getCommentCountForTicket(int ticketId) {
+        return ticketCommentStats.getOrDefault(ticketId, 0);
+    }
+
+    public Map<Integer, Integer> getTicketCommentStats() {
+        return new HashMap<>(ticketCommentStats);
+    }
+
     // TODO: format yyyy-mm-dd to be respected
     public enum ExpertiseArea {
         FRONTEND,
@@ -169,7 +200,7 @@ public class Developer extends User implements Observer {
         return stats;
     }
 
-    //TODO CHORE move where they belong
+    // TODO CHORE move where they belong
     public static double averageResolvedTicketType(int bug, int feature, int ui) {
         return (bug + feature + ui) / 3.0;
     }
