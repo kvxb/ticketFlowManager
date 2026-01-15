@@ -13,6 +13,7 @@ import java.time.LocalDate;
 public class Milestone implements Subject {
     private Database db = Database.getInstance();
     private List<Observer> observers = new ArrayList<>();
+    private int timeAlive;
 
     @Override
     public void addObserver(Observer observer) {
@@ -105,39 +106,52 @@ public class Milestone implements Subject {
         }
     }
 
-    public void changeStatusOfTicket(int id) {
+    public void changeStatusOfTicket(CommandInput command) {
+        int id = command.ticketID();
         if (openTickets.contains(id)) {
             openTickets.remove(Integer.valueOf(id));
             closedTickets.add(id);
         }
-        this.updateCompletionPercentage();
+        this.updateCompletionPercentage(command.time());
     }
 
-    public void undoChangeStatusOfTicket(int id) {
+    public void undoChangeStatusOfTicket(CommandInput command) {
+        int id = command.ticketID();
         if (closedTickets.contains(id)) {
             openTickets.add(id);
             closedTickets.remove(Integer.valueOf(id));
         }
-        this.updateCompletionPercentage();
+        this.updateCompletionPercentage(command.time());
     }
 
-    // TODO: this is runnign on assumption that a milestone cant be blocke by two
+    private LocalDate unlockedDate;
+
+    public LocalDate getUnlockedDate() {
+		return unlockedDate;
+	}
+
+	public void setUnlockedDate(LocalDate unlockedDate) {
+		this.unlockedDate = unlockedDate;
+	}
+
+	// TODO: this is runnign on assumption that a milestone cant be blocke by two
     // other at the same time which is wrong fix later
-    public void updateCompletionPercentage() {
+    public void updateCompletionPercentage(LocalDate time) {
         this.completionPercentage = MathUtil.round(getNumberOfTickets("CLOSED") / getNumberOfTickets("ALL"));
         if (completionPercentage == 1.0) {
             for (String milestoneName : blockingFor) {
                 Milestone blockedMilestone = db.getMilestoneFromName(milestoneName);
                 blockedMilestone.setBlocked(false);
+                blockedMilestone.setUnlockedDate(time);
 
-                //TODO dont we already have overdueBy and stuff like that for this ?
+                // TODO dont we already have overdueBy and stuff like that for this ?
                 // LocalDate dueDate = LocalDate.parse(blockedMilestone.getDueDate());
                 // LocalDate currentDate = LocalDate.parse(this.createdAt);
 
                 if (this.overdueBy > 0) {
                     blockedMilestone.notifyUnblockedAfterDue();
                 } else {
-                    //TODO keep the last ticket to be resolved;
+                    // TODO keep the last ticket to be resolved;
                     blockedMilestone.notifyUnblocked(-100);
                 }
             }
@@ -179,6 +193,7 @@ public class Milestone implements Subject {
             String[] assignedDevs) {
         this.owner = owner;
         this.createdAt = createdAt;
+        
         this.name = name;
         this.blockingFor = blockingFor;
         if (blockingFor != null) {
@@ -336,5 +351,37 @@ public class Milestone implements Subject {
 
     public void setRepartitions(Repartition[] repartitions) {
         this.repartitions = repartitions;
+    }
+
+    public Database getDb() {
+        return db;
+    }
+
+    public void setDb(Database db) {
+        this.db = db;
+    }
+
+    public List<Observer> getObservers() {
+        return observers;
+    }
+
+    public void setObservers(List<Observer> observers) {
+        this.observers = observers;
+    }
+
+    public int getTimeAlive() {
+        return timeAlive;
+    }
+
+    public void setTimeAlive(int timeAlive) {
+        this.timeAlive = timeAlive;
+    }
+
+    public boolean isSentNotificationDueTomorrow() {
+        return sentNotificationDueTomorrow;
+    }
+
+    public void setSentNotificationDueTomorrow(boolean sentNotificationDueTomorrow) {
+        this.sentNotificationDueTomorrow = sentNotificationDueTomorrow;
     }
 }

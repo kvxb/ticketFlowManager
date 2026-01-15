@@ -116,6 +116,10 @@ public class Database {
         Milestone mstn = getMilestoneFromTicketID(command.ticketID());
         Ticket tkt = getTicket(command.ticketID());
 
+        if (tkt == null) {
+            return;
+        }
+
         DeveloperValidationHandler validateDev = new ExpertiseAreaHandler();
         validateDev.setNext(new SeniorityLevelHandler())
                 .setNext(new TicketStatusHandler())
@@ -202,6 +206,8 @@ public class Database {
         Milestone milestone = milestones.getLast();
         for (int ticketId : milestone.getOpenTickets()) {
             Ticket ticket = getTicket(ticketId);
+            if (ticket == null)
+                continue;
             ticket.addActionMilestone(milestone.getName(), milestone.getOwner(), milestone.getCreatedAt());
         }
         for (String devUsername : milestone.getAssignedDevs()) {
@@ -515,6 +521,9 @@ public class Database {
     public void changeStatus(CommandInput command) {
         Ticket ticket = getTicket(command.ticketID());
         Developer dev = (Developer) getUser(command.username());
+        if (ticket == null) {
+            return;
+        }
         if (!ticket.getAssignedTo().equals(command.username())) {
             IOUtil.changeError(command, "ASSIGNMENT");
             return;
@@ -530,7 +539,7 @@ public class Database {
             case "RESOLVED":
                 ticket.changeStatus(Ticket.Status.CLOSED, command.username(), command.timestamp());
                 Milestone milestone = getMilestoneFromTicketID(command.ticketID());
-                milestone.changeStatusOfTicket(command.ticketID());
+                milestone.changeStatusOfTicket(command);
                 // dev.setClosedTickets(dev.getClosedTickets() + 1);
                 break;
             default:
@@ -541,6 +550,9 @@ public class Database {
     public void undoChangeStatus(CommandInput command) {
         Ticket ticket = getTicket(command.ticketID());
 
+        if (ticket == null) {
+            return;
+        }
         if (!ticket.getAssignedTo().equals(command.username())) {
             IOUtil.changeError(command, "ASSIGNMENT");
             return;
@@ -555,7 +567,7 @@ public class Database {
             case "CLOSED":
                 ticket.changeStatus(Ticket.Status.RESOLVED, command.username(), command.timestamp());
                 Milestone milestone = getMilestoneFromTicketID(command.ticketID());
-                milestone.undoChangeStatusOfTicket(command.ticketID());
+                milestone.undoChangeStatusOfTicket(command);
                 break;
             default:
                 break;
@@ -589,10 +601,26 @@ public class Database {
                 milestone.setOverdueBy(0);
             }
 
-            int timeSinceCreation = Math
-                    .abs((int) ChronoUnit.DAYS.between(LocalDate.parse(milestone.getCreatedAt()), date));
+            // int timeSinceCreation = Math
+            // .abs((int) ChronoUnit.DAYS.between(LocalDate.parse(milestone.getCreatedAt()),
+            // date));
+            int timeSinceCreation = 0;
+            if (!milestone.isBlocked()) {
+                if (milestone.getUnlockedDate() != null) {
+                    timeSinceCreation = Math
+                            .abs((int) ChronoUnit.DAYS.between((milestone.getUnlockedDate()),
+                                    date));
+                } else {
+                    timeSinceCreation = Math
+                            .abs((int) ChronoUnit.DAYS.between((LocalDate.parse(milestone.getCreatedAt())),
+                                    date));
+                }
+
+            }
+
             // monitor this method since im not sure what consitutes 3 days
             if ((timeSinceCreation != 0) && !milestone.isBlocked()) {
+                // if (milestone.getTimeAlive() != 0 && !milestone.isBlocked()) {
                 boolean CRIT = false;
                 if (timeLeft <= 1) {
                     CRIT = true;
@@ -612,6 +640,10 @@ public class Database {
                                 ticket.setBusinessPriority(BusinessPriority.CRITICAL);
                                 // System.out.println("CRITICAL " + ticket.getId());
                             }
+                            // if (milestone.getTimeAlive() % 3 == 0) {
+                            // // ticket.upPriority();
+                            // }
+
                             if (timeSinceCreation % 3 == 0) {
                                 ticket.upPriority();
                             }

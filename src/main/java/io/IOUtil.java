@@ -55,6 +55,8 @@ public class IOUtil {
     }
 
     public static void outputSearch(CommandInput command, List<?> results) {
+        User user = db.getUser(command.username());
+
         if (command.filters() == null) {
             System.out.println("ERROR: filters is null for search command!");
             return;
@@ -94,9 +96,9 @@ public class IOUtil {
                 ticketNode.put("solvedAt", ticket.getSolvedAt() != null ? ticket.getSolvedAt() : "");
                 ticketNode.put("reportedBy", ticket.getReportedBy());
 
-                if (hasKeywordsFilter &&
+                if ((hasKeywordsFilter &&
                         ticket.getMatchingWords() != null &&
-                        !ticket.getMatchingWords().isEmpty()) {
+                        !ticket.getMatchingWords().isEmpty()) || user.getRole().name().equals("MANAGER")) {
 
                     ArrayNode matchingWordsArray = MAPPER.createArrayNode();
                     for (String word : ticket.getMatchingWords()) {

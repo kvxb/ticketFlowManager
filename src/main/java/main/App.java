@@ -79,7 +79,7 @@ public class App {
                     IOUtil.outputSearch(currentCommand, db.getSearchResults(currentCommand));
                     break;
                 default:
-                    System.out.println("didnt match command");
+                    System.out.println("didnt match command in testing");
             }
             it++;
         }
@@ -87,7 +87,7 @@ public class App {
 
     public static void developPeriod() {
         System.out.println("developPeriod");
-        LocalDate endDate = currentDate.plusDays(100);
+        LocalDate endDate = currentDate.plusDays(1000);
 
         while (it < db.getSize("commands")) {
             CommandInput currentCommand = db.getCommands().get(it);
@@ -160,8 +160,12 @@ public class App {
                     break;
                 case "generatePerformanceReport":
                     IOUtil.generatePerformanceReport(currentCommand, db.getPerformance(currentCommand));
+                    break;
+                case "startTestingPhase":
+                    testingPeriod();
+                    continue;
                 default:
-                    System.out.println("didnt match command");
+                    System.out.println("didnt match command in development: " + currentCommand.name());
             }
             it++;
 
@@ -216,13 +220,9 @@ public class App {
         currentDate = db.getCommands().getFirst().time();
 
         // TODO 2: process commands.
-        boolean LOOPBACK = true;
-        while (LOOPBACK) {
-            testingPeriod();
-            developPeriod();
-            // verifiyPeriod();
-            LOOPBACK = false;
-        }
+        testingPeriod();
+        developPeriod();
+        // verifiyPeriod();
         // TODO 3: create objectnodes for output, add them to outputs list.
 
         IOUtil.writeOutput();

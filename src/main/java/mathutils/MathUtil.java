@@ -15,7 +15,7 @@ public class MathUtil {
 
     public static double average(double value, int elements) {
         if (elements == 0)
-            return -1.0;
+            return 0;
         return value / elements;
     }
 }
