@@ -113,6 +113,30 @@ public class IOUtil {
         outputs.add(commandNode);
     }
 
+    public static void generatePerformanceReport(CommandInput command, List<List<Object>> reportData) {
+        ObjectNode commandNode = MAPPER.createObjectNode();
+        commandNode.put("command", command.command());
+        commandNode.put("username", command.username());
+        commandNode.put("timestamp", command.timestamp());
+
+        ArrayNode reportArray = MAPPER.createArrayNode();
+
+        for (List<Object> row : reportData) {
+            ObjectNode devNode = MAPPER.createObjectNode();
+
+            devNode.put("username", (String) row.get(0));
+            devNode.put("closedTickets", ((Number) row.get(1)).intValue());
+            devNode.put("averageResolutionTime", ((Number) row.get(2)).doubleValue());
+            devNode.put("performanceScore", ((Number) row.get(3)).doubleValue());
+            devNode.put("seniority", (String) row.get(4));
+
+            reportArray.add(devNode);
+        }
+
+        commandNode.set("report", reportArray);
+        outputs.add(commandNode);
+    }
+
     public static void outputNotifications(CommandInput command, List<String> notifications) {
         ObjectNode commandNode = MAPPER.createObjectNode();
         commandNode.put("command", command.command());

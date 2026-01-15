@@ -158,6 +158,8 @@ public class App {
                 case "appStabilityReport":
                     IOUtil.generateAppStabilityReport(currentCommand, db.getAppStability());
                     break;
+                case "generatePerformanceReport":
+                    IOUtil.generatePerformanceReport(currentCommand, db.getPerformance(currentCommand));
                 default:
                     System.out.println("didnt match command");
             }

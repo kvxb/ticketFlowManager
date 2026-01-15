@@ -514,7 +514,7 @@ public class Database {
 
     public void changeStatus(CommandInput command) {
         Ticket ticket = getTicket(command.ticketID());
-
+        Developer dev = (Developer) getUser(command.username());
         if (!ticket.getAssignedTo().equals(command.username())) {
             IOUtil.changeError(command, "ASSIGNMENT");
             return;
@@ -525,11 +525,13 @@ public class Database {
         switch (oldStatus.name()) {
             case "IN_PROGRESS":
                 ticket.changeStatus(Ticket.Status.RESOLVED, command.username(), command.timestamp());
+                dev.setClosedTickets(dev.getClosedTickets() + 1);
                 break;
             case "RESOLVED":
                 ticket.changeStatus(Ticket.Status.CLOSED, command.username(), command.timestamp());
                 Milestone milestone = getMilestoneFromTicketID(command.ticketID());
                 milestone.changeStatusOfTicket(command.ticketID());
+                // dev.setClosedTickets(dev.getClosedTickets() + 1);
                 break;
             default:
                 break;
@@ -601,6 +603,9 @@ public class Database {
                 for (int ticketId : milestone.getTickets()) {
                     for (Ticket ticket : tickets) {
                         if (ticketId == ticket.getId()) {
+                            if (ticket.getSolvedAt() != null) {
+                                continue;
+                            }
                             if (CRIT) {
                                 // wrap this in a method since i dont think database should be aware of
                                 // businessPriority
@@ -873,6 +878,33 @@ public class Database {
         String appStability = determineStability(bugRiskLevel, featureRiskLevel, uiRiskLevel,
                 avgBugImpact, avgFeatureImpact, avgUIImpact);
         report.add(appStability);
+
+        return report;
+    }
+
+    public List<List<Object>> getPerformance(CommandInput command) {
+        List<List<Object>> report = new ArrayList<>();
+        Manager manager = (Manager) getUser(command.username());
+
+        List<String> subordinateUsernames = Arrays.asList(manager.getSubordinates());
+        List<String> sortedUsernames = new ArrayList<>(subordinateUsernames);
+        Collections.sort(sortedUsernames);
+
+        for (String username : sortedUsernames) {
+            Developer dev = (Developer) getUser(username);
+            if (dev != null) {
+                List<Object> row = new ArrayList<>();
+
+                row.add(username);
+                List<Number> metrics = dev.updatePerformanceScore(command.time());
+                row.add(metrics.get(0).intValue());
+                row.add(MathUtil.round(metrics.get(2).doubleValue()));
+                row.add(MathUtil.round(metrics.get(1).doubleValue()));
+                row.add(dev.getSeniority().toString());
+
+                report.add(row);
+            }
+        }
 
         return report;
     }

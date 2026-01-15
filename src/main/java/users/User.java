@@ -1,7 +1,7 @@
 package users;
 
 public class User {
-    private String username;
+    protected String username;
     private String email;
 
     public enum Role {

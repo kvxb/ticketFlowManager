@@ -27,7 +27,8 @@ public class ExpertiseAreaHandler extends DeveloperValidationHandler {
                 return 0;
             case "DESIGN":
                 if (!developerExpertise.equals("DESIGN")
-                        && !developerExpertise.equals("FULLSTACK")) {
+                        && !developerExpertise.equals("FULLSTACK")
+                        && !developerExpertise.equals("FRONTEND")) {
                     return 3;
                 }
                 return 0;
