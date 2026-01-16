@@ -581,6 +581,7 @@ public class Database {
                 break;
             case "CLOSED":
                 ticket.changeStatus(Ticket.Status.RESOLVED, command.username(), command.timestamp());
+                ticket.setSolvedAt(null);
                 Milestone milestone = getMilestoneFromTicketID(command.ticketID());
                 milestone.undoChangeStatusOfTicket(command);
                 break;
@@ -636,13 +637,11 @@ public class Database {
                 if (milestone.getUnlockedDate() != null) {
                     timeSinceCreation = Math
                             .abs((int) ChronoUnit.DAYS.between((milestone.getUnlockedDate()),
-                                    date))
-                            + 1;
+                                    date));
                 } else {
                     timeSinceCreation = Math
                             .abs((int) ChronoUnit.DAYS.between((LocalDate.parse(milestone.getCreatedAt())),
-                                    date))
-                            + 1; // i added 1's and nothing happened this is insane
+                                    date)); // i added 1's and nothing happened this is insane
                 }
 
             }
@@ -658,9 +657,13 @@ public class Database {
                     }
                 }
                 for (int ticketId : milestone.getTickets()) {
+                    //TODO chore use getTicket
                     for (Ticket ticket : tickets) {
                         if (ticketId == ticket.getId()) {
-                            if (ticket.getSolvedAt() != null) {
+                            // if (ticket.getSolvedAt() != null) {
+                            //     continue;
+                            // }
+                            if(ticket.getStatus().name().equals("CLOSED")){
                                 continue;
                             }
                             if (CRIT) {
