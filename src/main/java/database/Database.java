@@ -1,10 +1,7 @@
 package database;
 
-//TODO make this a singleton :(
 import tickets.Bug;
-import java.util.Set;
 import java.util.Comparator;
-import java.util.HashSet;
 import tickets.FeatureRequest;
 import mathutils.MathUtil;
 import tickets.Ticket;
@@ -36,7 +33,6 @@ import validation.commenthandlers.ClosedTicketHandler;
 import validation.commenthandlers.CommentLengthHandler;
 import validation.commenthandlers.DeveloperAssignmentHandler;
 import validation.commenthandlers.ReporterOwnershipHandler;
-import milestones.Milestone.Repartition;
 import java.util.Collections;
 import java.util.Map;
 import java.util.HashMap;
@@ -61,17 +57,17 @@ public class Database {
     private static Database instance;
     private final String USERS_DB = "input/database/users.json";
 
-    private List<User> users = new ArrayList<>(); // daken from the db file
-    private List<Ticket> tickets = new ArrayList<>(); // input in testing period
+    private List<User> users = new ArrayList<>();
+    private List<Ticket> tickets = new ArrayList<>();
     private List<CommandInput> commands = new ArrayList<>();
-    private List<Milestone> milestones = new ArrayList<>();
+    private final List<Milestone> milestones = new ArrayList<>();
     private LocalDate lastUpdate;
 
-    public void setLastUpdate(LocalDate lastUpdate) {
+    public void setLastUpdate(final LocalDate lastUpdate) {
         this.lastUpdate = lastUpdate;
     }
 
-    public int getSize(String who) {
+    public int getSize(final String who) {
         switch (who) {
             case "users":
                 return users.size();
@@ -91,12 +87,11 @@ public class Database {
         tickets.clear();
         commands.clear();
         milestones.clear();
-        // System.out.println("cleared all");
     }
 
-    public String getMilestoneNameFromTicketID(int TicketID) {
-        for (Milestone m : milestones) {
-            for (int id : m.getTickets()) {
+    public String getMilestoneNameFromTicketID(final int TicketID) {
+        for (final Milestone m : milestones) {
+            for (final int id : m.getTickets()) {
                 if (id == TicketID) {
                     return m.getName();
                 }
@@ -105,9 +100,9 @@ public class Database {
         return null;
     }
 
-    public Milestone getMilestoneFromTicketID(int TicketID) {
-        for (Milestone m : milestones) {
-            for (int id : m.getTickets()) {
+    public Milestone getMilestoneFromTicketID(final int TicketID) {
+        for (final Milestone m : milestones) {
+            for (final int id : m.getTickets()) {
                 if (id == TicketID) {
                     return m;
                 }
@@ -116,22 +111,22 @@ public class Database {
         return null;
     }
 
-    public void assignTicket(CommandInput command) {
-        Developer dev = (Developer) getUser(command.username());
-        Milestone mstn = getMilestoneFromTicketID(command.ticketID());
-        Ticket tkt = getTicket(command.ticketID());
+    public void assignTicket(final CommandInput command) {
+        final Developer dev = (Developer) getUser(command.username());
+        final Milestone mstn = getMilestoneFromTicketID(command.ticketID());
+        final Ticket tkt = getTicket(command.ticketID());
 
         if (tkt == null) {
             return;
         }
 
-        DeveloperValidationHandler validateDev = new ExpertiseAreaHandler();
+        final DeveloperValidationHandler validateDev = new ExpertiseAreaHandler();
         validateDev.setNext(new SeniorityLevelHandler())
                 .setNext(new TicketStatusHandler())
                 .setNext(new MilestoneAssignmentHandler())
                 .setNext(new LockedMilestoneHandler());
 
-        boolean isDevValid = validateDev.check(dev, tkt, mstn, command);
+        final boolean isDevValid = validateDev.check(dev, tkt, mstn, command);
 
         if (!isDevValid) {
             System.out.println("INVALID ASSIGNMENT");
@@ -143,32 +138,22 @@ public class Database {
         dev.assignToTicket(command.ticketID());
     }
 
-    public void undoAssignedTicket(CommandInput command) {
-        // TODO chore can change this with the method created later right ?
-        Ticket tkt = tickets.stream()
-                .filter(ticket -> ticket.getId() == command.ticketID())
-                .findFirst()
-                .orElse(null);
+    public void undoAssignedTicket(final CommandInput command) {
+        final Ticket tkt = getTicket(command.ticketID());
+        final Milestone milestone = getMilestoneFromTicketID(command.ticketID());
+        final Developer dev = (Developer) getUser(command.username());
 
         if (tkt == null) {
-            System.out.println("didnt find ticket");
             return;
-            // TODO: add error here
         }
-
-        Milestone milestone = getMilestoneFromTicketID(command.ticketID());
-        Developer dev = (Developer) getUser(command.username());
 
         dev.deassignFromTicket(command.ticketID());
         tkt.undoAssignDeveloper(command);
         milestone.removeTicketFromDev(command);
-        // TODO: is a milestone update not needed here ???? it for sure is
-        // but everything at its time
-        System.out.println("finished with ticket" + tkt.getId());
     }
 
-    public User getUser(String username) {
-        for (User user : users) {
+    public User getUser(final String username) {
+        for (final User user : users) {
             if (user.getUsername().equals(username)) {
                 return user;
             }
@@ -176,8 +161,8 @@ public class Database {
         return null;
     }
 
-    public Ticket getTicket(int id) {
-        for (Ticket t : tickets) {
+    public Ticket getTicket(final int id) {
+        for (final Ticket t : tickets) {
             if (t.getId() == id) {
                 return t;
             }
@@ -185,7 +170,7 @@ public class Database {
         return null;
     }
 
-    public List<Ticket> getAssignedTickets(String username) {
+    public List<Ticket> getAssignedTickets(final String username) {
         return tickets.stream()
                 .filter(ticket -> ticket.getAssignedTo() != null &&
                         ticket.getAssignedTo().equals(username))
@@ -195,7 +180,7 @@ public class Database {
                 .collect(Collectors.toList());
     }
 
-    public void addMilestone(CommandInput command) {
+    public void addMilestone(final CommandInput command) {
         if (!command.username().contains("manager")) {
             if (command.username().contains("reporter")) {
                 IOUtil.milestoneError(command, "WRONG_USER_REPORTER");
@@ -205,7 +190,7 @@ public class Database {
             return;
         }
 
-        for (int commandTicketId : command.tickets()) {
+        for (final int commandTicketId : command.tickets()) {
             if (getMilestoneNameFromTicketID(commandTicketId) != null) {
                 IOUtil.milestoneError(command,
                         "DUPE_" + getMilestoneNameFromTicketID(commandTicketId) + "_" + commandTicketId);
@@ -215,25 +200,25 @@ public class Database {
 
         milestones.add(new Milestone(command.username(), command.timestamp(), command.name(), command.blockingFor(),
                 command.dueDate(), command.tickets(), command.assignedDevs()));
-        Milestone milestone = milestones.getLast();
-        for (int ticketId : milestone.getOpenTickets()) {
-            Ticket ticket = getTicket(ticketId);
+        final Milestone milestone = milestones.getLast();
+        for (final int ticketId : milestone.getOpenTickets()) {
+            final Ticket ticket = getTicket(ticketId);
             if (ticket == null)
                 continue;
             ticket.addActionMilestone(milestone.getName(), milestone.getOwner(), milestone.getCreatedAt());
         }
-        for (String devUsername : milestone.getAssignedDevs()) {
-            User user = getUser(devUsername);
+        for (final String devUsername : milestone.getAssignedDevs()) {
+            final User user = getUser(devUsername);
             if (user instanceof Developer) {
-                Developer dev = (Developer) user;
+                final Developer dev = (Developer) user;
                 milestone.addObserver(dev);
             }
         }
         milestone.notifyCreated();
     }
 
-    public Milestone getMilestoneFromName(String name) {
-        for (Milestone milestone : milestones) {
+    public Milestone getMilestoneFromName(final String name) {
+        for (final Milestone milestone : milestones) {
             if (milestone.getName().equals(name)) {
                 return milestone;
             }
@@ -241,17 +226,21 @@ public class Database {
         return null;
     }
 
-    public List<Ticket> getTicketsConcerningUser(String username) {
-        List<Ticket> filteredTickets = new ArrayList<>();
-        User user = getUser(username);
+    public List<Ticket> getTicketsConcerningUser(final String username) {
+        final List<Ticket> filteredTickets = new ArrayList<>();
+        final User user = getUser(username);
 
-        for (Ticket ticket : tickets) {
+        if (user.getRole().name().equals("REPORTER")) {
+            return null;
+        }
+
+        for (final Ticket ticket : tickets) {
             boolean shouldAddTicket = false;
 
             switch (user.getRole().name()) {
                 case "DEVELOPER":
                     if (ticket.getTicketHistory() != null) {
-                        for (Ticket.Action action : ticket.getTicketHistory().getActions()) {
+                        for (final Ticket.Action action : ticket.getTicketHistory().getActions()) {
                             if (username.equals(action.getBy())) {
                                 shouldAddTicket = true;
                                 break;
@@ -260,7 +249,7 @@ public class Database {
                     }
 
                     if (!shouldAddTicket && ticket.getComments() != null) {
-                        for (Ticket.Comment comment : ticket.getComments()) {
+                        for (final Ticket.Comment comment : ticket.getComments()) {
                             if (username.equals(comment.getAuthor())) {
                                 shouldAddTicket = true;
                                 break;
@@ -270,9 +259,9 @@ public class Database {
                     break;
 
                 case "MANAGER":
-                    List<Milestone> managerMilestones = getMilestonesFromUser(username);
+                    final List<Milestone> managerMilestones = getMilestonesFromUser(username);
 
-                    for (Milestone milestone : managerMilestones) {
+                    for (final Milestone milestone : managerMilestones) {
                         if (milestone.containsTicket(ticket.getId())) {
                             shouldAddTicket = true;
                             break;
@@ -287,7 +276,7 @@ public class Database {
         }
 
         Collections.sort(filteredTickets, (t1, t2) -> {
-            int dateCompare = t1.getCreatedAt().compareTo(t2.getCreatedAt());
+            final int dateCompare = t1.getCreatedAt().compareTo(t2.getCreatedAt());
             if (dateCompare != 0)
                 return dateCompare;
             return Integer.compare(t1.getId(), t2.getId());
@@ -296,10 +285,10 @@ public class Database {
         return filteredTickets;
     }
 
-    public List<Milestone> getMilestonesFromUser(String user) {
-        List<Milestone> userMilestones = new ArrayList<>();
+    public List<Milestone> getMilestonesFromUser(final String user) {
+        final List<Milestone> userMilestones = new ArrayList<>();
 
-        for (Milestone milestone : milestones) {
+        for (final Milestone milestone : milestones) {
             if (milestone.getOwner().equals(user)) {
                 userMilestones.add(milestone);
             }
@@ -308,9 +297,9 @@ public class Database {
         return userMilestones;
     }
 
-    private List<Milestone> getMilestonesForDeveloper(String username) {
-        List<Milestone> devMilestones = new ArrayList<>();
-        for (Milestone milestone : milestones) {
+    private List<Milestone> getMilestonesForDeveloper(final String username) {
+        final List<Milestone> devMilestones = new ArrayList<>();
+        for (final Milestone milestone : milestones) {
             if (Arrays.asList(milestone.getAssignedDevs()).contains(username)) {
                 devMilestones.add(milestone);
             }
@@ -318,16 +307,16 @@ public class Database {
         return devMilestones;
     }
 
-    public void blockMilestone(String name) {
+    public void blockMilestone(final String name) {
         milestones.stream()
                 .filter(milestone -> name.equals(milestone.getName()))
                 .findFirst()
                 .ifPresent(milestone -> milestone.setBlocked(true));
     }
 
-    public List<Milestone> getMilestones(String username) {
-        int lUnderscore = username.lastIndexOf('_');
-        String role = username.substring(lUnderscore + 1);
+    public List<Milestone> getMilestones(final String username) {
+        final int lUnderscore = username.lastIndexOf('_');
+        final String role = username.substring(lUnderscore + 1);
         switch (role) {
             case "manager":
                 return milestones.stream()
@@ -344,7 +333,7 @@ public class Database {
         }
     }
 
-    public void addTicket(CommandInput command) {
+    public void addTicket(final CommandInput command) {
         if (!command.params().type().equals("BUG") && command.params().reportedBy().isEmpty()) {
             IOUtil.ticketError(command, "ANON");
             return;
@@ -354,9 +343,9 @@ public class Database {
             return;
         }
         tickets.add(
-                switch (command.params().type()/* .toUpperCase() */ ) {
+                switch (command.params().type()) {
                     case "BUG" -> {
-                        Bug bug = new Bug.Builder()
+                        final Bug bug = new Bug.Builder()
                                 .id(Ticket.getTicketId())
                                 .title(command.params().title())
                                 .type(command.params().type())
@@ -375,7 +364,6 @@ public class Database {
                                 .severity(Bug.Severity.valueOf(
                                         command.params().severity().toUpperCase()))
                                 .environment(command.params().environment())
-                                // not verified that it works if somethig break around test this
                                 .errorCode(command.params().errorCode() != null
                                         ? Integer.parseInt(command.params().errorCode())
                                         : 0)
@@ -384,7 +372,7 @@ public class Database {
                         yield bug;
                     }
                     case "FEATURE_REQUEST" -> {
-                        FeatureRequest fr = new FeatureRequest.Builder()
+                        final FeatureRequest fr = new FeatureRequest.Builder()
                                 .id(Ticket.getTicketId())
                                 .type(command.params().type())
                                 .title(command.params().title())
@@ -402,7 +390,7 @@ public class Database {
                         yield fr;
                     }
                     case "UI_FEEDBACK" -> {
-                        UIFeedback ui = new UIFeedback.Builder()
+                        final UIFeedback ui = new UIFeedback.Builder()
                                 .id(Ticket.getTicketId())
                                 .type(command.params().type())
                                 .title(command.params().title())
@@ -427,7 +415,7 @@ public class Database {
         Ticket.setTicketId(Ticket.getTicketId() + 1);
     }
 
-    public boolean userExists(String username) {
+    public boolean userExists(final String username) {
         return users.stream()
                 .anyMatch(user -> username.equals(user.getUsername()));
     }
@@ -440,7 +428,7 @@ public class Database {
         return users;
     }
 
-    public void setUsers(List<UserInput> inputs) {
+    public void setUsers(final List<UserInput> inputs) {
         users = inputs.stream()
                 .map(input -> switch (input.role()) {
                     case "REPORTER" -> new Reporter(input.username(), input.email(), input.role());
@@ -454,9 +442,9 @@ public class Database {
                 .collect(Collectors.toList());
     }
 
-    public List<Ticket> getTickets(String username) {
-        int lUnderscore = username.lastIndexOf('_');
-        String role = username.substring(lUnderscore + 1);
+    public List<Ticket> getTickets(final String username) {
+        final int lUnderscore = username.lastIndexOf('_');
+        final String role = username.substring(lUnderscore + 1);
         switch (role) {
             case "manager":
                 return new ArrayList<>(tickets);
@@ -465,18 +453,17 @@ public class Database {
                         .filter(ticket -> username.equals(ticket.getReportedBy()))
                         .collect(Collectors.toList());
             default:
-                // TODO: change this later i dont like it
-                List<Milestone> devMilestones = milestones.stream()
+                final List<Milestone> devMilestones = milestones.stream()
                         .filter(milestone -> milestone.getAssignedDevs() != null &&
                                 Arrays.stream(milestone.getAssignedDevs())
                                         .anyMatch(dev -> dev.equals(username)))
                         .collect(Collectors.toList());
 
-                List<Ticket> result = new ArrayList<>();
+                final List<Ticket> result = new ArrayList<>();
 
-                for (Milestone milestone : devMilestones) {
-                    for (int ticketId : milestone.getTickets()) {
-                        for (Ticket ticket : tickets) {
+                for (final Milestone milestone : devMilestones) {
+                    for (final int ticketId : milestone.getTickets()) {
+                        for (final Ticket ticket : tickets) {
                             if (ticket.getId() == ticketId && "OPEN".equals(ticket.getStatus().toString())) {
                                 result.add(ticket);
                                 break;
@@ -490,53 +477,46 @@ public class Database {
         }
     }
 
-    public void addComment(CommandInput command) {
-        // System.out.println("entered add comment");
-        CommentValidationHandler validateComment = new TicketExistenceHandler();
+    public void addComment(final CommandInput command) {
+        final CommentValidationHandler validateComment = new TicketExistenceHandler();
         validateComment.setNext(new AnonymousTicketHandler())
                 .setNext(new ClosedTicketHandler())
                 .setNext(new CommentLengthHandler())
                 .setNext(new DeveloperAssignmentHandler())
                 .setNext(new ReporterOwnershipHandler());
 
-        Ticket ticket = getTicket(command.ticketID());
+        final Ticket ticket = getTicket(command.ticketID());
 
-        boolean isValid = validateComment.validate(command);
+        final boolean isValid = validateComment.validate(command);
         if (!isValid) {
-            // System.out.println("not valid");
-
             return;
         }
         ticket.addComment(command.username(), command.comment(), command.timestamp());
 
-        Developer developer = (Developer) getUser(ticket.getAssignedTo());
+        final Developer developer = (Developer) getUser(ticket.getAssignedTo());
         developer.incrementCommentCount(ticket.getId());
-
-        // System.out.println("exited peacefully");
     }
 
-    public void undoAddComment(CommandInput command) {
-        Ticket ticket = getTicket(command.ticketID());
-        // verifica si daca commentul exista !
+    public void undoAddComment(final CommandInput command) {
+        final Ticket ticket = getTicket(command.ticketID());
 
         if (ticket == null) {
-            // System.out.println("nullcomm");
             return;
         }
         if (ticket.getReportedBy().isEmpty()) {
             IOUtil.commentError(command, "ANON");
             return;
         }
-        // if (ticket.isWasError()) {
-        // IOUtil.commentError(command, "UNDO");
-        // }
         ticket.undoAddComment(command.username());
     }
 
-    public void changeStatus(CommandInput command) {
-        Ticket ticket = getTicket(command.ticketID());
-        Developer dev = (Developer) getUser(command.username());
+    public void changeStatus(final CommandInput command) {
+        final Ticket ticket = getTicket(command.ticketID());
+        final Developer dev = (Developer) getUser(command.username());
         if (ticket == null) {
+            return;
+        }
+        if (ticket.getAssignedTo() == null) {
             return;
         }
         if (!ticket.getAssignedTo().equals(command.username())) {
@@ -544,7 +524,7 @@ public class Database {
             return;
         }
 
-        Status oldStatus = ticket.getStatus();
+        final Status oldStatus = ticket.getStatus();
 
         switch (oldStatus.name()) {
             case "IN_PROGRESS":
@@ -553,17 +533,16 @@ public class Database {
                 break;
             case "RESOLVED":
                 ticket.changeStatus(Ticket.Status.CLOSED, command.username(), command.timestamp());
-                Milestone milestone = getMilestoneFromTicketID(command.ticketID());
+                final Milestone milestone = getMilestoneFromTicketID(command.ticketID());
                 milestone.changeStatusOfTicket(command);
-                // dev.setClosedTickets(dev.getClosedTickets() + 1);
                 break;
             default:
                 break;
         }
     }
 
-    public void undoChangeStatus(CommandInput command) {
-        Ticket ticket = getTicket(command.ticketID());
+    public void undoChangeStatus(final CommandInput command) {
+        final Ticket ticket = getTicket(command.ticketID());
 
         if (ticket == null) {
             return;
@@ -573,7 +552,7 @@ public class Database {
             return;
         }
 
-        Status currentStatus = ticket.getStatus();
+        final Status currentStatus = ticket.getStatus();
 
         switch (currentStatus.name()) {
             case "RESOLVED":
@@ -582,7 +561,7 @@ public class Database {
             case "CLOSED":
                 ticket.changeStatus(Ticket.Status.RESOLVED, command.username(), command.timestamp());
                 ticket.setSolvedAt(null);
-                Milestone milestone = getMilestoneFromTicketID(command.ticketID());
+                final Milestone milestone = getMilestoneFromTicketID(command.ticketID());
                 milestone.undoChangeStatusOfTicket(command);
                 break;
             default:
@@ -590,22 +569,21 @@ public class Database {
         }
     }
 
-    public TicketHistory getTicketHistory(int id) {
-        Ticket ticket = getTicket(id);
+    public TicketHistory getTicketHistory(final int id) {
+        final Ticket ticket = getTicket(id);
         return ticket.getTicketHistory();
     }
 
-    public void update(LocalDate date) {
+    public void update(final LocalDate date) {
         for (LocalDate time = lastUpdate; !time.isAfter(date); time = time.plusDays(1)) {
-            // System.out.println("UPDATE MADE AT: " + time.toString());
             miniUpdate(time);
         }
         lastUpdate = date;
     }
 
-    public void miniUpdate(LocalDate date) {
+    public void miniUpdate(final LocalDate date) {
         milestones.forEach(milestone -> {
-            int timeLeft = (int) ChronoUnit.DAYS.between(date, LocalDate.parse(milestone.getDueDate()));
+            final int timeLeft = (int) ChronoUnit.DAYS.between(date, LocalDate.parse(milestone.getDueDate()));
 
             if (milestone.getCompletionPercentage() == 1.0) {
                 milestone.setStatus("COMPLETED");
@@ -613,10 +591,7 @@ public class Database {
             if (milestone.getStatus().equals("COMPLETED")) {
                 return;
             }
-            // this should be in the milestone class maybe ? not here idk
-            // like how i do for upPriority() edit: maybe to contorted since in the
-            // milestone class you have to call here to do the actual changes since here lie
-            // the actual tickets
+
             if (timeLeft < 0) {
                 milestone.setDaysUntilDue(0);
                 milestone.setOverdueBy(-timeLeft + 1);
@@ -629,9 +604,6 @@ public class Database {
                 return;
             }
 
-            // int timeSinceCreation = Math
-            // .abs((int) ChronoUnit.DAYS.between(LocalDate.parse(milestone.getCreatedAt()),
-            // date));
             int timeSinceCreation = 0;
             if (!milestone.isBlocked()) {
                 if (milestone.getUnlockedDate() != null) {
@@ -641,14 +613,12 @@ public class Database {
                 } else {
                     timeSinceCreation = Math
                             .abs((int) ChronoUnit.DAYS.between((LocalDate.parse(milestone.getCreatedAt())),
-                                    date)); // i added 1's and nothing happened this is insane
+                                    date));
                 }
 
             }
 
-            // monitor this method since im not sure what consitutes 3 days
             if ((timeSinceCreation != 0) && !milestone.isBlocked()) {
-                // if (milestone.getTimeAlive() != 0 && !milestone.isBlocked()) {
                 boolean CRIT = false;
                 if (timeLeft <= 1) {
                     CRIT = true;
@@ -656,39 +626,27 @@ public class Database {
                         milestone.notifyDueTomorrow();
                     }
                 }
-                for (int ticketId : milestone.getTickets()) {
-                    //TODO chore use getTicket
-                    for (Ticket ticket : tickets) {
-                        if (ticketId == ticket.getId()) {
-                            // if (ticket.getSolvedAt() != null) {
-                            //     continue;
-                            // }
-                            if(ticket.getStatus().name().equals("CLOSED")){
-                                continue;
-                            }
-                            if (CRIT) {
-                                // wrap this in a method since i dont think database should be aware of
-                                // businessPriority
-                                ticket.setBusinessPriority(BusinessPriority.CRITICAL);
-                                // System.out.println("CRITICAL " + ticket.getId());
-                            }
-                            // if (milestone.getTimeAlive() % 3 == 0) {
-                            // // ticket.upPriority();
-                            // }
-
-                            if (timeSinceCreation % 3 == 0) {
-                                ticket.upPriority();
-                            }
-                        }
+                for (final int ticketId : milestone.getTickets()) {
+                    final Ticket ticket = getTicket(ticketId);
+                    if (ticket == null) {
+                        continue;
+                    }
+                    if (ticket.getStatus().name().equals("CLOSED")) {
+                        continue;
+                    }
+                    if (CRIT) {
+                        ticket.setBusinessPriority(BusinessPriority.CRITICAL);
+                    }
+                    if (timeSinceCreation % 3 == 0) {
+                        ticket.upPriority();
                     }
                 }
             }
         });
     }
 
-    // TODO CHORE: DUPLICATE CODE FOR THESE FUCKASS STATS
     public List<Number> getCustomerImpact() {
-        List<Number> report = new ArrayList<>();
+        final List<Number> report = new ArrayList<>();
 
         int totalTickets = 0;
 
@@ -705,7 +663,7 @@ public class Database {
         double featureRequestImpact = 0.0;
         double uiFeedbackImpact = 0.0;
 
-        for (Ticket ticket : tickets) {
+        for (final Ticket ticket : tickets) {
             if (ticket.getStatus().name().equals("RESOLVED")) {
                 continue;
             }
@@ -713,9 +671,9 @@ public class Database {
                 continue;
             }
             totalTickets++;
-            String type = ticket.getType();
-            String priority = ticket.getBusinessPriority().name();
-            double impact = ticket.getImpact();
+            final String type = ticket.getType();
+            final String priority = ticket.getBusinessPriority().name();
+            final double impact = ticket.getImpact();
 
             switch (type) {
                 case "BUG":
@@ -766,7 +724,7 @@ public class Database {
     }
 
     public List<Number> getResolutionEfficiency() {
-        List<Number> report = new ArrayList<>();
+        final List<Number> report = new ArrayList<>();
 
         int totalTickets = 0;
 
@@ -783,7 +741,7 @@ public class Database {
         double featureRequestImpact = 0.0;
         double uiFeedbackImpact = 0.0;
 
-        for (Ticket ticket : tickets) {
+        for (final Ticket ticket : tickets) {
             if (ticket.getStatus().name().equals("OPEN")) {
                 continue;
             }
@@ -791,9 +749,9 @@ public class Database {
                 continue;
             }
             totalTickets++;
-            String type = ticket.getType();
-            String priority = ticket.getBusinessPriority().name();
-            double impact = ticket.getEfficiency();
+            final String type = ticket.getType();
+            final String priority = ticket.getBusinessPriority().name();
+            final double impact = ticket.getEfficiency();
 
             switch (type) {
                 case "BUG":
@@ -844,7 +802,7 @@ public class Database {
     }
 
     public List<Object> getAppStability() {
-        List<Object> report = new ArrayList<>();
+        final List<Object> report = new ArrayList<>();
 
         int totalOpenTickets = 0;
         int bugCount = 0;
@@ -864,15 +822,15 @@ public class Database {
         double featureRequestRiskScore = 0.0;
         double uiFeedbackRiskScore = 0.0;
 
-        for (Ticket ticket : tickets) {
+        for (final Ticket ticket : tickets) {
             if (!ticket.getStatus().name().equals("OPEN") &&
                     !ticket.getStatus().name().equals("IN_PROGRESS")) {
                 continue;
             }
 
             totalOpenTickets++;
-            String type = ticket.getType();
-            String priority = ticket.getBusinessPriority().name();
+            final String type = ticket.getType();
+            final String priority = ticket.getBusinessPriority().name();
 
             switch (type) {
                 case "BUG":
@@ -919,48 +877,48 @@ public class Database {
         report.add(highPriority);
         report.add(criticalPriority);
 
-        double avgBugRisk = bugCount > 0 ? bugRiskScore / bugCount : 0;
-        double avgFeatureRisk = featureRequestCount > 0 ? featureRequestRiskScore / featureRequestCount : 0;
-        double avgUIRisk = uiFeedbackCount > 0 ? uiFeedbackRiskScore / uiFeedbackCount : 0;
+        final double avgBugRisk = bugCount > 0 ? bugRiskScore / bugCount : 0;
+        final double avgFeatureRisk = featureRequestCount > 0 ? featureRequestRiskScore / featureRequestCount : 0;
+        final double avgUIRisk = uiFeedbackCount > 0 ? uiFeedbackRiskScore / uiFeedbackCount : 0;
 
-        String bugRiskLevel = getRiskLevel(avgBugRisk);
-        String featureRiskLevel = getRiskLevel(avgFeatureRisk);
-        String uiRiskLevel = getRiskLevel(avgUIRisk);
+        final String bugRiskLevel = getRiskLevel(avgBugRisk);
+        final String featureRiskLevel = getRiskLevel(avgFeatureRisk);
+        final String uiRiskLevel = getRiskLevel(avgUIRisk);
 
         report.add(bugRiskLevel);
         report.add(featureRiskLevel);
         report.add(uiRiskLevel);
 
-        double avgBugImpact = bugCount > 0 ? bugImpact / bugCount : 0;
-        double avgFeatureImpact = featureRequestCount > 0 ? featureRequestImpact / featureRequestCount : 0;
-        double avgUIImpact = uiFeedbackCount > 0 ? uiFeedbackImpact / uiFeedbackCount : 0;
+        final double avgBugImpact = bugCount > 0 ? bugImpact / bugCount : 0;
+        final double avgFeatureImpact = featureRequestCount > 0 ? featureRequestImpact / featureRequestCount : 0;
+        final double avgUIImpact = uiFeedbackCount > 0 ? uiFeedbackImpact / uiFeedbackCount : 0;
 
         report.add(MathUtil.round(avgBugImpact));
         report.add(MathUtil.round(avgFeatureImpact));
         report.add(MathUtil.round(avgUIImpact));
 
-        String appStability = determineStability(bugRiskLevel, featureRiskLevel, uiRiskLevel,
+        final String appStability = determineStability(bugRiskLevel, featureRiskLevel, uiRiskLevel,
                 avgBugImpact, avgFeatureImpact, avgUIImpact);
         report.add(appStability);
 
         return report;
     }
 
-    public List<List<Object>> getPerformance(CommandInput command) {
-        List<List<Object>> report = new ArrayList<>();
-        Manager manager = (Manager) getUser(command.username());
+    public List<List<Object>> getPerformance(final CommandInput command) {
+        final List<List<Object>> report = new ArrayList<>();
+        final Manager manager = (Manager) getUser(command.username());
 
-        List<String> subordinateUsernames = Arrays.asList(manager.getSubordinates());
-        List<String> sortedUsernames = new ArrayList<>(subordinateUsernames);
+        final List<String> subordinateUsernames = Arrays.asList(manager.getSubordinates());
+        final List<String> sortedUsernames = new ArrayList<>(subordinateUsernames);
         Collections.sort(sortedUsernames);
 
-        for (String username : sortedUsernames) {
-            Developer dev = (Developer) getUser(username);
+        for (final String username : sortedUsernames) {
+            final Developer dev = (Developer) getUser(username);
             if (dev != null) {
-                List<Object> row = new ArrayList<>();
+                final List<Object> row = new ArrayList<>();
 
                 row.add(username);
-                List<Number> metrics = dev.updatePerformanceScore(command.time());
+                final List<Number> metrics = dev.updatePerformanceScore(command.time());
                 row.add(metrics.get(0).intValue());
                 row.add(MathUtil.round(metrics.get(2).doubleValue()));
                 row.add(MathUtil.round(metrics.get(1).doubleValue()));
@@ -973,21 +931,21 @@ public class Database {
         return report;
     }
 
-    private String determineStability(String bugRisk, String featureRisk, String uiRisk,
-            double bugImpact, double featureImpact, double uiImpact) {
+    private String determineStability(final String bugRisk, final String featureRisk, final String uiRisk,
+            final double bugImpact, final double featureImpact, final double uiImpact) {
 
-        boolean hasSignificantRisk = bugRisk.equals("SIGNIFICANT") ||
+        final boolean hasSignificantRisk = bugRisk.equals("SIGNIFICANT") ||
                 bugRisk.equals("MAJOR") ||
                 featureRisk.equals("SIGNIFICANT") ||
                 featureRisk.equals("MAJOR") ||
                 uiRisk.equals("SIGNIFICANT") ||
                 uiRisk.equals("MAJOR");
 
-        boolean allNegligible = bugRisk.equals("NEGLIGIBLE") &&
+        final boolean allNegligible = bugRisk.equals("NEGLIGIBLE") &&
                 featureRisk.equals("NEGLIGIBLE") &&
                 uiRisk.equals("NEGLIGIBLE");
 
-        boolean allImpactBelow50 = bugImpact < 50 && featureImpact < 50 && uiImpact < 50;
+        final boolean allImpactBelow50 = bugImpact < 50 && featureImpact < 50 && uiImpact < 50;
 
         if (hasSignificantRisk) {
             return "UNSTABLE";
@@ -1001,7 +959,7 @@ public class Database {
     }
 
     public List<Object> getTicketRisk() {
-        List<Object> report = new ArrayList<>();
+        final List<Object> report = new ArrayList<>();
 
         int totalTickets = 0;
 
@@ -1018,7 +976,7 @@ public class Database {
         double featureRequestImpact = 0.0;
         double uiFeedbackImpact = 0.0;
 
-        for (Ticket ticket : tickets) {
+        for (final Ticket ticket : tickets) {
             if (ticket.getStatus().name().equals("RESOLVED")) {
                 continue;
             }
@@ -1026,9 +984,9 @@ public class Database {
                 continue;
             }
             totalTickets++;
-            String type = ticket.getType();
-            String priority = ticket.getBusinessPriority().name();
-            double impact = ticket.getRisk();
+            final String type = ticket.getType();
+            final String priority = ticket.getBusinessPriority().name();
+            final double impact = ticket.getRisk();
 
             switch (type) {
                 case "BUG":
@@ -1075,9 +1033,9 @@ public class Database {
         featureRequestImpact = (MathUtil.round(MathUtil.average(featureRequestImpact, featureRequestCount)));
         uiFeedbackImpact = (MathUtil.round(MathUtil.average(uiFeedbackImpact, uiFeedbackCount)));
 
-        String bugRiskLevel = getRiskLevel(bugImpact);
-        String featureRequestRiskLevel = getRiskLevel(featureRequestImpact);
-        String uiFeedbackRiskLevel = getRiskLevel(uiFeedbackImpact);
+        final String bugRiskLevel = getRiskLevel(bugImpact);
+        final String featureRequestRiskLevel = getRiskLevel(featureRequestImpact);
+        final String uiFeedbackRiskLevel = getRiskLevel(uiFeedbackImpact);
 
         report.add(bugRiskLevel);
         report.add(featureRequestRiskLevel);
@@ -1086,7 +1044,7 @@ public class Database {
         return report;
     }
 
-    private String getRiskLevel(double impact) {
+    private String getRiskLevel(final double impact) {
         if (impact >= 0 && impact <= 24)
             return "NEGLIGIBLE";
         if (impact >= 25 && impact <= 49)
@@ -1099,8 +1057,8 @@ public class Database {
     }
 
     public List<Developer> getAllDevelopers() {
-        List<Developer> developers = new ArrayList<Developer>();
-        for (User user : users) {
+        final List<Developer> developers = new ArrayList<Developer>();
+        for (final User user : users) {
             if (user.getRole().name().equals("DEVELOPER")) {
                 developers.add((Developer) user);
             }
@@ -1108,42 +1066,42 @@ public class Database {
         return developers;
     }
 
-    public List<?> getSearchResults(CommandInput command) {
-        User user = getUser(command.username());
-        FiltersInput filters = command.filters();
-        String searchType = filters.searchType();
+    public List<?> getSearchResults(final CommandInput command) {
+        final User user = getUser(command.username());
+        final FiltersInput filters = command.filters();
+        final String searchType = filters.searchType();
 
         if ("DEVELOPER".equals(searchType)) {
             if (!"MANAGER".equals(user.getRole().name())) {
                 return new ArrayList<>();
             }
 
-            List<Developer> allDevelopers = getAllDevelopers();
+            final List<Developer> allDevelopers = getAllDevelopers();
             return filterDevelopers((Manager) user, allDevelopers, filters);
 
         } else {
-            List<Ticket> allTickets = getAllTickets();
+            final List<Ticket> allTickets = getAllTickets();
             return filterTickets(user, allTickets, filters);
         }
     }
 
-    private List<Ticket> filterTickets(User user, List<Ticket> allTickets, FiltersInput filters) {
-        List<Ticket> accessibleTickets = new ArrayList<>();
+    private List<Ticket> filterTickets(final User user, final List<Ticket> allTickets, final FiltersInput filters) {
+        final List<Ticket> accessibleTickets = new ArrayList<>();
 
         if ("MANAGER".equals(user.getRole().name())) {
             accessibleTickets.addAll(allTickets);
         } else if ("DEVELOPER".equals(user.getRole().name())) {
-            Developer dev = (Developer) user;
-            List<Milestone> devMilestones = getMilestonesForDeveloper(dev.getUsername());
+            final Developer dev = (Developer) user;
+            final List<Milestone> devMilestones = getMilestonesForDeveloper(dev.getUsername());
 
-            for (Milestone milestone : devMilestones) {
-                for (int ticketId : milestone.getTickets()) {
-                    for (Ticket ticket : allTickets) {
+            for (final Milestone milestone : devMilestones) {
+                for (final int ticketId : milestone.getTickets()) {
+                    for (final Ticket ticket : allTickets) {
                         if (ticket.getId() == ticketId &&
                                 ticket.getStatus() == Ticket.Status.OPEN) {
 
                             boolean alreadyAdded = false;
-                            for (Ticket addedTicket : accessibleTickets) {
+                            for (final Ticket addedTicket : accessibleTickets) {
                                 if (addedTicket.getId() == ticketId) {
                                     alreadyAdded = true;
                                     break;
@@ -1162,7 +1120,7 @@ public class Database {
             return new ArrayList<>();
         }
 
-        FilterContext<Ticket> context = new FilterContext<>();
+        final FilterContext<Ticket> context = new FilterContext<>();
 
         context.addStrategy("businessPriority", new BusinessPriorityFilter());
         context.addStrategy("type", new TypeFilter());
@@ -1172,12 +1130,12 @@ public class Database {
         context.addStrategy("keywords", new KeywordsFilter());
 
         if ("DEVELOPER".equals(user.getRole().name())) {
-            Developer dev = (Developer) user;
+            final Developer dev = (Developer) user;
             context.addStrategy("availableForAssignment", new AvailableForAssignmentFilter(dev));
         }
 
-        Map<String, String> filterMap = convertToMap(filters);
-        List<Ticket> filtered = context.applyFilters(accessibleTickets, filterMap);
+        final Map<String, String> filterMap = convertToMap(filters);
+        final List<Ticket> filtered = context.applyFilters(accessibleTickets, filterMap);
 
         filtered.sort(Comparator
                 .comparing(Ticket::getCreatedAt)
@@ -1186,34 +1144,34 @@ public class Database {
         return filtered;
     }
 
-    private List<Developer> filterDevelopers(Manager manager, List<Developer> allDevelopers,
-            FiltersInput filters) {
-        List<Developer> subordinates = new ArrayList<>();
-        List<String> subordinateUsernames = Arrays.asList(manager.getSubordinates());
+    private List<Developer> filterDevelopers(final Manager manager, final List<Developer> allDevelopers,
+            final FiltersInput filters) {
+        final List<Developer> subordinates = new ArrayList<>();
+        final List<String> subordinateUsernames = Arrays.asList(manager.getSubordinates());
 
-        for (Developer dev : allDevelopers) {
+        for (final Developer dev : allDevelopers) {
             if (subordinateUsernames.contains(dev.getUsername())) {
                 subordinates.add(dev);
             }
         }
 
-        FilterContext<Developer> context = new FilterContext<>();
+        final FilterContext<Developer> context = new FilterContext<>();
 
         context.addStrategy("expertiseArea", new ExpertiseAreaFilter());
         context.addStrategy("seniority", new SeniorityFilter());
         context.addStrategy("performanceScoreAbove", new PerformanceScoreAboveFilter());
         context.addStrategy("performanceScoreBelow", new PerformanceScoreBelowFilter());
 
-        Map<String, String> filterMap = convertToMap(filters);
-        List<Developer> filtered = context.applyFilters(subordinates, filterMap);
+        final Map<String, String> filterMap = convertToMap(filters);
+        final List<Developer> filtered = context.applyFilters(subordinates, filterMap);
 
         filtered.sort(Comparator.comparing(Developer::getUsername));
 
         return filtered;
     }
 
-    private Map<String, String> convertToMap(FiltersInput filters) {
-        Map<String, String> map = new HashMap<>();
+    private Map<String, String> convertToMap(final FiltersInput filters) {
+        final Map<String, String> map = new HashMap<>();
 
         if (filters.businessPriority() != null) {
             map.put("businessPriority", filters.businessPriority());
@@ -1256,7 +1214,7 @@ public class Database {
         return new ArrayList<>(tickets);
     }
 
-    public void setTickets(List<Ticket> tickets) {
+    public void setTickets(final List<Ticket> tickets) {
         this.tickets = tickets;
     }
 
@@ -1264,7 +1222,7 @@ public class Database {
         return commands;
     }
 
-    public void setCommands(List<CommandInput> commands) {
+    public void setCommands(final List<CommandInput> commands) {
         this.commands = commands;
     }
 

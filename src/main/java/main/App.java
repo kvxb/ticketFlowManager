@@ -1,72 +1,35 @@
 package main;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import database.Database;
 import io.IOUtil;
 import io.CommandInput;
-import io.ParamsInput;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import java.time.LocalDate;
 import tickets.Ticket;
 import users.Developer;
 
-/*
-https://www.baeldung.com/jackson-annotations
- */
-
-/**
- * main.App represents the main application logic that processes input commands,
- * generates outputs, and writes them to a file
- */
 public class App {
     private App() {
     }
 
-    // do these rlly need to be satatic?
     private static LocalDate currentDate;
     private static int it = 0;
     private static Database db = Database.getInstance();
 
-    /**
-     * Runs the application: reads commands from an input file,
-     * processes them, generates results, and writes them to an output file
-     *
-     * @param inputPath  path to the input file containing commands
-     * @param outputPath path to the file where results should be written
-     */
-
-    // think how this method should work it should be as decoupled from the logic of
-    // the commands as that should be implmeneted in their respective classes
-    // but then who holds the commands for example ? this class should right ?
-    // unless you can make them float as a sort of static class ? think about it
-    // tomorrow i cba today
     public static void testingPeriod() {
-        System.out.println("testingPeriod");
-        // read commands in the 12 days period after the start of this method
-        // initialize tickets validate them add them to db
-        LocalDate endDate = currentDate.plusDays(12);
-        System.out.println("testing" + currentDate);
-
-        // LocalDate futureDate = currentDate;
+        final LocalDate endDate = currentDate.plusDays(12);
 
         while (it < db.getSize("commands")) {
-            CommandInput currentCommand = db.getCommands().get(it);
+            final CommandInput currentCommand = db.getCommands().get(it);
             currentDate = currentCommand.time();
-            // futureDate = db.getCommands().get(it + 1).time();
             if (currentDate.isAfter(endDate)) {
                 currentDate = endDate;
                 break;
             }
             db.update(currentCommand.time());
-            System.out.println("testing" + currentDate + currentCommand.command());
 
             switch (currentCommand.command()) {
                 case "reportTicket":
@@ -86,20 +49,16 @@ public class App {
     }
 
     public static void developPeriod() {
-        System.out.println("developPeriod");
-        LocalDate endDate = currentDate.plusDays(1000);
+        final LocalDate endDate = currentDate.plusDays(1000);
 
         while (it < db.getSize("commands")) {
-            CommandInput currentCommand = db.getCommands().get(it);
+            final CommandInput currentCommand = db.getCommands().get(it);
             currentDate = currentCommand.time();
-            // futureDate = db.getCommands().get(it + 1).time();
             if (currentDate.isAfter(endDate)) {
                 break;
             }
             db.update(currentCommand.time());
-            System.out.println("develop" + currentDate + currentCommand.command());
 
-            // swtich to ->
             switch (currentCommand.command()) {
                 case "reportTicket":
                     IOUtil.ticketError(currentCommand, "WPER");
@@ -141,8 +100,8 @@ public class App {
                     IOUtil.outputSearch(currentCommand, db.getSearchResults(currentCommand));
                     break;
                 case "viewNotifications":
-                    Developer dev = (Developer) db.getUser(currentCommand.username());
-                    List<String> notifications = dev.getNotifications();
+                    final Developer dev = (Developer) db.getUser(currentCommand.username());
+                    final List<String> notifications = dev.getNotifications();
                     IOUtil.outputNotifications(currentCommand, notifications);
                     dev.clearNotifications();
                     break;
@@ -165,54 +124,23 @@ public class App {
                     testingPeriod();
                     continue;
                 default:
-                    System.out.println("didnt match command in development: " + currentCommand.name());
             }
             it++;
-
         }
 
     }
 
-    // public static void verifiyPeriod() {
-    // System.out.println("verifiyPeriod");
-    // LocalDate endDate = currentDate.plusDays(12);
-    //
-    // while (it <= db.getSize("commands")) {
-    // CommandInput currentCommand = db.getCommands().get(it);
-    // currentDate = currentCommand.time();
-    // // futureDate = db.getCommands().get(it + 1).time();
-    // if (currentDate.isAfter(endDate)) {
-    // it--;
-    // break;
-    // }
-    // switch (currentCommand.command()) {
-    // case "reportTicket":
-    // db.addTicket(currentCommand, currentDate);
-    // break;
-    // case "viewTickets":
-    // IOUtil.viewTickets(currentCommand,
-    // db.getTickets(currentCommand.username()));
-    // break;
-    // default:
-    // System.out.println("vv");
-    // }
-    // it++;
-    // }
-    // System.out.println("verifiy" + currentDate);
-    //
-    // }
-
     public static void run(final String inputPath, final String outputPath) {
         db.clearDatabase();
         IOUtil.clearIO();
+        IOUtil.setPaths(inputPath, outputPath);
         Ticket.clearTicket();
         it = 0;
 
-        IOUtil.setPaths(inputPath, outputPath);
         try {
             db.setUsers(IOUtil.readUsers());
             db.setCommands(IOUtil.readCommands());
-        } catch (IOException e) {
+        } catch (final IOException e) {
             System.out.println("error reading from input file: " + e.getMessage());
             return;
         }
@@ -220,13 +148,9 @@ public class App {
         currentDate = db.getCommands().getFirst().time();
         db.setLastUpdate(currentDate);
 
-        // TODO 2: process commands.
         testingPeriod();
         developPeriod();
-        // verifiyPeriod();
-        // TODO 3: create objectnodes for output, add them to outputs list.
 
         IOUtil.writeOutput();
-        System.out.println("END" + outputPath);
     }
 }

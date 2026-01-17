@@ -3,6 +3,8 @@ package milestones;
 import java.util.Arrays;
 import database.Database;
 import io.CommandInput;
+import lombok.Data;
+
 import java.util.List;
 import java.util.ArrayList;
 import mathutils.MathUtil;
@@ -10,6 +12,7 @@ import notifications.Subject;
 import notifications.Observer;
 import java.time.LocalDate;
 
+@Data
 public class Milestone implements Subject {
     private Database db = Database.getInstance();
     private List<Observer> observers = new ArrayList<>();
@@ -77,7 +80,7 @@ public class Milestone implements Subject {
         }
 
         // if (!openTickets.contains(ticketId)) {
-        //     openTickets.add(ticketId);
+        // openTickets.add(ticketId);
         // }
         //
         // closedTickets.removeIf(id -> id == ticketId);
@@ -85,6 +88,7 @@ public class Milestone implements Subject {
         // this.updateCompletionPercentage(command.time());
     }
 
+    @Data
     public class Repartition {
         private String dev;
         private List<Integer> assignedTickets;
@@ -103,21 +107,6 @@ public class Milestone implements Subject {
             this.assignedTickets = (assignedTickets != null) ? assignedTickets : new ArrayList<>();
         }
 
-        public String getDev() {
-            return dev;
-        }
-
-        public void setDev(String dev) {
-            this.dev = dev;
-        }
-
-        public List<Integer> getAssignedTickets() {
-            return assignedTickets;
-        }
-
-        public void setAssignedTickets(List<Integer> assignedTickets) {
-            this.assignedTickets = assignedTickets;
-        }
     }
 
     public void assignDeveloper(CommandInput command) {
@@ -153,14 +142,6 @@ public class Milestone implements Subject {
     }
 
     private LocalDate unlockedDate;
-
-    public LocalDate getUnlockedDate() {
-        return unlockedDate;
-    }
-
-    public void setUnlockedDate(LocalDate unlockedDate) {
-        this.unlockedDate = unlockedDate;
-    }
 
     // TODO: this is runnign on assumption that a milestone cant be blocke by two
     // other at the same time which is wrong fix later
@@ -259,157 +240,5 @@ public class Milestone implements Subject {
     public boolean hasDeveloper(String username) {
         return Arrays.stream(this.assignedDevs)
                 .anyMatch(name -> name.equals(username));
-    }
-
-    public int getDaysUntilDue() {
-        return daysUntilDue;
-    }
-
-    public void setDaysUntilDue(int daysUntilDue) {
-        this.daysUntilDue = daysUntilDue;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String[] getBlockingFor() {
-        return blockingFor;
-    }
-
-    public void setBlockingFor(String[] blockingFor) {
-        this.blockingFor = blockingFor;
-    }
-
-    public String getDueDate() {
-        return dueDate;
-    }
-
-    public void setDueDate(String dueDate) {
-        this.dueDate = dueDate;
-    }
-
-    public int[] getTickets() {
-        return tickets;
-    }
-
-    public void setTickets(int[] tickets) {
-        this.tickets = tickets;
-    }
-
-    public String[] getAssignedDevs() {
-        return assignedDevs;
-    }
-
-    public void setAssignedDevs(String[] assignedDevs) {
-        this.assignedDevs = assignedDevs;
-    }
-
-    public String getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(String createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public String getOwner() {
-        return owner;
-    }
-
-    public void setOwner(String owner) {
-        this.owner = owner;
-    }
-
-    public List<Integer> getOpenTickets() {
-        return openTickets;
-    }
-
-    public void setOpenTickets(List<Integer> openTickets) {
-        this.openTickets = openTickets;
-    }
-
-    public List<Integer> getClosedTickets() {
-        return closedTickets;
-    }
-
-    public void setClosedTickets(List<Integer> closedTickets) {
-        this.closedTickets = closedTickets;
-    }
-
-    public double getCompletionPercentage() {
-        return completionPercentage;
-    }
-
-    public void setCompletionPercentage(double completionPercentage) {
-        this.completionPercentage = completionPercentage;
-    }
-
-    public boolean isBlocked() {
-        return isBlocked;
-    }
-
-    public void setBlocked(boolean isBlocked) {
-        this.isBlocked = isBlocked;
-    }
-
-    public int getOverdueBy() {
-        return overdueBy;
-    }
-
-    public void setOverdueBy(int overdueBy) {
-        this.overdueBy = overdueBy;
-    }
-
-    public Repartition[] getRepartitions() {
-        return repartitions;
-    }
-
-    public void setRepartitions(Repartition[] repartitions) {
-        this.repartitions = repartitions;
-    }
-
-    public Database getDb() {
-        return db;
-    }
-
-    public void setDb(Database db) {
-        this.db = db;
-    }
-
-    public List<Observer> getObservers() {
-        return observers;
-    }
-
-    public void setObservers(List<Observer> observers) {
-        this.observers = observers;
-    }
-
-    public int getTimeAlive() {
-        return timeAlive;
-    }
-
-    public void setTimeAlive(int timeAlive) {
-        this.timeAlive = timeAlive;
-    }
-
-    public boolean isSentNotificationDueTomorrow() {
-        return sentNotificationDueTomorrow;
-    }
-
-    public void setSentNotificationDueTomorrow(boolean sentNotificationDueTomorrow) {
-        this.sentNotificationDueTomorrow = sentNotificationDueTomorrow;
     }
 }
