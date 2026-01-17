@@ -9,12 +9,12 @@ import java.time.LocalDate;
 public class CreatedAtFilter implements TicketFilterStrategy {
 
     @Override
-    public List<Ticket> filter(List<Ticket> tickets, String filterValue) {
-        List<Ticket> filteredTickets = new ArrayList<>();
-        LocalDate targetDate = LocalDate.parse(filterValue);
+    public List<Ticket> filter(final List<Ticket> tickets, final String filterValue) {
+        final List<Ticket> filteredTickets = new ArrayList<>();
+        final LocalDate targetDate = LocalDate.parse(filterValue);
 
-        for (Ticket ticket : tickets) {
-            if (ticket.getCreatedAt().equals(targetDate.toString())){
+        for (final Ticket ticket : tickets) {
+            if (ticket.getCreatedAt().equals(targetDate.toString())) {
                 filteredTickets.add(ticket);
             }
         }

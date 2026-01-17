@@ -48,47 +48,47 @@ public abstract class Ticket {
         // TODO: shouldnt this be a LocalDate?
         protected String createdAt;
 
-        public T id(int id) {
+        public T id(final int id) {
             this.id = id;
             return self();
         }
 
-        public T createdAt(String createdAt) {
+        public T createdAt(final String createdAt) {
             this.createdAt = createdAt;
             return self();
         }
 
-        public T type(String type) {
+        public T type(final String type) {
             this.type = type;
             return self();
         }
 
-        public T title(String title) {
+        public T title(final String title) {
             this.title = title;
             return self();
         }
 
-        public T businessPriority(BusinessPriority priority) {
+        public T businessPriority(final BusinessPriority priority) {
             this.businessPriority = priority;
             return self();
         }
 
-        public T status(Status status) {
+        public T status(final Status status) {
             this.status = status;
             return self();
         }
 
-        public T expertiseArea(ExpertiseArea area) {
+        public T expertiseArea(final ExpertiseArea area) {
             this.expertiseArea = area;
             return self();
         }
 
-        public T description(String description) {
+        public T description(final String description) {
             this.description = description;
             return self();
         }
 
-        public T reportedBy(String reportedBy) {
+        public T reportedBy(final String reportedBy) {
             this.reportedBy = reportedBy;
             return self();
         }
@@ -99,7 +99,7 @@ public abstract class Ticket {
             return id;
         }
 
-        public void setId(int id) {
+        public void setId(final int id) {
             this.id = id;
         }
 
@@ -107,7 +107,7 @@ public abstract class Ticket {
             return type;
         }
 
-        public void setType(String type) {
+        public void setType(final String type) {
             this.type = type;
         }
 
@@ -115,7 +115,7 @@ public abstract class Ticket {
             return title;
         }
 
-        public void setTitle(String title) {
+        public void setTitle(final String title) {
             this.title = title;
         }
 
@@ -123,7 +123,7 @@ public abstract class Ticket {
             return businessPriority;
         }
 
-        public void setBusinessPriority(BusinessPriority businessPriority) {
+        public void setBusinessPriority(final BusinessPriority businessPriority) {
             this.businessPriority = businessPriority;
         }
 
@@ -131,7 +131,7 @@ public abstract class Ticket {
             return status;
         }
 
-        public void setStatus(Status status) {
+        public void setStatus(final Status status) {
             this.status = status;
         }
 
@@ -139,7 +139,7 @@ public abstract class Ticket {
             return expertiseArea;
         }
 
-        public void setExpertiseArea(ExpertiseArea expertiseArea) {
+        public void setExpertiseArea(final ExpertiseArea expertiseArea) {
             this.expertiseArea = expertiseArea;
         }
 
@@ -147,7 +147,7 @@ public abstract class Ticket {
             return description;
         }
 
-        public void setDescription(String description) {
+        public void setDescription(final String description) {
             this.description = description;
         }
 
@@ -155,7 +155,7 @@ public abstract class Ticket {
             return reportedBy;
         }
 
-        public void setReportedBy(String reportedBy) {
+        public void setReportedBy(final String reportedBy) {
             this.reportedBy = reportedBy;
         }
 
@@ -170,14 +170,19 @@ public abstract class Ticket {
         Status from;
         Status to;
 
-        public Action(String milestone, String by, String timestamp, String action) {
+        public Action() {
+
+        }
+
+        public Action(final String milestone, final String by, final String timestamp, final String action) {
             this.milestone = milestone;
             this.by = by;
             this.timestamp = timestamp;
             this.action = action;
         }
 
-        public Action(Status from, Status to, String by, String timestamp, String action) {
+        public Action(final Status from, final Status to, final String by, final String timestamp,
+                final String action) {
             this.from = from;
             this.to = to;
             this.by = by;
@@ -185,7 +190,7 @@ public abstract class Ticket {
             this.action = action;
         }
 
-        public Action(String by, String timestamp, String action) {
+        public Action(final String by, final String timestamp, final String action) {
             this.by = by;
             this.timestamp = timestamp;
             this.action = action;
@@ -195,7 +200,7 @@ public abstract class Ticket {
             return milestone;
         }
 
-        public void setMilestone(String milestone) {
+        public void setMilestone(final String milestone) {
             this.milestone = milestone;
         }
 
@@ -203,7 +208,7 @@ public abstract class Ticket {
             return by;
         }
 
-        public void setBy(String by) {
+        public void setBy(final String by) {
             this.by = by;
         }
 
@@ -211,7 +216,7 @@ public abstract class Ticket {
             return timestamp;
         }
 
-        public void setTimestamp(String timestamp) {
+        public void setTimestamp(final String timestamp) {
             this.timestamp = timestamp;
         }
 
@@ -219,7 +224,7 @@ public abstract class Ticket {
             return action;
         }
 
-        public void setAction(String action) {
+        public void setAction(final String action) {
             this.action = action;
         }
 
@@ -227,7 +232,7 @@ public abstract class Ticket {
             return from;
         }
 
-        public void setFrom(Status from) {
+        public void setFrom(final Status from) {
             this.from = from;
         }
 
@@ -235,7 +240,7 @@ public abstract class Ticket {
             return to;
         }
 
-        public void setTo(Status to) {
+        public void setTo(final Status to) {
             this.to = to;
         }
     }
@@ -251,7 +256,7 @@ public abstract class Ticket {
             return id;
         }
 
-        public void setId(int id) {
+        public void setId(final int id) {
             this.id = id;
         }
 
@@ -259,7 +264,7 @@ public abstract class Ticket {
             return title;
         }
 
-        public void setTitle(String title) {
+        public void setTitle(final String title) {
             this.title = title;
         }
 
@@ -267,7 +272,7 @@ public abstract class Ticket {
             return status;
         }
 
-        public void setStatus(Status status) {
+        public void setStatus(final Status status) {
             this.status = status;
         }
 
@@ -275,7 +280,7 @@ public abstract class Ticket {
             return actions;
         }
 
-        public void setActions(List<Action> actions) {
+        public void setActions(final List<Action> actions) {
             this.actions = actions;
         }
 
@@ -286,7 +291,7 @@ public abstract class Ticket {
         String content;
         String createdAt;
 
-        public Comment(String author, String content, String createdAt) {
+        public Comment(final String author, final String content, final String createdAt) {
             this.author = author;
             this.createdAt = createdAt;
             this.content = content;
@@ -296,7 +301,7 @@ public abstract class Ticket {
             return author;
         }
 
-        public void setAuthor(String author) {
+        public void setAuthor(final String author) {
             this.author = author;
         }
 
@@ -304,7 +309,7 @@ public abstract class Ticket {
             return content;
         }
 
-        public void setContent(String content) {
+        public void setContent(final String content) {
             this.content = content;
         }
 
@@ -312,7 +317,7 @@ public abstract class Ticket {
             return createdAt;
         }
 
-        public void setCreatedAt(String createdAt) {
+        public void setCreatedAt(final String createdAt) {
             this.createdAt = createdAt;
         }
     }
@@ -320,7 +325,7 @@ public abstract class Ticket {
     private static int ticketId = 0;
 
     public static int getNextTicketId() {
-        int answer = ticketId;
+        final int answer = ticketId;
         ticketId++;
         return answer;
     }
@@ -333,7 +338,7 @@ public abstract class Ticket {
         return ticketId;
     }
 
-    public static void setTicketId(int ticketId) {
+    public static void setTicketId(final int ticketId) {
         Ticket.ticketId = ticketId;
     }
 
@@ -352,7 +357,7 @@ public abstract class Ticket {
     private List<Comment> comments = new ArrayList<Comment>();
     private TicketHistory ticketHistory;
 
-    public Ticket(Builder<?> b) {
+    public Ticket(final Builder<?> b) {
         this.id = b.id;
         this.type = b.type;
         this.title = b.title;
@@ -370,7 +375,7 @@ public abstract class Ticket {
 
     }
 
-    public void addActionMilestone(String milestone, String by, String timestamp) {
+    public void addActionMilestone(final String milestone, final String by, final String timestamp) {
         ticketHistory.actions.add(new Action(milestone, by, timestamp, "ADDED_TO_MILESTONE"));
     }
 
@@ -380,15 +385,15 @@ public abstract class Ticket {
 
     // TODO imlement the comments part
 
-    public void setComments(List<Comment> comments) {
+    public void setComments(final List<Comment> comments) {
         this.comments = comments;
     }
 
-    public void assignDeveloper(CommandInput command) {
-        Action assignAction = new Action(command.username(), command.timestamp(), "ASSIGNED");
+    public void assignDeveloper(final CommandInput command) {
+        final Action assignAction = new Action(command.username(), command.timestamp(), "ASSIGNED");
         ticketHistory.getActions().add(assignAction);
 
-        Action statusAction = new Action(Status.OPEN, Status.IN_PROGRESS,
+        final Action statusAction = new Action(Status.OPEN, Status.IN_PROGRESS,
                 command.username(), command.timestamp(), "STATUS_CHANGED");
         ticketHistory.getActions().add(statusAction);
 
@@ -397,11 +402,11 @@ public abstract class Ticket {
         this.assignedAt = command.timestamp();
     }
 
-    public void undoAssignDeveloper(CommandInput command) {
-        Action assignAction = new Action(command.username(), command.timestamp(), "DE-ASSIGNED");
+    public void undoAssignDeveloper(final CommandInput command) {
+        final Action assignAction = new Action(command.username(), command.timestamp(), "DE-ASSIGNED");
         ticketHistory.getActions().add(assignAction);
 
-        Action statusAction = new Action(Status.IN_PROGRESS, Status.OPEN,
+        final Action statusAction = new Action(Status.IN_PROGRESS, Status.OPEN,
                 command.username(), command.timestamp(), "STATUS_CHANGED");
         ticketHistory.getActions().add(statusAction);
 
@@ -410,13 +415,13 @@ public abstract class Ticket {
         this.assignedAt = null;
     }
 
-    public void changeStatus(Status newStatus, String by, String timestamp) {
+    public void changeStatus(final Status newStatus, final String by, final String timestamp) {
         if (this.ticketHistory != null) {
-            Action statusAction = new Action(this.status, newStatus, by, timestamp, "STATUS_CHANGED");
+            final Action statusAction = new Action(this.status, newStatus, by, timestamp, "STATUS_CHANGED");
             this.ticketHistory.getActions().add(statusAction);
         }
         this.status = newStatus;
-        if(status.name().equals("RESOLVED")) {
+        if (status.name().equals("RESOLVED")) {
             solvedAt = timestamp;
         }
     }
@@ -466,13 +471,13 @@ public abstract class Ticket {
         return createdAt;
     }
 
-    public void addComment(String author, String comment, String date) {
+    public void addComment(final String author, final String comment, final String date) {
         comments.add(new Comment(author, comment, date));
     }
 
-    public void undoAddComment(String author) {
+    public void undoAddComment(final String author) {
         Comment remove = null;
-        for (Comment c : comments) {
+        for (final Comment c : comments) {
             if (c.author.equals(author)) {
                 remove = c;
             }
@@ -489,11 +494,11 @@ public abstract class Ticket {
         return matchingWords;
     }
 
-    public void setMatchingWords(List<String> matchingWords) {
+    public void setMatchingWords(final List<String> matchingWords) {
         this.matchingWords = matchingWords;
     }
 
-    public void setCreatedAt(String createdAt) {
+    public void setCreatedAt(final String createdAt) {
         this.createdAt = createdAt;
     }
 
@@ -501,7 +506,7 @@ public abstract class Ticket {
         return assignedTo;
     }
 
-    public void setAssignedTo(String assignedTo) {
+    public void setAssignedTo(final String assignedTo) {
         this.assignedTo = assignedTo;
     }
 
@@ -509,7 +514,7 @@ public abstract class Ticket {
         return assignedAt;
     }
 
-    public void setAssignedAt(String assignedAt) {
+    public void setAssignedAt(final String assignedAt) {
         this.assignedAt = assignedAt;
     }
 
@@ -517,7 +522,7 @@ public abstract class Ticket {
         return solvedAt;
     }
 
-    public void setSolvedAt(String solvedAt) {
+    public void setSolvedAt(final String solvedAt) {
         this.solvedAt = solvedAt;
     }
 
@@ -525,7 +530,7 @@ public abstract class Ticket {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(final int id) {
         this.id = id;
     }
 
@@ -533,7 +538,7 @@ public abstract class Ticket {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(final String type) {
         this.type = type;
     }
 
@@ -541,7 +546,7 @@ public abstract class Ticket {
         return title;
     }
 
-    public void setTitle(String title) {
+    public void setTitle(final String title) {
         this.title = title;
     }
 
@@ -549,7 +554,7 @@ public abstract class Ticket {
         return description;
     }
 
-    public void setDescription(String description) {
+    public void setDescription(final String description) {
         this.description = description;
     }
 
@@ -557,7 +562,7 @@ public abstract class Ticket {
         return reportedBy;
     }
 
-    public void setReportedBy(String reportedBy) {
+    public void setReportedBy(final String reportedBy) {
         this.reportedBy = reportedBy;
     }
 
@@ -565,7 +570,7 @@ public abstract class Ticket {
         return businessPriority;
     }
 
-    public void setBusinessPriority(BusinessPriority businessPriority) {
+    public void setBusinessPriority(final BusinessPriority businessPriority) {
         this.businessPriority = businessPriority;
     }
 
@@ -573,7 +578,7 @@ public abstract class Ticket {
         return status;
     }
 
-    public void setStatus(Status status) {
+    public void setStatus(final Status status) {
         this.status = status;
     }
 
@@ -581,7 +586,7 @@ public abstract class Ticket {
         return expertiseArea;
     }
 
-    public void setExpertiseArea(ExpertiseArea expertiseArea) {
+    public void setExpertiseArea(final ExpertiseArea expertiseArea) {
         this.expertiseArea = expertiseArea;
     }
 
@@ -589,7 +594,7 @@ public abstract class Ticket {
         return ticketHistory;
     }
 
-    public void setTicketHistory(TicketHistory ticketHistory) {
+    public void setTicketHistory(final TicketHistory ticketHistory) {
         this.ticketHistory = ticketHistory;
     }
 }

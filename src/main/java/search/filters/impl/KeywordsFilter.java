@@ -12,12 +12,12 @@ import java.util.Arrays;
 public class KeywordsFilter implements TicketFilterStrategy {
 
     @Override
-    public List<Ticket> filter(List<Ticket> tickets, String filterValue) {
-        List<Ticket> filteredTickets = new ArrayList<>();
-        String[] keywords = parseKeywords(filterValue);
+    public List<Ticket> filter(final List<Ticket> tickets, final String filterValue) {
+        final List<Ticket> filteredTickets = new ArrayList<>();
+        final String[] keywords = parseKeywords(filterValue);
 
-        for (Ticket ticket : tickets) {
-            List<String> matchingWords = findMatchingWords(ticket, keywords);
+        for (final Ticket ticket : tickets) {
+            final List<String> matchingWords = findMatchingWords(ticket, keywords);
             if (!matchingWords.isEmpty()) {
                 ticket.setMatchingWords(matchingWords);
                 filteredTickets.add(ticket);
@@ -26,12 +26,12 @@ public class KeywordsFilter implements TicketFilterStrategy {
         return filteredTickets;
     }
 
-    private String[] parseKeywords(String jsonArray) {
+    private String[] parseKeywords(final String jsonArray) {
         if (jsonArray == null || jsonArray.equals("null") || jsonArray.isEmpty()) {
             return new String[0];
         }
 
-        String cleaned = jsonArray.replace("[", "").replace("]", "")
+        final String cleaned = jsonArray.replace("[", "").replace("]", "")
                 .replace("\"", "").replace(" ", "");
         if (cleaned.isEmpty()) {
             return new String[0];
@@ -39,21 +39,21 @@ public class KeywordsFilter implements TicketFilterStrategy {
         return cleaned.split(",");
     }
 
-    private List<String> findMatchingWords(Ticket ticket, String[] keywords) {
-        List<String> matchingWords = new ArrayList<>();
+    private List<String> findMatchingWords(final Ticket ticket, final String[] keywords) {
+        final List<String> matchingWords = new ArrayList<>();
 
-        String title = ticket.getTitle();
-        String description = ticket.getDescription();
+        final String title = ticket.getTitle();
+        final String description = ticket.getDescription();
 
         if (title == null && description == null) {
             return matchingWords;
         }
 
-        String titleLower = title != null ? title.toLowerCase() : "";
-        String descLower = description != null ? description.toLowerCase() : "";
+        final String titleLower = title != null ? title.toLowerCase() : "";
+        final String descLower = description != null ? description.toLowerCase() : "";
 
-        for (String keyword : keywords) {
-            String keywordLower = keyword.toLowerCase();
+        for (final String keyword : keywords) {
+            final String keywordLower = keyword.toLowerCase();
             if (titleLower.contains(keywordLower) || descLower.contains(keywordLower)) {
                 matchingWords.add(keyword);
             }

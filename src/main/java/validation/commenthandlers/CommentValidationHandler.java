@@ -7,12 +7,12 @@ public abstract class CommentValidationHandler {
     protected CommentValidationHandler next;
     protected Database db = Database.getInstance();
 
-    public CommentValidationHandler setNext(CommentValidationHandler next) {
+    public CommentValidationHandler setNext(final CommentValidationHandler next) {
         this.next = next;
         return next;
     }
 
-    public boolean validate(CommandInput command) {
+    public boolean validate(final CommandInput command) {
         if (!appliesTo(command)) {
             return next == null || next.validate(command);
         }

@@ -6,24 +6,24 @@ import java.util.HashMap;
 import java.util.ArrayList;
 
 public class FilterContext<T> {
-    private Map<String, FilterStrategy<T>> strategies;
+    private final Map<String, FilterStrategy<T>> strategies;
 
     public FilterContext() {
         this.strategies = new HashMap<>();
     }
 
-    public void addStrategy(String filterName, FilterStrategy<T> strategy) {
+    public void addStrategy(final String filterName, final FilterStrategy<T> strategy) {
         strategies.put(filterName, strategy);
     }
 
-    public List<T> applyFilters(List<T> items, Map<String, String> filters) {
+    public List<T> applyFilters(final List<T> items, final Map<String, String> filters) {
         List<T> result = new ArrayList<>(items);
 
-        for (Map.Entry<String, String> filterEntry : filters.entrySet()) {
-            String filterName = filterEntry.getKey();
-            String filterValue = filterEntry.getValue();
+        for (final Map.Entry<String, String> filterEntry : filters.entrySet()) {
+            final String filterName = filterEntry.getKey();
+            final String filterValue = filterEntry.getValue();
 
-            FilterStrategy<T> strategy = strategies.get(filterName);
+            final FilterStrategy<T> strategy = strategies.get(filterName);
             if (strategy != null && filterValue != null && !filterValue.trim().isEmpty()) {
                 result = strategy.filter(result, filterValue);
             }

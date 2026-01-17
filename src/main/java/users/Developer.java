@@ -16,25 +16,25 @@ import java.util.HashSet;
 
 public class Developer extends User implements Observer {
 
-    private Map<Integer, Integer> ticketCommentStats = new HashMap<>();
-    private Set<Integer> currentlyAssignedTickets = new HashSet<>();
+    private final Map<Integer, Integer> ticketCommentStats = new HashMap<>();
+    private final Set<Integer> currentlyAssignedTickets = new HashSet<>();
 
-    public void assignToTicket(int ticketId) {
+    public void assignToTicket(final int ticketId) {
         currentlyAssignedTickets.add(ticketId);
         ticketCommentStats.putIfAbsent(ticketId, 0);
     }
 
-    public void deassignFromTicket(int ticketId) {
+    public void deassignFromTicket(final int ticketId) {
         currentlyAssignedTickets.remove(ticketId);
     }
 
-    public void incrementCommentCount(int ticketId) {
+    public void incrementCommentCount(final int ticketId) {
         if (currentlyAssignedTickets.contains(ticketId)) {
             ticketCommentStats.put(ticketId, ticketCommentStats.getOrDefault(ticketId, 0) + 1);
         }
     }
 
-    public int getCommentCountForTicket(int ticketId) {
+    public int getCommentCountForTicket(final int ticketId) {
         return ticketCommentStats.getOrDefault(ticketId, 0);
     }
 
@@ -70,8 +70,9 @@ public class Developer extends User implements Observer {
 
     private Seniority seniority;
 
-    public Developer(String username, String email, String role, String hireDate, String expertiseArea,
-            String seniority) {
+    public Developer(final String username, final String email, final String role, final String hireDate,
+            final String expertiseArea,
+            final String seniority) {
         super(username, email, role);
         this.hireDate = hireDate;
         this.expertiseArea = ExpertiseArea.valueOf(expertiseArea);
@@ -79,7 +80,7 @@ public class Developer extends User implements Observer {
     }
 
     @Override
-    public void update(String message) {
+    public void update(final String message) {
         notifications.add(message);
     }
 
@@ -92,8 +93,8 @@ public class Developer extends User implements Observer {
     }
 
     /** NOT YET IMPLEMENTED **/
-    public List<Number> updatePerformanceScore(LocalDate reportTimestamp) {
-        List<Number> stats = new ArrayList<>();
+    public List<Number> updatePerformanceScore(final LocalDate reportTimestamp) {
+        final List<Number> stats = new ArrayList<>();
 
         int bugTickets = 0;
         int featureTickets = 0;
@@ -102,25 +103,25 @@ public class Developer extends User implements Observer {
         double totalResolutionTime = 0.0;
         int monthlyClosedTickets = 0;
 
-        Database db = Database.getInstance();
-        List<Ticket> allTickets = db.getAllTickets();
+        final Database db = Database.getInstance();
+        final List<Ticket> allTickets = db.getAllTickets();
 
-        LocalDate currentDate = reportTimestamp;
-        LocalDate earliestDate = currentDate
+        final LocalDate currentDate = reportTimestamp;
+        final LocalDate earliestDate = currentDate
                 .withDayOfMonth(1)
                 .minusMonths(1);
-        LocalDate latestDate = currentDate
+        final LocalDate latestDate = currentDate
                 .withDayOfMonth(1)
                 .minusMonths(1)
                 .with(TemporalAdjusters.lastDayOfMonth());
 
-        for (Ticket ticket : allTickets) {
+        for (final Ticket ticket : allTickets) {
             if (ticket.getStatus() != Ticket.Status.CLOSED)
                 continue;
             if (!ticket.getAssignedTo().equals(this.username))
                 continue;
 
-            LocalDate solvedDate = LocalDate.parse(ticket.getSolvedAt());
+            final LocalDate solvedDate = LocalDate.parse(ticket.getSolvedAt());
 
             if (solvedDate.isBefore(earliestDate) || solvedDate.isAfter(latestDate))
                 continue;
@@ -144,14 +145,15 @@ public class Developer extends User implements Observer {
                 highPriorityTickets++;
             }
 
-            LocalDate assignedDate = LocalDate.parse(ticket.getAssignedAt());
-            long days = ChronoUnit.DAYS.between(assignedDate, solvedDate) + 1;
+            final LocalDate assignedDate = LocalDate.parse(ticket.getAssignedAt());
+            final long days = ChronoUnit.DAYS.between(assignedDate, solvedDate) + 1;
             totalResolutionTime += days;
         }
 
-        double averageResolutionTime = monthlyClosedTickets > 0 ? totalResolutionTime / monthlyClosedTickets : 0.0;
+        final double averageResolutionTime = monthlyClosedTickets > 0 ? totalResolutionTime / monthlyClosedTickets
+                : 0.0;
 
-        double seniorityBonus = switch (this.seniority) {
+        final double seniorityBonus = switch (this.seniority) {
             case JUNIOR -> 5.0;
             case MID -> 15.0;
             case SENIOR -> 30.0;
@@ -163,7 +165,7 @@ public class Developer extends User implements Observer {
         switch (this.seniority) {
             case JUNIOR:
                 if (monthlyClosedTickets > 0) {
-                    double diversityFactor = ticketDiversityFactor(bugTickets, featureTickets, uiTickets);
+                    final double diversityFactor = ticketDiversityFactor(bugTickets, featureTickets, uiTickets);
                     performanceScore = Math.max(0, 0.5 * monthlyClosedTickets - diversityFactor) + seniorityBonus;
                 } else {
                     performanceScore = 0.0;
@@ -201,31 +203,31 @@ public class Developer extends User implements Observer {
     }
 
     // TODO CHORE move where they belong
-    public static double averageResolvedTicketType(int bug, int feature, int ui) {
+    public static double averageResolvedTicketType(final int bug, final int feature, final int ui) {
         return (bug + feature + ui) / 3.0;
     }
 
-    public static double standardDeviation(int bug, int feature, int ui) {
-        double mean = averageResolvedTicketType(bug, feature, ui);
-        double variance = (Math.pow(bug - mean, 2) + Math.pow(feature - mean, 2) + Math.pow(ui - mean, 2)) / 3.0;
+    public static double standardDeviation(final int bug, final int feature, final int ui) {
+        final double mean = averageResolvedTicketType(bug, feature, ui);
+        final double variance = (Math.pow(bug - mean, 2) + Math.pow(feature - mean, 2) + Math.pow(ui - mean, 2)) / 3.0;
         return Math.sqrt(variance);
     }
 
-    public static double ticketDiversityFactor(int bug, int feature, int ui) {
-        double mean = averageResolvedTicketType(bug, feature, ui);
+    public static double ticketDiversityFactor(final int bug, final int feature, final int ui) {
+        final double mean = averageResolvedTicketType(bug, feature, ui);
 
         if (mean == 0.0) {
             return 0.0;
         }
 
-        double std = standardDeviation(bug, feature, ui);
+        final double std = standardDeviation(bug, feature, ui);
         return std / mean;
     }
 
-    public boolean canHandleTicket(Ticket ticket) {
+    public boolean canHandleTicket(final Ticket ticket) {
         // TODO: the code is duplicated from a developer validation for seniority remove
         // it from there if can
-        int developerLevel = switch (this.getSeniority().name()) {
+        final int developerLevel = switch (this.getSeniority().name()) {
             case "MID" -> 3;
             case "SENIOR" -> 4;
             case "JUNIOR" -> 2;
@@ -234,7 +236,7 @@ public class Developer extends User implements Observer {
         // if (developerLevel == -1) {
         // System.out.println("IMPLEMENT: SeniorityLevelHandler");
         // }
-        int ticketLevel = switch (ticket.getBusinessPriority().name()) {
+        final int ticketLevel = switch (ticket.getBusinessPriority().name()) {
             case "LOW" -> 1;
             case "MEDIUM" -> 2;
             case "HIGH" -> 3;
@@ -251,7 +253,7 @@ public class Developer extends User implements Observer {
         return hireDate;
     }
 
-    public void setHireDate(String hireDate) {
+    public void setHireDate(final String hireDate) {
         this.hireDate = hireDate;
     }
 
@@ -259,7 +261,7 @@ public class Developer extends User implements Observer {
         return expertiseArea;
     }
 
-    public void setExpertiseArea(ExpertiseArea expertiseArea) {
+    public void setExpertiseArea(final ExpertiseArea expertiseArea) {
         this.expertiseArea = expertiseArea;
     }
 
@@ -267,11 +269,11 @@ public class Developer extends User implements Observer {
         return seniority;
     }
 
-    public void setSeniority(Seniority seniority) {
+    public void setSeniority(final Seniority seniority) {
         this.seniority = seniority;
     }
 
-    public void setNotifications(List<String> notifications) {
+    public void setNotifications(final List<String> notifications) {
         this.notifications = notifications;
     }
 
@@ -279,11 +281,11 @@ public class Developer extends User implements Observer {
         return performanceScoreCalculated;
     }
 
-    public void setPerformanceScoreCalculated(boolean performanceScoreCalculated) {
+    public void setPerformanceScoreCalculated(final boolean performanceScoreCalculated) {
         this.performanceScoreCalculated = performanceScoreCalculated;
     }
 
-    public void setPerformanceScore(double performanceScore) {
+    public void setPerformanceScore(final double performanceScore) {
         this.performanceScore = performanceScore;
     }
 
@@ -291,7 +293,7 @@ public class Developer extends User implements Observer {
         return closedTickets;
     }
 
-    public void setClosedTickets(int closedTickets) {
+    public void setClosedTickets(final int closedTickets) {
         this.closedTickets = closedTickets;
     }
 

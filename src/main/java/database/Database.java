@@ -34,34 +34,58 @@ import validation.commenthandlers.CommentLengthHandler;
 import validation.commenthandlers.DeveloperAssignmentHandler;
 import validation.commenthandlers.ReporterOwnershipHandler;
 import java.util.Collections;
-import java.util.Map;
-import java.util.HashMap;
-import search.filters.FilterContext;
-import search.filters.impl.BusinessPriorityFilter;
-import search.filters.impl.TypeFilter;
-import search.filters.impl.CreatedAtFilter;
-import search.filters.impl.CreatedBeforeFilter;
-import search.filters.impl.CreatedAfterFilter;
-import search.filters.impl.KeywordsFilter;
-import search.filters.impl.AvailableForAssignmentFilter;
-import search.filters.impl.ExpertiseAreaFilter;
-import search.filters.impl.SeniorityFilter;
-import search.filters.impl.PerformanceScoreAboveFilter;
-import search.filters.impl.PerformanceScoreBelowFilter;
 import users.User;
 import users.Manager;
 import users.Developer;
 import users.Reporter;
 
+import services.AnalyticsService;
+import tickets.TicketFactory;
+import search.SearchService;
+
 public class Database {
     private static Database instance;
-    private final String USERS_DB = "input/database/users.json";
 
+    public static void setInstance(Database instance) {
+        Database.instance = instance;
+    }
+
+    public static Database getInstance() {
+        if (instance == null) {
+            instance = new Database();
+        }
+        return instance;
+    }
+
+    private final String USERS_DB = "input/database/users.json";
     private List<User> users = new ArrayList<>();
+
     private List<Ticket> tickets = new ArrayList<>();
+
     private List<CommandInput> commands = new ArrayList<>();
+
     private final List<Milestone> milestones = new ArrayList<>();
+
     private LocalDate lastUpdate;
+
+    private Database() {
+    }
+
+    public String getUSERS_DB() {
+        return USERS_DB;
+    }
+
+    public List<Ticket> getTickets() {
+        return tickets;
+    }
+
+    public List<Milestone> getMilestones() {
+        return milestones;
+    }
+
+    public LocalDate getLastUpdate() {
+        return lastUpdate;
+    }
 
     public void setLastUpdate(final LocalDate lastUpdate) {
         this.lastUpdate = lastUpdate;
@@ -297,16 +321,6 @@ public class Database {
         return userMilestones;
     }
 
-    private List<Milestone> getMilestonesForDeveloper(final String username) {
-        final List<Milestone> devMilestones = new ArrayList<>();
-        for (final Milestone milestone : milestones) {
-            if (Arrays.asList(milestone.getAssignedDevs()).contains(username)) {
-                devMilestones.add(milestone);
-            }
-        }
-        return devMilestones;
-    }
-
     public void blockMilestone(final String name) {
         milestones.stream()
                 .filter(milestone -> name.equals(milestone.getName()))
@@ -342,76 +356,8 @@ public class Database {
             IOUtil.ticketError(command, "NUSR");
             return;
         }
-        tickets.add(
-                switch (command.params().type()) {
-                    case "BUG" -> {
-                        final Bug bug = new Bug.Builder()
-                                .id(Ticket.getTicketId())
-                                .title(command.params().title())
-                                .type(command.params().type())
-                                .businessPriority(
-                                        command.params().reportedBy().isEmpty()
-                                                ? Ticket.BusinessPriority.LOW
-                                                : Ticket.BusinessPriority.valueOf(
-                                                        command.params().businessPriority().toUpperCase()))
-                                .expertiseArea(Ticket.ExpertiseArea.valueOf(
-                                        command.params().expertiseArea().toUpperCase()))
-                                .reportedBy(command.params().reportedBy())
-                                .expectedBehaviour(command.params().expectedBehavior())
-                                .actualBehaviour(command.params().actualBehavior())
-                                .frequency(Bug.Frequency.valueOf(
-                                        command.params().frequency().toUpperCase()))
-                                .severity(Bug.Severity.valueOf(
-                                        command.params().severity().toUpperCase()))
-                                .environment(command.params().environment())
-                                .errorCode(command.params().errorCode() != null
-                                        ? Integer.parseInt(command.params().errorCode())
-                                        : 0)
-                                .createdAt(command.timestamp())
-                                .build();
-                        yield bug;
-                    }
-                    case "FEATURE_REQUEST" -> {
-                        final FeatureRequest fr = new FeatureRequest.Builder()
-                                .id(Ticket.getTicketId())
-                                .type(command.params().type())
-                                .title(command.params().title())
-                                .businessPriority(Ticket.BusinessPriority.valueOf(
-                                        command.params().businessPriority().toUpperCase()))
-                                .expertiseArea(Ticket.ExpertiseArea.valueOf(
-                                        command.params().expertiseArea().toUpperCase()))
-                                .reportedBy(command.params().reportedBy())
-                                .businessValue(FeatureRequest.BusinessValue.valueOf(
-                                        command.params().businessValue().toUpperCase()))
-                                .customerDemand(FeatureRequest.CustomerDemand.valueOf(
-                                        command.params().customerDemand().toUpperCase()))
-                                .createdAt(command.timestamp())
-                                .build();
-                        yield fr;
-                    }
-                    case "UI_FEEDBACK" -> {
-                        final UIFeedback ui = new UIFeedback.Builder()
-                                .id(Ticket.getTicketId())
-                                .type(command.params().type())
-                                .title(command.params().title())
-                                .businessPriority(Ticket.BusinessPriority.valueOf(
-                                        command.params().businessPriority().toUpperCase()))
-                                .expertiseArea(Ticket.ExpertiseArea.valueOf(
-                                        command.params().expertiseArea().toUpperCase()))
-                                .reportedBy(command.params().reportedBy())
-                                .businessValue(FeatureRequest.BusinessValue.valueOf(
-                                        command.params().businessValue().toUpperCase()))
-                                .uiElementId(command.params().uiElementId())
-                                .usabilityScore(command.params().usabilityScore())
-                                .screenshotUrl(command.params().screenshotUrl())
-                                .suggestedFix(command.params().suggestedFix())
-                                .createdAt(command.timestamp())
-                                .build();
-                        yield ui;
-                    }
-                    default -> throw new IllegalArgumentException(
-                            "Unknown ticket type: " + command.params().type());
-                });
+
+        tickets.add(TicketFactory.createTicket(command));
         Ticket.setTicketId(Ticket.getTicketId() + 1);
     }
 
@@ -494,7 +440,9 @@ public class Database {
         ticket.addComment(command.username(), command.comment(), command.timestamp());
 
         final Developer developer = (Developer) getUser(ticket.getAssignedTo());
-        developer.incrementCommentCount(ticket.getId());
+        if (developer != null) {
+            developer.incrementCommentCount(ticket.getId());
+        }
     }
 
     public void undoAddComment(final CommandInput command) {
@@ -615,7 +563,6 @@ public class Database {
                             .abs((int) ChronoUnit.DAYS.between((LocalDate.parse(milestone.getCreatedAt())),
                                     date));
                 }
-
             }
 
             if ((timeSinceCreation != 0) && !milestone.isBlocked()) {
@@ -634,274 +581,56 @@ public class Database {
                     if (ticket.getStatus().name().equals("CLOSED")) {
                         continue;
                     }
+
                     if (CRIT) {
                         ticket.setBusinessPriority(BusinessPriority.CRITICAL);
                     }
                     if (timeSinceCreation % 3 == 0) {
                         ticket.upPriority();
                     }
+
+                    if (ticket.getStatus() == Status.IN_PROGRESS && ticket.getAssignedTo() != null) {
+                        User user = getUser(ticket.getAssignedTo());
+                        if (user instanceof Developer) {
+                            Developer dev = (Developer) user;
+                            if (!canHandlePriority(dev, ticket.getBusinessPriority())) {
+                                dev.deassignFromTicket(ticket.getId());
+                                ticket.setAssignedTo(null);
+                                ticket.setStatus(Status.OPEN);
+
+                                if (ticket.getTicketHistory() != null) {
+                                }
+                            }
+                        }
+                    }
                 }
             }
         });
     }
 
-    public List<Number> getCustomerImpact() {
-        final List<Number> report = new ArrayList<>();
-
-        int totalTickets = 0;
-
-        int bugCount = 0;
-        int featureRequestCount = 0;
-        int uiFeedbackCount = 0;
-
-        int lowPriority = 0;
-        int mediumPriority = 0;
-        int highPriority = 0;
-        int criticalPriority = 0;
-
-        double bugImpact = 0.0;
-        double featureRequestImpact = 0.0;
-        double uiFeedbackImpact = 0.0;
-
-        for (final Ticket ticket : tickets) {
-            if (ticket.getStatus().name().equals("RESOLVED")) {
-                continue;
-            }
-            if (ticket.getStatus().name().equals("CLOSED")) {
-                continue;
-            }
-            totalTickets++;
-            final String type = ticket.getType();
-            final String priority = ticket.getBusinessPriority().name();
-            final double impact = ticket.getImpact();
-
-            switch (type) {
-                case "BUG":
-                    bugCount++;
-                    bugImpact += impact;
-                    break;
-                case "FEATURE_REQUEST":
-                    featureRequestCount++;
-                    featureRequestImpact += impact;
-                    break;
-                case "UI_FEEDBACK":
-                    uiFeedbackCount++;
-                    uiFeedbackImpact += impact;
-                    break;
-            }
-
-            switch (priority) {
-                case "LOW":
-                    lowPriority++;
-                    break;
-                case "MEDIUM":
-                    mediumPriority++;
-                    break;
-                case "HIGH":
-                    highPriority++;
-                    break;
-                case "CRITICAL":
-                    criticalPriority++;
-                    break;
-            }
+    private boolean canHandlePriority(final Developer dev, final BusinessPriority priority) {
+        switch (dev.getSeniority()) {
+            case SENIOR:
+                return true;
+            case MID:
+                return priority != BusinessPriority.CRITICAL;
+            case JUNIOR:
+                return priority == BusinessPriority.LOW || priority == BusinessPriority.MEDIUM;
+            default:
+                return false;
         }
-        report.add(totalTickets);
+    }
 
-        report.add(bugCount);
-        report.add(featureRequestCount);
-        report.add(uiFeedbackCount);
-
-        report.add(lowPriority);
-        report.add(mediumPriority);
-        report.add(highPriority);
-        report.add(criticalPriority);
-
-        report.add(MathUtil.round(MathUtil.average(bugImpact, bugCount)));
-        report.add(MathUtil.round(MathUtil.average(featureRequestImpact, featureRequestCount)));
-        report.add(MathUtil.round(MathUtil.average(uiFeedbackImpact, uiFeedbackCount)));
-
-        return report;
+    public List<Number> getCustomerImpact() {
+        return AnalyticsService.getCustomerImpact(this.tickets);
     }
 
     public List<Number> getResolutionEfficiency() {
-        final List<Number> report = new ArrayList<>();
-
-        int totalTickets = 0;
-
-        int bugCount = 0;
-        int featureRequestCount = 0;
-        int uiFeedbackCount = 0;
-
-        int lowPriority = 0;
-        int mediumPriority = 0;
-        int highPriority = 0;
-        int criticalPriority = 0;
-
-        double bugImpact = 0.0;
-        double featureRequestImpact = 0.0;
-        double uiFeedbackImpact = 0.0;
-
-        for (final Ticket ticket : tickets) {
-            if (ticket.getStatus().name().equals("OPEN")) {
-                continue;
-            }
-            if (ticket.getStatus().name().equals("IN_PROGRESS")) {
-                continue;
-            }
-            totalTickets++;
-            final String type = ticket.getType();
-            final String priority = ticket.getBusinessPriority().name();
-            final double impact = ticket.getEfficiency();
-
-            switch (type) {
-                case "BUG":
-                    bugCount++;
-                    bugImpact += impact;
-                    break;
-                case "FEATURE_REQUEST":
-                    featureRequestCount++;
-                    featureRequestImpact += impact;
-                    break;
-                case "UI_FEEDBACK":
-                    uiFeedbackCount++;
-                    uiFeedbackImpact += impact;
-                    break;
-            }
-
-            switch (priority) {
-                case "LOW":
-                    lowPriority++;
-                    break;
-                case "MEDIUM":
-                    mediumPriority++;
-                    break;
-                case "HIGH":
-                    highPriority++;
-                    break;
-                case "CRITICAL":
-                    criticalPriority++;
-                    break;
-            }
-        }
-        report.add(totalTickets);
-
-        report.add(bugCount);
-        report.add(featureRequestCount);
-        report.add(uiFeedbackCount);
-
-        report.add(lowPriority);
-        report.add(mediumPriority);
-        report.add(highPriority);
-        report.add(criticalPriority);
-
-        report.add(MathUtil.round(MathUtil.average(bugImpact, bugCount)));
-        report.add(MathUtil.round(MathUtil.average(featureRequestImpact, featureRequestCount)));
-        report.add(MathUtil.round(MathUtil.average(uiFeedbackImpact, uiFeedbackCount)));
-
-        return report;
+        return AnalyticsService.getResolutionEfficiency(this.tickets);
     }
 
     public List<Object> getAppStability() {
-        final List<Object> report = new ArrayList<>();
-
-        int totalOpenTickets = 0;
-        int bugCount = 0;
-        int featureRequestCount = 0;
-        int uiFeedbackCount = 0;
-
-        int lowPriority = 0;
-        int mediumPriority = 0;
-        int highPriority = 0;
-        int criticalPriority = 0;
-
-        double bugImpact = 0.0;
-        double featureRequestImpact = 0.0;
-        double uiFeedbackImpact = 0.0;
-
-        double bugRiskScore = 0.0;
-        double featureRequestRiskScore = 0.0;
-        double uiFeedbackRiskScore = 0.0;
-
-        for (final Ticket ticket : tickets) {
-            if (!ticket.getStatus().name().equals("OPEN") &&
-                    !ticket.getStatus().name().equals("IN_PROGRESS")) {
-                continue;
-            }
-
-            totalOpenTickets++;
-            final String type = ticket.getType();
-            final String priority = ticket.getBusinessPriority().name();
-
-            switch (type) {
-                case "BUG":
-                    bugCount++;
-                    bugImpact += ticket.getImpact();
-                    bugRiskScore += ticket.getRisk();
-                    break;
-                case "FEATURE_REQUEST":
-                    featureRequestCount++;
-                    featureRequestImpact += ticket.getImpact();
-                    featureRequestRiskScore += ticket.getRisk();
-                    break;
-                case "UI_FEEDBACK":
-                    uiFeedbackCount++;
-                    uiFeedbackImpact += ticket.getImpact();
-                    uiFeedbackRiskScore += ticket.getRisk();
-                    break;
-            }
-
-            switch (priority) {
-                case "LOW":
-                    lowPriority++;
-                    break;
-                case "MEDIUM":
-                    mediumPriority++;
-                    break;
-                case "HIGH":
-                    highPriority++;
-                    break;
-                case "CRITICAL":
-                    criticalPriority++;
-                    break;
-            }
-        }
-
-        report.add(totalOpenTickets);
-
-        report.add(bugCount);
-        report.add(featureRequestCount);
-        report.add(uiFeedbackCount);
-
-        report.add(lowPriority);
-        report.add(mediumPriority);
-        report.add(highPriority);
-        report.add(criticalPriority);
-
-        final double avgBugRisk = bugCount > 0 ? bugRiskScore / bugCount : 0;
-        final double avgFeatureRisk = featureRequestCount > 0 ? featureRequestRiskScore / featureRequestCount : 0;
-        final double avgUIRisk = uiFeedbackCount > 0 ? uiFeedbackRiskScore / uiFeedbackCount : 0;
-
-        final String bugRiskLevel = getRiskLevel(avgBugRisk);
-        final String featureRiskLevel = getRiskLevel(avgFeatureRisk);
-        final String uiRiskLevel = getRiskLevel(avgUIRisk);
-
-        report.add(bugRiskLevel);
-        report.add(featureRiskLevel);
-        report.add(uiRiskLevel);
-
-        final double avgBugImpact = bugCount > 0 ? bugImpact / bugCount : 0;
-        final double avgFeatureImpact = featureRequestCount > 0 ? featureRequestImpact / featureRequestCount : 0;
-        final double avgUIImpact = uiFeedbackCount > 0 ? uiFeedbackImpact / uiFeedbackCount : 0;
-
-        report.add(MathUtil.round(avgBugImpact));
-        report.add(MathUtil.round(avgFeatureImpact));
-        report.add(MathUtil.round(avgUIImpact));
-
-        final String appStability = determineStability(bugRiskLevel, featureRiskLevel, uiRiskLevel,
-                avgBugImpact, avgFeatureImpact, avgUIImpact);
-        report.add(appStability);
-
-        return report;
+        return new AnalyticsService().getAppStability();
     }
 
     public List<List<Object>> getPerformance(final CommandInput command) {
@@ -931,129 +660,8 @@ public class Database {
         return report;
     }
 
-    private String determineStability(final String bugRisk, final String featureRisk, final String uiRisk,
-            final double bugImpact, final double featureImpact, final double uiImpact) {
-
-        final boolean hasSignificantRisk = bugRisk.equals("SIGNIFICANT") ||
-                bugRisk.equals("MAJOR") ||
-                featureRisk.equals("SIGNIFICANT") ||
-                featureRisk.equals("MAJOR") ||
-                uiRisk.equals("SIGNIFICANT") ||
-                uiRisk.equals("MAJOR");
-
-        final boolean allNegligible = bugRisk.equals("NEGLIGIBLE") &&
-                featureRisk.equals("NEGLIGIBLE") &&
-                uiRisk.equals("NEGLIGIBLE");
-
-        final boolean allImpactBelow50 = bugImpact < 50 && featureImpact < 50 && uiImpact < 50;
-
-        if (hasSignificantRisk) {
-            return "UNSTABLE";
-        }
-
-        if (allNegligible && allImpactBelow50) {
-            return "STABLE";
-        }
-
-        return "PARTIALLY STABLE";
-    }
-
     public List<Object> getTicketRisk() {
-        final List<Object> report = new ArrayList<>();
-
-        int totalTickets = 0;
-
-        int bugCount = 0;
-        int featureRequestCount = 0;
-        int uiFeedbackCount = 0;
-
-        int lowPriority = 0;
-        int mediumPriority = 0;
-        int highPriority = 0;
-        int criticalPriority = 0;
-
-        double bugImpact = 0.0;
-        double featureRequestImpact = 0.0;
-        double uiFeedbackImpact = 0.0;
-
-        for (final Ticket ticket : tickets) {
-            if (ticket.getStatus().name().equals("RESOLVED")) {
-                continue;
-            }
-            if (ticket.getStatus().name().equals("CLOSED")) {
-                continue;
-            }
-            totalTickets++;
-            final String type = ticket.getType();
-            final String priority = ticket.getBusinessPriority().name();
-            final double impact = ticket.getRisk();
-
-            switch (type) {
-                case "BUG":
-                    bugCount++;
-                    bugImpact += impact;
-                    break;
-                case "FEATURE_REQUEST":
-                    featureRequestCount++;
-                    featureRequestImpact += impact;
-                    break;
-                case "UI_FEEDBACK":
-                    uiFeedbackCount++;
-                    uiFeedbackImpact += impact;
-                    break;
-            }
-
-            switch (priority) {
-                case "LOW":
-                    lowPriority++;
-                    break;
-                case "MEDIUM":
-                    mediumPriority++;
-                    break;
-                case "HIGH":
-                    highPriority++;
-                    break;
-                case "CRITICAL":
-                    criticalPriority++;
-                    break;
-            }
-        }
-        report.add(totalTickets);
-
-        report.add(bugCount);
-        report.add(featureRequestCount);
-        report.add(uiFeedbackCount);
-
-        report.add(lowPriority);
-        report.add(mediumPriority);
-        report.add(highPriority);
-        report.add(criticalPriority);
-
-        bugImpact = (MathUtil.round(MathUtil.average(bugImpact, bugCount)));
-        featureRequestImpact = (MathUtil.round(MathUtil.average(featureRequestImpact, featureRequestCount)));
-        uiFeedbackImpact = (MathUtil.round(MathUtil.average(uiFeedbackImpact, uiFeedbackCount)));
-
-        final String bugRiskLevel = getRiskLevel(bugImpact);
-        final String featureRequestRiskLevel = getRiskLevel(featureRequestImpact);
-        final String uiFeedbackRiskLevel = getRiskLevel(uiFeedbackImpact);
-
-        report.add(bugRiskLevel);
-        report.add(featureRequestRiskLevel);
-        report.add(uiFeedbackRiskLevel);
-
-        return report;
-    }
-
-    private String getRiskLevel(final double impact) {
-        if (impact >= 0 && impact <= 24)
-            return "NEGLIGIBLE";
-        if (impact >= 25 && impact <= 49)
-            return "MODERATE";
-        if (impact >= 50 && impact <= 74)
-            return "SIGNIFICANT";
-        if (impact >= 75 && impact <= 100)
-            return "MAJOR";
-        return "NEGLIGIBLE";
+        return new AnalyticsService().getTicketRisk();
     }
 
     public List<Developer> getAllDevelopers() {
@@ -1067,147 +675,7 @@ public class Database {
     }
 
     public List<?> getSearchResults(final CommandInput command) {
-        final User user = getUser(command.username());
-        final FiltersInput filters = command.filters();
-        final String searchType = filters.searchType();
-
-        if ("DEVELOPER".equals(searchType)) {
-            if (!"MANAGER".equals(user.getRole().name())) {
-                return new ArrayList<>();
-            }
-
-            final List<Developer> allDevelopers = getAllDevelopers();
-            return filterDevelopers((Manager) user, allDevelopers, filters);
-
-        } else {
-            final List<Ticket> allTickets = getAllTickets();
-            return filterTickets(user, allTickets, filters);
-        }
-    }
-
-    private List<Ticket> filterTickets(final User user, final List<Ticket> allTickets, final FiltersInput filters) {
-        final List<Ticket> accessibleTickets = new ArrayList<>();
-
-        if ("MANAGER".equals(user.getRole().name())) {
-            accessibleTickets.addAll(allTickets);
-        } else if ("DEVELOPER".equals(user.getRole().name())) {
-            final Developer dev = (Developer) user;
-            final List<Milestone> devMilestones = getMilestonesForDeveloper(dev.getUsername());
-
-            for (final Milestone milestone : devMilestones) {
-                for (final int ticketId : milestone.getTickets()) {
-                    for (final Ticket ticket : allTickets) {
-                        if (ticket.getId() == ticketId &&
-                                ticket.getStatus() == Ticket.Status.OPEN) {
-
-                            boolean alreadyAdded = false;
-                            for (final Ticket addedTicket : accessibleTickets) {
-                                if (addedTicket.getId() == ticketId) {
-                                    alreadyAdded = true;
-                                    break;
-                                }
-                            }
-
-                            if (!alreadyAdded) {
-                                accessibleTickets.add(ticket);
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-        } else {
-            return new ArrayList<>();
-        }
-
-        final FilterContext<Ticket> context = new FilterContext<>();
-
-        context.addStrategy("businessPriority", new BusinessPriorityFilter());
-        context.addStrategy("type", new TypeFilter());
-        context.addStrategy("createdAt", new CreatedAtFilter());
-        context.addStrategy("createdBefore", new CreatedBeforeFilter());
-        context.addStrategy("createdAfter", new CreatedAfterFilter());
-        context.addStrategy("keywords", new KeywordsFilter());
-
-        if ("DEVELOPER".equals(user.getRole().name())) {
-            final Developer dev = (Developer) user;
-            context.addStrategy("availableForAssignment", new AvailableForAssignmentFilter(dev));
-        }
-
-        final Map<String, String> filterMap = convertToMap(filters);
-        final List<Ticket> filtered = context.applyFilters(accessibleTickets, filterMap);
-
-        filtered.sort(Comparator
-                .comparing(Ticket::getCreatedAt)
-                .thenComparing(Ticket::getId));
-
-        return filtered;
-    }
-
-    private List<Developer> filterDevelopers(final Manager manager, final List<Developer> allDevelopers,
-            final FiltersInput filters) {
-        final List<Developer> subordinates = new ArrayList<>();
-        final List<String> subordinateUsernames = Arrays.asList(manager.getSubordinates());
-
-        for (final Developer dev : allDevelopers) {
-            if (subordinateUsernames.contains(dev.getUsername())) {
-                subordinates.add(dev);
-            }
-        }
-
-        final FilterContext<Developer> context = new FilterContext<>();
-
-        context.addStrategy("expertiseArea", new ExpertiseAreaFilter());
-        context.addStrategy("seniority", new SeniorityFilter());
-        context.addStrategy("performanceScoreAbove", new PerformanceScoreAboveFilter());
-        context.addStrategy("performanceScoreBelow", new PerformanceScoreBelowFilter());
-
-        final Map<String, String> filterMap = convertToMap(filters);
-        final List<Developer> filtered = context.applyFilters(subordinates, filterMap);
-
-        filtered.sort(Comparator.comparing(Developer::getUsername));
-
-        return filtered;
-    }
-
-    private Map<String, String> convertToMap(final FiltersInput filters) {
-        final Map<String, String> map = new HashMap<>();
-
-        if (filters.businessPriority() != null) {
-            map.put("businessPriority", filters.businessPriority());
-        }
-        if (filters.type() != null) {
-            map.put("type", filters.type());
-        }
-        if (filters.createdAt() != null) {
-            map.put("createdAt", filters.createdAt());
-        }
-        if (filters.createdBefore() != null) {
-            map.put("createdBefore", filters.createdBefore());
-        }
-        if (filters.createdAfter() != null) {
-            map.put("createdAfter", filters.createdAfter());
-        }
-        if (filters.availableForAssignment() != null) {
-            map.put("availableForAssignment", String.valueOf(filters.availableForAssignment()));
-        }
-        if (filters.keywords() != null && filters.keywords().length > 0) {
-            map.put("keywords", Arrays.toString(filters.keywords()));
-        }
-        if (filters.expertiseArea() != null) {
-            map.put("expertiseArea", filters.expertiseArea());
-        }
-        if (filters.seniority() != null) {
-            map.put("seniority", filters.seniority());
-        }
-        if (filters.performanceScoreAbove() > 0) {
-            map.put("performanceScoreAbove", String.valueOf(filters.performanceScoreAbove()));
-        }
-        if (filters.performanceScoreBelow() > 0) {
-            map.put("performanceScoreBelow", String.valueOf(filters.performanceScoreBelow()));
-        }
-
-        return map;
+        return SearchService.getSearchResults(command);
     }
 
     public List<Ticket> getAllTickets() {
@@ -1224,15 +692,5 @@ public class Database {
 
     public void setCommands(final List<CommandInput> commands) {
         this.commands = commands;
-    }
-
-    private Database() {
-    }
-
-    public static Database getInstance() {
-        if (instance == null) {
-            instance = new Database();
-        }
-        return instance;
     }
 }

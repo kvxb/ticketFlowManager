@@ -7,10 +7,10 @@ import java.time.temporal.ChronoUnit;
 import java.time.LocalDate;
 
 public class UIFeedback extends Ticket {
-    private String uiElementId;
-    private int usabilityScore;// 1-10
-    private String screenshotUrl;
-    private String suggestedFix;
+    private final String uiElementId;
+    private final int usabilityScore;// 1-10
+    private final String screenshotUrl;
+    private final String suggestedFix;
 
     public enum businessValue {
         S,
@@ -21,7 +21,7 @@ public class UIFeedback extends Ticket {
 
     @Override
     public double getImpact() {
-        double businessScore = switch (businessValue.name()) {
+        final double businessScore = switch (businessValue.name()) {
             case "S" -> 1.0;
             case "M" -> 3.0;
             case "L" -> 6.0;
@@ -34,7 +34,7 @@ public class UIFeedback extends Ticket {
 
     @Override
     public double getRisk() {
-        double businessScore = switch (businessValue.name()) {
+        final double businessScore = switch (businessValue.name()) {
             case "S" -> 1.0;
             case "M" -> 3.0;
             case "L" -> 6.0;
@@ -47,7 +47,7 @@ public class UIFeedback extends Ticket {
 
     @Override
     public double getEfficiency() {
-        double businessScore = switch (businessValue.name()) {
+        final double businessScore = switch (businessValue.name()) {
             case "S" -> 1.0;
             case "M" -> 3.0;
             case "L" -> 6.0;
@@ -62,9 +62,9 @@ public class UIFeedback extends Ticket {
         return MathUtil.normalize(((businessScore + usabilityScore) / daysToResolve), 20);
     }
 
-    private BusinessValue businessValue;
+    private final BusinessValue businessValue;
 
-    private UIFeedback(Builder builder) {
+    private UIFeedback(final Builder builder) {
         super(builder);
         this.uiElementId = builder.uiElementId;
         this.usabilityScore = builder.usabilityScore;
@@ -84,27 +84,27 @@ public class UIFeedback extends Ticket {
             super.type("FEATURE_REQUEST");
         }
 
-        public Builder uiElementId(String uiElementId) {
+        public Builder uiElementId(final String uiElementId) {
             this.uiElementId = uiElementId;
             return this;
         }
 
-        public Builder usabilityScore(int usabilityScore) {
+        public Builder usabilityScore(final int usabilityScore) {
             this.usabilityScore = usabilityScore;
             return this;
         }
 
-        public Builder screenshotUrl(String screenshotUrl) {
+        public Builder screenshotUrl(final String screenshotUrl) {
             this.screenshotUrl = screenshotUrl;
             return this;
         }
 
-        public Builder suggestedFix(String suggestedFix) {
+        public Builder suggestedFix(final String suggestedFix) {
             this.suggestedFix = suggestedFix;
             return this;
         }
 
-        public Builder businessValue(BusinessValue businessValue) {
+        public Builder businessValue(final BusinessValue businessValue) {
             this.businessValue = businessValue;
             return this;
         }

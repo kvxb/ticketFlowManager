@@ -1,8 +1,8 @@
 package users;
 
-public class Reporter extends User{
+public class Reporter extends User {
 
-    public Reporter(String username, String email, String role) {
+    public Reporter(final String username, final String email, final String role) {
         super(username, email, role);
     }
 }

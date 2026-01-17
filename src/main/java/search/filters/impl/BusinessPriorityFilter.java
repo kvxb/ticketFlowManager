@@ -6,18 +6,18 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class BusinessPriorityFilter implements TicketFilterStrategy {
-    
+
     @Override
-    public List<Ticket> filter(List<Ticket> tickets, String filterValue) {
-        List<Ticket> filteredTickets = new ArrayList<>();
-        for (Ticket ticket : tickets) {
+    public List<Ticket> filter(final List<Ticket> tickets, final String filterValue) {
+        final List<Ticket> filteredTickets = new ArrayList<>();
+        for (final Ticket ticket : tickets) {
             if (ticket.getBusinessPriority().toString().equalsIgnoreCase(filterValue)) {
                 filteredTickets.add(ticket);
             }
         }
         return filteredTickets;
     }
-    
+
     @Override
     public String getFilterName() {
         return "businessPriority";

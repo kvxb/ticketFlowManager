@@ -8,9 +8,9 @@ import milestones.Milestone;
 
 public class ExpertiseAreaHandler extends DeveloperValidationHandler {
     @Override
-    protected int validate(Developer developer, Ticket ticket, Milestone milestone) {
-        String developerExpertise = developer.getExpertiseArea().name();
-        String ticketExpertise = ticket.getExpertiseArea().name();
+    protected int validate(final Developer developer, final Ticket ticket, final Milestone milestone) {
+        final String developerExpertise = developer.getExpertiseArea().name();
+        final String ticketExpertise = ticket.getExpertiseArea().name();
 
         switch (ticketExpertise) {
             case "FRONTEND":
@@ -53,7 +53,7 @@ public class ExpertiseAreaHandler extends DeveloperValidationHandler {
     }
 
     @Override
-    protected void showError(CommandInput command, int error) {
+    protected void showError(final CommandInput command, final int error) {
         IOUtil.assignError(command, "EXPERTISE");
     }
 }

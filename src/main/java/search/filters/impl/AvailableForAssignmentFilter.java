@@ -8,20 +8,20 @@ import java.util.ArrayList;
 
 public class AvailableForAssignmentFilter implements TicketFilterStrategy {
 
-    private Developer currentDeveloper;
+    private final Developer currentDeveloper;
 
-    public AvailableForAssignmentFilter(Developer currentDeveloper) {
+    public AvailableForAssignmentFilter(final Developer currentDeveloper) {
         this.currentDeveloper = currentDeveloper;
     }
 
     @Override
-    public List<Ticket> filter(List<Ticket> tickets, String filterValue) {
+    public List<Ticket> filter(final List<Ticket> tickets, final String filterValue) {
         if (!Boolean.parseBoolean(filterValue)) {
             return tickets;
         }
 
-        List<Ticket> filteredTickets = new ArrayList<>();
-        for (Ticket ticket : tickets) {
+        final List<Ticket> filteredTickets = new ArrayList<>();
+        for (final Ticket ticket : tickets) {
             if (canBeAssigned(ticket)) {
                 filteredTickets.add(ticket);
             }
@@ -29,7 +29,7 @@ public class AvailableForAssignmentFilter implements TicketFilterStrategy {
         return filteredTickets;
     }
 
-    private boolean canBeAssigned(Ticket ticket) {
+    private boolean canBeAssigned(final Ticket ticket) {
         if (currentDeveloper == null)
             return false;
         if (ticket.getStatus() != Ticket.Status.OPEN)

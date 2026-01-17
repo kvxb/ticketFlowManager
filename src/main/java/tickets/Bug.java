@@ -6,12 +6,12 @@ import java.time.temporal.ChronoUnit;
 import mathutils.MathUtil;
 
 final public class Bug extends Ticket {
-    private String expectedBehaviour;
-    private String actualBehaviour;
+    private final String expectedBehaviour;
+    private final String actualBehaviour;
 
     @Override
     public double getImpact() {
-        double frequencyScore = switch (frequency.name()) {
+        final double frequencyScore = switch (frequency.name()) {
             case "RARE" -> 1.0;
             case "OCCASIONAL" -> 2.0;
             case "FREQUENT" -> 3.0;
@@ -19,7 +19,7 @@ final public class Bug extends Ticket {
             default -> -1.0;
         };
 
-        double priorityScore = switch (businessPriority.name()) {
+        final double priorityScore = switch (businessPriority.name()) {
             case "LOW" -> 1.0;
             case "MEDIUM" -> 2.0;
             case "HIGH" -> 3.0;
@@ -27,7 +27,7 @@ final public class Bug extends Ticket {
             default -> -1.0;
         };
 
-        double severityScore = switch (severity.name()) {
+        final double severityScore = switch (severity.name()) {
             case "MINOR" -> 1.0;
             case "MODERATE" -> 2.0;
             case "SEVERE" -> 3.0;
@@ -38,7 +38,7 @@ final public class Bug extends Ticket {
 
     @Override
     public double getEfficiency() {
-        double frequencyScore = switch (frequency.name()) {
+        final double frequencyScore = switch (frequency.name()) {
             case "RARE" -> 1.0;
             case "OCCASIONAL" -> 2.0;
             case "FREQUENT" -> 3.0;
@@ -46,7 +46,7 @@ final public class Bug extends Ticket {
             default -> -1.0;
         };
 
-        double severityScore = switch (severity.name()) {
+        final double severityScore = switch (severity.name()) {
             case "MINOR" -> 1.0;
             case "MODERATE" -> 2.0;
             case "SEVERE" -> 3.0;
@@ -63,7 +63,7 @@ final public class Bug extends Ticket {
 
     @Override
     public double getRisk() {
-        double frequencyScore = switch (frequency.name()) {
+        final double frequencyScore = switch (frequency.name()) {
             case "RARE" -> 1.0;
             case "OCCASIONAL" -> 2.0;
             case "FREQUENT" -> 3.0;
@@ -71,7 +71,7 @@ final public class Bug extends Ticket {
             default -> -1.0;
         };
 
-        double severityScore = switch (severity.name()) {
+        final double severityScore = switch (severity.name()) {
             case "MINOR" -> 1.0;
             case "MODERATE" -> 2.0;
             case "SEVERE" -> 3.0;
@@ -93,12 +93,12 @@ final public class Bug extends Ticket {
         SEVERE
     }
 
-    private Frequency frequency;
-    private Severity severity;
-    private String environment;
-    private Integer errorCode;
+    private final Frequency frequency;
+    private final Severity severity;
+    private final String environment;
+    private final Integer errorCode;
 
-    private Bug(Builder builder) {
+    private Bug(final Builder builder) {
         super(builder);
         this.expectedBehaviour = builder.expectedBehaviour;
         this.actualBehaviour = builder.actualBehaviour;
@@ -120,32 +120,32 @@ final public class Bug extends Ticket {
             super.type("BUG");
         }
 
-        public Builder expectedBehaviour(String expectedBehaviour) {
+        public Builder expectedBehaviour(final String expectedBehaviour) {
             this.expectedBehaviour = expectedBehaviour;
             return this;
         }
 
-        public Builder actualBehaviour(String actualBehaviour) {
+        public Builder actualBehaviour(final String actualBehaviour) {
             this.actualBehaviour = actualBehaviour;
             return this;
         }
 
-        public Builder frequency(Frequency frequency) {
+        public Builder frequency(final Frequency frequency) {
             this.frequency = frequency;
             return this;
         }
 
-        public Builder severity(Severity severity) {
+        public Builder severity(final Severity severity) {
             this.severity = severity;
             return this;
         }
 
-        public Builder environment(String environment) {
+        public Builder environment(final String environment) {
             this.environment = environment;
             return this;
         }
 
-        public Builder errorCode(Integer errorCode) {
+        public Builder errorCode(final Integer errorCode) {
             this.errorCode = errorCode;
             return this;
         }

@@ -7,20 +7,20 @@ import java.util.ArrayList;
 import java.time.LocalDate;
 
 public class CreatedAfterFilter implements TicketFilterStrategy {
-    
+
     @Override
-    public List<Ticket> filter(List<Ticket> tickets, String filterValue) {
-        List<Ticket> filteredTickets = new ArrayList<>();
-        LocalDate targetDate = LocalDate.parse(filterValue);
-        
-        for (Ticket ticket : tickets) {
-            if (LocalDate.parse(ticket.getCreatedAt()).isAfter(targetDate)){
+    public List<Ticket> filter(final List<Ticket> tickets, final String filterValue) {
+        final List<Ticket> filteredTickets = new ArrayList<>();
+        final LocalDate targetDate = LocalDate.parse(filterValue);
+
+        for (final Ticket ticket : tickets) {
+            if (LocalDate.parse(ticket.getCreatedAt()).isAfter(targetDate)) {
                 filteredTickets.add(ticket);
             }
         }
         return filteredTickets;
     }
-    
+
     @Override
     public String getFilterName() {
         return "createdAfter";

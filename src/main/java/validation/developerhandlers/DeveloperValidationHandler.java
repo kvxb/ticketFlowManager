@@ -8,13 +8,13 @@ import milestones.Milestone;
 public abstract class DeveloperValidationHandler {
     private DeveloperValidationHandler next;
     
-    public DeveloperValidationHandler setNext(DeveloperValidationHandler next) {
+    public DeveloperValidationHandler setNext(final DeveloperValidationHandler next) {
         this.next = next;
         return next;
     }
     
-    public boolean check(Developer developer, Ticket ticket, Milestone milestone, CommandInput command) {
-        int error = validate(developer, ticket, milestone);
+    public boolean check(final Developer developer, final Ticket ticket, final Milestone milestone, final CommandInput command) {
+        final int error = validate(developer, ticket, milestone);
         if(error != 0){   
             showError(command, error);
             return false;

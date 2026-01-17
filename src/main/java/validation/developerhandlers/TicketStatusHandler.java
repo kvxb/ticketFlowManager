@@ -8,12 +8,12 @@ import milestones.Milestone;
 
 public class TicketStatusHandler extends DeveloperValidationHandler {
     @Override
-    protected int validate(Developer developer, Ticket ticket, Milestone milestone) {
-        return ticket.getStatus().name().equals("OPEN")?0:1;
+    protected int validate(final Developer developer, final Ticket ticket, final Milestone milestone) {
+        return ticket.getStatus().name().equals("OPEN") ? 0 : 1;
     }
-    
+
     @Override
-    protected void showError(CommandInput command, int error) {
+    protected void showError(final CommandInput command, final int error) {
         IOUtil.assignError(command, "STATUS");
     }
 }

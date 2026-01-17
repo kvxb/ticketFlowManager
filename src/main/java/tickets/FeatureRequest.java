@@ -21,7 +21,7 @@ public class FeatureRequest extends Ticket {
 
     @Override
     public double getImpact() {
-        double businessScore = switch (businessValue.name()) {
+        final double businessScore = switch (businessValue.name()) {
             case "S" -> 1.0;
             case "M" -> 3.0;
             case "L" -> 6.0;
@@ -29,7 +29,7 @@ public class FeatureRequest extends Ticket {
             default -> -1.0;
         };
 
-        double customerScore = switch (customerDemand.name()) {
+        final double customerScore = switch (customerDemand.name()) {
             case "LOW" -> 1.0;
             case "MEDIUM" -> 3.0;
             case "HIGH" -> 6.0;
@@ -42,7 +42,7 @@ public class FeatureRequest extends Ticket {
 
     @Override
     public double getRisk() {
-        double businessScore = switch (businessValue.name()) {
+        final double businessScore = switch (businessValue.name()) {
             case "S" -> 1.0;
             case "M" -> 3.0;
             case "L" -> 6.0;
@@ -50,7 +50,7 @@ public class FeatureRequest extends Ticket {
             default -> -1.0;
         };
 
-        double customerScore = switch (customerDemand.name()) {
+        final double customerScore = switch (customerDemand.name()) {
             case "LOW" -> 1.0;
             case "MEDIUM" -> 3.0;
             case "HIGH" -> 6.0;
@@ -63,7 +63,7 @@ public class FeatureRequest extends Ticket {
 
     @Override
     public double getEfficiency() {
-        double businessScore = switch (businessValue.name()) {
+        final double businessScore = switch (businessValue.name()) {
             case "S" -> 1.0;
             case "M" -> 3.0;
             case "L" -> 6.0;
@@ -71,7 +71,7 @@ public class FeatureRequest extends Ticket {
             default -> -1.0;
         };
 
-        double customerScore = switch (customerDemand.name()) {
+        final double customerScore = switch (customerDemand.name()) {
             case "LOW" -> 1.0;
             case "MEDIUM" -> 3.0;
             case "HIGH" -> 6.0;
@@ -86,10 +86,10 @@ public class FeatureRequest extends Ticket {
         return MathUtil.normalize(((businessScore + customerScore) / daysToResolve), 20);
     }
 
-    private BusinessValue businessValue;
-    private CustomerDemand customerDemand;
+    private final BusinessValue businessValue;
+    private final CustomerDemand customerDemand;
 
-    private FeatureRequest(Builder builder) {
+    private FeatureRequest(final Builder builder) {
         super(builder);
         this.businessValue = builder.businessValue;
         this.customerDemand = builder.customerDemand;
@@ -103,12 +103,12 @@ public class FeatureRequest extends Ticket {
             super.type("FEATURE_REQUEST");
         }
 
-        public Builder businessValue(BusinessValue businessValue) {
+        public Builder businessValue(final BusinessValue businessValue) {
             this.businessValue = businessValue;
             return this;
         }
 
-        public Builder customerDemand(CustomerDemand customerDemand) {
+        public Builder customerDemand(final CustomerDemand customerDemand) {
             this.customerDemand = customerDemand;
             return this;
         }
