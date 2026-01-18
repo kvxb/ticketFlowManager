@@ -4,12 +4,11 @@ import search.filters.TicketFilterStrategy;
 import tickets.Ticket;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Collections;
-import java.util.Arrays;
 
-public class KeywordsFilter implements TicketFilterStrategy {
+/**
+ * Filters tickets based on keywords found in title or description.
+ */
+public final class KeywordsFilter implements TicketFilterStrategy {
 
     @Override
     public List<Ticket> filter(final List<Ticket> tickets, final String filterValue) {

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import java.lang.Object;
 import database.Database;
 import milestones.Milestone;
 import users.Developer;
@@ -18,22 +17,75 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
-public class IOUtil {
+/**
+ * Input/Output utility class for reading/writing JSON data and generating
+ * output responses.
+ * Handles all file operations and JSON serialization/deserialization.
+ */
+public final class IOUtil {
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final ObjectWriter WRITER = new ObjectMapper().writer().withDefaultPrettyPrinter();
+    private static final ObjectWriter WRITER = new ObjectMapper().writer()
+            .withDefaultPrettyPrinter();
     private static List<ObjectNode> outputs = new ArrayList<>();
     private static String inputPath;
     private static String outputPath;
     private static Database db = Database.getInstance();
 
+    // Constants for report data indices
+    private static final int PERF_IDX_USERNAME = 0;
+    private static final int PERF_IDX_CLOSED = 1;
+    private static final int PERF_IDX_AVG_TIME = 2;
+    private static final int PERF_IDX_SCORE = 3;
+    private static final int PERF_IDX_SENIORITY = 4;
+
+    private static final int REPORT_IDX_TOTAL = 0;
+    private static final int REPORT_IDX_BUG = 1;
+    private static final int REPORT_IDX_FEATURE = 2;
+    private static final int REPORT_IDX_UI = 3;
+    private static final int REPORT_IDX_LOW = 4;
+    private static final int REPORT_IDX_MED = 5;
+    private static final int REPORT_IDX_HIGH = 6;
+    private static final int REPORT_IDX_CRIT = 7;
+
+    // Indices for String risk values (AppStability, TicketRisk)
+    private static final int REPORT_IDX_RISK_BUG = 8;
+    private static final int REPORT_IDX_RISK_FEATURE = 9;
+    private static final int REPORT_IDX_RISK_UI = 10;
+
+    // Indices for numeric impact/efficiency values (ResolutionEfficiency,
+    // CustomerImpact)
+    private static final int REPORT_IDX_VAL_BUG = 8;
+    private static final int REPORT_IDX_VAL_FEATURE = 9;
+    private static final int REPORT_IDX_VAL_UI = 10;
+
+    // Indices for AppStability specific fields
+    private static final int REPORT_IDX_STAB_IMPACT_BUG = 11;
+    private static final int REPORT_IDX_STAB_IMPACT_FEATURE = 12;
+    private static final int REPORT_IDX_STAB_IMPACT_UI = 13;
+    private static final int REPORT_IDX_STABILITY_LABEL = 14;
+
+    private static final int MIN_COMMENT_LENGTH = 10;
+
+    /**
+     * Private constructor to prevent instantiation.
+     */
     private IOUtil() {
 
     }
 
+    /**
+     * Clears all stored output data.
+     */
     public static void clearIO() {
         outputs.clear();
     }
 
+    /**
+     * Creates a base output node with command metadata.
+     *
+     * @param command The command input
+     * @return ObjectNode with command metadata
+     */
     private static ObjectNode createOutputHeader(final CommandInput command) {
         final ObjectNode node = MAPPER.createObjectNode();
         node.put("command", command.command());
@@ -42,6 +94,12 @@ public class IOUtil {
         return node;
     }
 
+    /**
+     * Reads commands from the input JSON file.
+     *
+     * @return List of CommandInput objects
+     * @throws IOException If there's an error reading the file
+     */
     public static List<CommandInput> readCommands() throws IOException {
         final File inputFile = new File(inputPath);
 
@@ -49,6 +107,12 @@ public class IOUtil {
                 .readValue(inputFile);
     }
 
+    /**
+     * Reads users from the users database JSON file.
+     *
+     * @return List of UserInput objects
+     * @throws IOException If there's an error reading the file
+     */
     public static List<UserInput> readUsers() throws IOException {
         final File inputFile = new File(db.getUsersDb());
 
@@ -56,6 +120,12 @@ public class IOUtil {
                 .readValue(inputFile);
     }
 
+    /**
+     * Outputs search results in JSON format.
+     *
+     * @param command The search command
+     * @param results The search results list
+     */
     public static void outputSearch(final CommandInput command, final List<?> results) {
         final User user = db.getUser(command.username());
 
@@ -80,8 +150,8 @@ public class IOUtil {
                 resultsArray.add(devNode);
             }
         } else {
-            final boolean hasKeywordsFilter = command.filters().keywords() != null &&
-                    command.filters().keywords().length > 0;
+            final boolean hasKeywordsFilter = command.filters().keywords() != null
+                    && command.filters().keywords().length > 0;
 
             for (final Object obj : results) {
                 final Ticket ticket = (Ticket) obj;
@@ -92,12 +162,15 @@ public class IOUtil {
                 ticketNode.put("businessPriority", ticket.getBusinessPriority().toString());
                 ticketNode.put("status", ticket.getStatus().toString());
                 ticketNode.put("createdAt", ticket.getCreatedAt());
-                ticketNode.put("solvedAt", ticket.getSolvedAt() != null ? ticket.getSolvedAt() : "");
+                ticketNode.put("solvedAt", ticket.getSolvedAt() != null
+                        ? ticket.getSolvedAt()
+                        : "");
                 ticketNode.put("reportedBy", ticket.getReportedBy());
 
-                if ((hasKeywordsFilter &&
-                        ticket.getMatchingWords() != null &&
-                        !ticket.getMatchingWords().isEmpty()) || user.getRole().name().equals("MANAGER")) {
+                if ((hasKeywordsFilter
+                        && ticket.getMatchingWords() != null
+                        && !ticket.getMatchingWords().isEmpty())
+                        || user.getRole().name().equals("MANAGER")) {
 
                     final ArrayNode matchingWordsArray = MAPPER.createArrayNode();
                     for (final String word : ticket.getMatchingWords()) {
@@ -114,7 +187,14 @@ public class IOUtil {
         outputs.add(commandNode);
     }
 
-    public static void generatePerformanceReport(final CommandInput command, final List<List<Object>> reportData) {
+    /**
+     * Generates a performance report output.
+     *
+     * @param command    The performance report command
+     * @param reportData The performance data for each developer
+     */
+    public static void generatePerformanceReport(final CommandInput command,
+            final List<List<Object>> reportData) {
         final ObjectNode commandNode = createOutputHeader(command);
 
         final ArrayNode reportArray = MAPPER.createArrayNode();
@@ -122,11 +202,12 @@ public class IOUtil {
         for (final List<Object> row : reportData) {
             final ObjectNode devNode = MAPPER.createObjectNode();
 
-            devNode.put("username", (String) row.get(0));
-            devNode.put("closedTickets", ((Number) row.get(1)).intValue());
-            devNode.put("averageResolutionTime", ((Number) row.get(2)).doubleValue());
-            devNode.put("performanceScore", ((Number) row.get(3)).doubleValue());
-            devNode.put("seniority", (String) row.get(4));
+            devNode.put("username", (String) row.get(PERF_IDX_USERNAME));
+            devNode.put("closedTickets", ((Number) row.get(PERF_IDX_CLOSED)).intValue());
+            devNode.put("averageResolutionTime",
+                    ((Number) row.get(PERF_IDX_AVG_TIME)).doubleValue());
+            devNode.put("performanceScore", ((Number) row.get(PERF_IDX_SCORE)).doubleValue());
+            devNode.put("seniority", (String) row.get(PERF_IDX_SENIORITY));
 
             reportArray.add(devNode);
         }
@@ -135,7 +216,14 @@ public class IOUtil {
         outputs.add(commandNode);
     }
 
-    public static void outputNotifications(final CommandInput command, final List<String> notifications) {
+    /**
+     * Outputs notifications for a developer.
+     *
+     * @param command       The view notifications command
+     * @param notifications List of notification messages
+     */
+    public static void outputNotifications(final CommandInput command,
+            final List<String> notifications) {
         final ObjectNode commandNode = createOutputHeader(command);
 
         final ArrayNode notificationsArray = MAPPER.createArrayNode();
@@ -147,6 +235,12 @@ public class IOUtil {
         outputs.add(commandNode);
     }
 
+    /**
+     * Outputs assigned tickets for a user.
+     *
+     * @param command The view assigned tickets command
+     * @param tickets List of assigned tickets
+     */
     public static void viewAssignedTickets(final CommandInput command, final List<Ticket> tickets) {
         final ObjectNode commandNode = createOutputHeader(command);
 
@@ -161,9 +255,15 @@ public class IOUtil {
             ticketNode.put("businessPriority", ticket.getBusinessPriority().toString());
             ticketNode.put("status", ticket.getStatus().toString());
 
-            ticketNode.put("createdAt", ticket.getCreatedAt() != null ? ticket.getCreatedAt() : "");
-            ticketNode.put("assignedAt", ticket.getAssignedAt() != null ? ticket.getAssignedAt() : "");
-            ticketNode.put("reportedBy", ticket.getReportedBy() != null ? ticket.getReportedBy() : "");
+            ticketNode.put("createdAt", ticket.getCreatedAt() != null
+                    ? ticket.getCreatedAt()
+                    : "");
+            ticketNode.put("assignedAt", ticket.getAssignedAt() != null
+                    ? ticket.getAssignedAt()
+                    : "");
+            ticketNode.put("reportedBy", ticket.getReportedBy() != null
+                    ? ticket.getReportedBy()
+                    : "");
 
             final ArrayNode commentsArray = MAPPER.createArrayNode();
             ticket.getComments().stream()
@@ -183,133 +283,181 @@ public class IOUtil {
 
     }
 
-    public static void generateAppStabilityReport(final CommandInput command, final List<Object> reportData) {
+    /**
+     * Generates an application stability report output.
+     *
+     * @param command    The app stability report command
+     * @param reportData The stability report data
+     */
+    public static void generateAppStabilityReport(final CommandInput command,
+            final List<Object> reportData) {
         final ObjectNode commandNode = createOutputHeader(command);
         final ObjectNode reportNode = MAPPER.createObjectNode();
 
-        reportNode.put("totalOpenTickets", ((Number) reportData.get(0)).intValue());
+        reportNode.put("totalOpenTickets", ((Number) reportData.get(REPORT_IDX_TOTAL)).intValue());
 
         final ObjectNode openTicketsByTypeNode = MAPPER.createObjectNode();
-        openTicketsByTypeNode.put("BUG", ((Number) reportData.get(1)).intValue());
-        openTicketsByTypeNode.put("FEATURE_REQUEST", ((Number) reportData.get(2)).intValue());
-        openTicketsByTypeNode.put("UI_FEEDBACK", ((Number) reportData.get(3)).intValue());
+        openTicketsByTypeNode.put("BUG", ((Number) reportData.get(REPORT_IDX_BUG)).intValue());
+        openTicketsByTypeNode.put("FEATURE_REQUEST",
+                ((Number) reportData.get(REPORT_IDX_FEATURE)).intValue());
+        openTicketsByTypeNode.put("UI_FEEDBACK",
+                ((Number) reportData.get(REPORT_IDX_UI)).intValue());
         reportNode.set("openTicketsByType", openTicketsByTypeNode);
 
         final ObjectNode openTicketsByPriorityNode = MAPPER.createObjectNode();
-        openTicketsByPriorityNode.put("LOW", ((Number) reportData.get(4)).intValue());
-        openTicketsByPriorityNode.put("MEDIUM", ((Number) reportData.get(5)).intValue());
-        openTicketsByPriorityNode.put("HIGH", ((Number) reportData.get(6)).intValue());
-        openTicketsByPriorityNode.put("CRITICAL", ((Number) reportData.get(7)).intValue());
+        openTicketsByPriorityNode.put("LOW", ((Number) reportData.get(REPORT_IDX_LOW)).intValue());
+        openTicketsByPriorityNode.put("MEDIUM",
+                ((Number) reportData.get(REPORT_IDX_MED)).intValue());
+        openTicketsByPriorityNode.put("HIGH",
+                ((Number) reportData.get(REPORT_IDX_HIGH)).intValue());
+        openTicketsByPriorityNode.put("CRITICAL",
+                ((Number) reportData.get(REPORT_IDX_CRIT)).intValue());
         reportNode.set("openTicketsByPriority", openTicketsByPriorityNode);
 
         final ObjectNode riskByTypeNode = MAPPER.createObjectNode();
-        riskByTypeNode.put("BUG", (String) reportData.get(8));
-        riskByTypeNode.put("FEATURE_REQUEST", (String) reportData.get(9));
-        riskByTypeNode.put("UI_FEEDBACK", (String) reportData.get(10));
+        riskByTypeNode.put("BUG", (String) reportData.get(REPORT_IDX_RISK_BUG));
+        riskByTypeNode.put("FEATURE_REQUEST", (String) reportData.get(REPORT_IDX_RISK_FEATURE));
+        riskByTypeNode.put("UI_FEEDBACK", (String) reportData.get(REPORT_IDX_RISK_UI));
         reportNode.set("riskByType", riskByTypeNode);
 
         final ObjectNode impactByTypeNode = MAPPER.createObjectNode();
-        impactByTypeNode.put("BUG", ((Number) reportData.get(11)).doubleValue());
-        impactByTypeNode.put("FEATURE_REQUEST", ((Number) reportData.get(12)).doubleValue());
-        impactByTypeNode.put("UI_FEEDBACK", ((Number) reportData.get(13)).doubleValue());
+        impactByTypeNode.put("BUG",
+                ((Number) reportData.get(REPORT_IDX_STAB_IMPACT_BUG)).doubleValue());
+        impactByTypeNode.put("FEATURE_REQUEST",
+                ((Number) reportData.get(REPORT_IDX_STAB_IMPACT_FEATURE)).doubleValue());
+        impactByTypeNode.put("UI_FEEDBACK",
+                ((Number) reportData.get(REPORT_IDX_STAB_IMPACT_UI)).doubleValue());
         reportNode.set("impactByType", impactByTypeNode);
 
-        reportNode.put("appStability", (String) reportData.get(14));
+        reportNode.put("appStability", (String) reportData.get(REPORT_IDX_STABILITY_LABEL));
 
         commandNode.set("report", reportNode);
         outputs.add(commandNode);
     }
 
-    public static void generateTicketRiskReport(final CommandInput command, final List<Object> reportData) {
+    /**
+     * Generates a ticket risk report output.
+     *
+     * @param command    The ticket risk report command
+     * @param reportData The ticket risk data
+     */
+    public static void generateTicketRiskReport(final CommandInput command,
+            final List<Object> reportData) {
         final ObjectNode commandNode = createOutputHeader(command);
 
         final ObjectNode reportNode = MAPPER.createObjectNode();
 
-        reportNode.put("totalTickets", ((Number) reportData.get(0)).intValue());
+        reportNode.put("totalTickets", ((Number) reportData.get(REPORT_IDX_TOTAL)).intValue());
 
         final ObjectNode ticketsByTypeNode = MAPPER.createObjectNode();
-        ticketsByTypeNode.put("BUG", ((Number) reportData.get(1)).intValue());
-        ticketsByTypeNode.put("FEATURE_REQUEST", ((Number) reportData.get(2)).intValue());
-        ticketsByTypeNode.put("UI_FEEDBACK", ((Number) reportData.get(3)).intValue());
+        ticketsByTypeNode.put("BUG", ((Number) reportData.get(REPORT_IDX_BUG)).intValue());
+        ticketsByTypeNode.put("FEATURE_REQUEST",
+                ((Number) reportData.get(REPORT_IDX_FEATURE)).intValue());
+        ticketsByTypeNode.put("UI_FEEDBACK", ((Number) reportData.get(REPORT_IDX_UI)).intValue());
         reportNode.set("ticketsByType", ticketsByTypeNode);
 
         final ObjectNode ticketsByPriorityNode = MAPPER.createObjectNode();
-        ticketsByPriorityNode.put("LOW", ((Number) reportData.get(4)).intValue());
-        ticketsByPriorityNode.put("MEDIUM", ((Number) reportData.get(5)).intValue());
-        ticketsByPriorityNode.put("HIGH", ((Number) reportData.get(6)).intValue());
-        ticketsByPriorityNode.put("CRITICAL", ((Number) reportData.get(7)).intValue());
+        ticketsByPriorityNode.put("LOW", ((Number) reportData.get(REPORT_IDX_LOW)).intValue());
+        ticketsByPriorityNode.put("MEDIUM", ((Number) reportData.get(REPORT_IDX_MED)).intValue());
+        ticketsByPriorityNode.put("HIGH", ((Number) reportData.get(REPORT_IDX_HIGH)).intValue());
+        ticketsByPriorityNode.put("CRITICAL", ((Number) reportData.get(REPORT_IDX_CRIT))
+                .intValue());
         reportNode.set("ticketsByPriority", ticketsByPriorityNode);
 
         final ObjectNode riskByTypeNode = MAPPER.createObjectNode();
-        riskByTypeNode.put("BUG", (String) reportData.get(8));
-        riskByTypeNode.put("FEATURE_REQUEST", (String) reportData.get(9));
-        riskByTypeNode.put("UI_FEEDBACK", (String) reportData.get(10));
+        riskByTypeNode.put("BUG", (String) reportData.get(REPORT_IDX_RISK_BUG));
+        riskByTypeNode.put("FEATURE_REQUEST", (String) reportData.get(REPORT_IDX_RISK_FEATURE));
+        riskByTypeNode.put("UI_FEEDBACK", (String) reportData.get(REPORT_IDX_RISK_UI));
         reportNode.set("riskByType", riskByTypeNode);
 
         commandNode.set("report", reportNode);
         outputs.add(commandNode);
     }
 
-    public static void generateResolutionEfficiencyReport(final CommandInput command, final List<Number> reportData) {
+    /**
+     * Generates a resolution efficiency report output.
+     *
+     * @param command    The resolution efficiency report command
+     * @param reportData The resolution efficiency data
+     */
+    public static void generateResolutionEfficiencyReport(final CommandInput command,
+            final List<Number> reportData) {
         final ObjectNode commandNode = createOutputHeader(command);
 
         final ObjectNode reportNode = MAPPER.createObjectNode();
 
-        reportNode.put("totalTickets", reportData.get(0).intValue());
+        reportNode.put("totalTickets", reportData.get(REPORT_IDX_TOTAL).intValue());
 
         final ObjectNode ticketsByTypeNode = MAPPER.createObjectNode();
-        ticketsByTypeNode.put("BUG", reportData.get(1).intValue());
-        ticketsByTypeNode.put("FEATURE_REQUEST", reportData.get(2).intValue());
-        ticketsByTypeNode.put("UI_FEEDBACK", reportData.get(3).intValue());
+        ticketsByTypeNode.put("BUG", reportData.get(REPORT_IDX_BUG).intValue());
+        ticketsByTypeNode.put("FEATURE_REQUEST", reportData.get(REPORT_IDX_FEATURE).intValue());
+        ticketsByTypeNode.put("UI_FEEDBACK", reportData.get(REPORT_IDX_UI).intValue());
         reportNode.set("ticketsByType", ticketsByTypeNode);
 
         final ObjectNode ticketsByPriorityNode = MAPPER.createObjectNode();
-        ticketsByPriorityNode.put("LOW", reportData.get(4).intValue());
-        ticketsByPriorityNode.put("MEDIUM", reportData.get(5).intValue());
-        ticketsByPriorityNode.put("HIGH", reportData.get(6).intValue());
-        ticketsByPriorityNode.put("CRITICAL", reportData.get(7).intValue());
+        ticketsByPriorityNode.put("LOW", reportData.get(REPORT_IDX_LOW).intValue());
+        ticketsByPriorityNode.put("MEDIUM", reportData.get(REPORT_IDX_MED).intValue());
+        ticketsByPriorityNode.put("HIGH", reportData.get(REPORT_IDX_HIGH).intValue());
+        ticketsByPriorityNode.put("CRITICAL", reportData.get(REPORT_IDX_CRIT).intValue());
         reportNode.set("ticketsByPriority", ticketsByPriorityNode);
 
         final ObjectNode customerImpactByTypeNode = MAPPER.createObjectNode();
-        customerImpactByTypeNode.put("BUG", reportData.get(8).doubleValue());
-        customerImpactByTypeNode.put("FEATURE_REQUEST", reportData.get(9).doubleValue());
-        customerImpactByTypeNode.put("UI_FEEDBACK", reportData.get(10).doubleValue());
+        customerImpactByTypeNode.put("BUG", reportData.get(REPORT_IDX_VAL_BUG).doubleValue());
+        customerImpactByTypeNode.put("FEATURE_REQUEST",
+                reportData.get(REPORT_IDX_VAL_FEATURE).doubleValue());
+        customerImpactByTypeNode.put("UI_FEEDBACK",
+                reportData.get(REPORT_IDX_VAL_UI).doubleValue());
         reportNode.set("efficiencyByType", customerImpactByTypeNode);
 
         commandNode.set("report", reportNode);
         outputs.add(commandNode);
     }
 
-    public static void generateCustomerImpactReport(final CommandInput command, final List<Number> reportData) {
+    /**
+     * Generates a customer impact report output.
+     *
+     * @param command    The customer impact report command
+     * @param reportData The customer impact data
+     */
+    public static void generateCustomerImpactReport(final CommandInput command,
+            final List<Number> reportData) {
         final ObjectNode commandNode = createOutputHeader(command);
 
         final ObjectNode reportNode = MAPPER.createObjectNode();
 
-        reportNode.put("totalTickets", reportData.get(0).intValue());
+        reportNode.put("totalTickets", reportData.get(REPORT_IDX_TOTAL).intValue());
 
         final ObjectNode ticketsByTypeNode = MAPPER.createObjectNode();
-        ticketsByTypeNode.put("BUG", reportData.get(1).intValue());
-        ticketsByTypeNode.put("FEATURE_REQUEST", reportData.get(2).intValue());
-        ticketsByTypeNode.put("UI_FEEDBACK", reportData.get(3).intValue());
+        ticketsByTypeNode.put("BUG", reportData.get(REPORT_IDX_BUG).intValue());
+        ticketsByTypeNode.put("FEATURE_REQUEST", reportData.get(REPORT_IDX_FEATURE).intValue());
+        ticketsByTypeNode.put("UI_FEEDBACK", reportData.get(REPORT_IDX_UI).intValue());
         reportNode.set("ticketsByType", ticketsByTypeNode);
 
         final ObjectNode ticketsByPriorityNode = MAPPER.createObjectNode();
-        ticketsByPriorityNode.put("LOW", reportData.get(4).intValue());
-        ticketsByPriorityNode.put("MEDIUM", reportData.get(5).intValue());
-        ticketsByPriorityNode.put("HIGH", reportData.get(6).intValue());
-        ticketsByPriorityNode.put("CRITICAL", reportData.get(7).intValue());
+        ticketsByPriorityNode.put("LOW", reportData.get(REPORT_IDX_LOW).intValue());
+        ticketsByPriorityNode.put("MEDIUM", reportData.get(REPORT_IDX_MED).intValue());
+        ticketsByPriorityNode.put("HIGH", reportData.get(REPORT_IDX_HIGH).intValue());
+        ticketsByPriorityNode.put("CRITICAL", reportData.get(REPORT_IDX_CRIT).intValue());
         reportNode.set("ticketsByPriority", ticketsByPriorityNode);
 
         final ObjectNode customerImpactByTypeNode = MAPPER.createObjectNode();
-        customerImpactByTypeNode.put("BUG", reportData.get(8).doubleValue());
-        customerImpactByTypeNode.put("FEATURE_REQUEST", reportData.get(9).doubleValue());
-        customerImpactByTypeNode.put("UI_FEEDBACK", reportData.get(10).doubleValue());
+        customerImpactByTypeNode.put("BUG", reportData.get(REPORT_IDX_VAL_BUG).doubleValue());
+        customerImpactByTypeNode.put("FEATURE_REQUEST",
+                reportData.get(REPORT_IDX_VAL_FEATURE).doubleValue());
+        customerImpactByTypeNode.put("UI_FEEDBACK",
+                reportData.get(REPORT_IDX_VAL_UI).doubleValue());
         reportNode.set("customerImpactByType", customerImpactByTypeNode);
 
         commandNode.set("report", reportNode);
         outputs.add(commandNode);
     }
 
+    /**
+     * Outputs tickets view for a user.
+     *
+     * @param command The view tickets command
+     * @param tickets List of tickets to display
+     */
     public static void viewTickets(final CommandInput command, final List<Ticket> tickets) {
         final ObjectNode commandNode = createOutputHeader(command);
 
@@ -325,10 +473,16 @@ public class IOUtil {
             ticketNode.put("status", ticket.getStatus().toString());
 
             ticketNode.put("createdAt", ticket.getCreatedAt() != null ? ticket.getCreatedAt() : "");
-            ticketNode.put("assignedAt", ticket.getAssignedAt() != null ? ticket.getAssignedAt() : "");
+            ticketNode.put("assignedAt", ticket.getAssignedAt() != null
+                    ? ticket.getAssignedAt()
+                    : "");
             ticketNode.put("solvedAt", ticket.getSolvedAt() != null ? ticket.getSolvedAt() : "");
-            ticketNode.put("assignedTo", ticket.getAssignedTo() != null ? ticket.getAssignedTo() : "");
-            ticketNode.put("reportedBy", ticket.getReportedBy() != null ? ticket.getReportedBy() : "");
+            ticketNode.put("assignedTo", ticket.getAssignedTo() != null
+                    ? ticket.getAssignedTo()
+                    : "");
+            ticketNode.put("reportedBy", ticket.getReportedBy() != null
+                    ? ticket.getReportedBy()
+                    : "");
 
             final ArrayNode commentsArray = MAPPER.createArrayNode();
             ticket.getComments().stream()
@@ -346,7 +500,14 @@ public class IOUtil {
         outputs.add(commandNode);
     }
 
-    public static void viewMilestones(final CommandInput command, final List<Milestone> unsortedMilestones) {
+    /**
+     * Outputs milestones view for a user.
+     *
+     * @param command            The view milestones command
+     * @param unsortedMilestones List of milestones to display
+     */
+    public static void viewMilestones(final CommandInput command,
+            final List<Milestone> unsortedMilestones) {
         final List<Milestone> sortedMilestones = unsortedMilestones.stream()
                 .sorted(Comparator
                         .comparing(Milestone::getDueDate)
@@ -422,14 +583,22 @@ public class IOUtil {
         outputs.add(commandNode);
     }
 
-    public static void viewTicketHistory(final CommandInput command, final List<Ticket> userTickets) {
+    /**
+     * Outputs ticket history for a user.
+     *
+     * @param command     The view ticket history command
+     * @param userTickets List of tickets concerning the user
+     */
+    public static void viewTicketHistory(final CommandInput command,
+            final List<Ticket> userTickets) {
         final ObjectNode commandNode = createOutputHeader(command);
 
         final ArrayNode ticketHistoryArray = MAPPER.createArrayNode();
 
         if (userTickets == null) {
             commandNode.put("error",
-                    "The user does not have permission to execute this command: required role DEVELOPER, MANAGER; user role REPORTER.");
+                    "The user does not have permission to execute this command: "
+                            + "required role DEVELOPER, MANAGER; user role REPORTER.");
         } else {
             for (final Ticket ticket : userTickets) {
                 final ObjectNode ticketNode = MAPPER.createObjectNode();
@@ -439,7 +608,8 @@ public class IOUtil {
 
                 final ArrayNode actionsArray = MAPPER.createArrayNode();
 
-                if (ticket.getTicketHistory() != null && ticket.getTicketHistory().getActions() != null) {
+                if (ticket.getTicketHistory() != null
+                        && ticket.getTicketHistory().getActions() != null) {
                     boolean stopOutput = false;
 
                     for (final Ticket.Action action : ticket.getTicketHistory().getActions()) {
@@ -447,8 +617,8 @@ public class IOUtil {
                             break;
                         }
 
-                        if ("DE-ASSIGNED".equals(action.getAction()) &&
-                                command.username().equals(action.getBy())) {
+                        if ("DE-ASSIGNED".equals(action.getAction())
+                                && command.username().equals(action.getBy())) {
                             final ObjectNode actionNode = MAPPER.createObjectNode();
 
                             if (action.getMilestone() != null && !action.getMilestone().isEmpty()) {
@@ -516,11 +686,14 @@ public class IOUtil {
                         }
                     } else if (user.getRole().name().equals("DEVELOPER")) {
                         final Developer currentDev = (Developer) user;
-                        final int allowedCommentCount = currentDev.getCommentCountForTicket(ticket.getId());
-                        final List<Ticket.Comment> sortedComments = new ArrayList<>(ticket.getComments());
+                        final int allowedCommentCount = currentDev
+                                .getCommentCountForTicket(ticket.getId());
+                        final List<Ticket.Comment> sortedComments
+                            = new ArrayList<>(ticket.getComments());
                         sortedComments.sort(Comparator.comparing(Ticket.Comment::getCreatedAt));
 
-                        for (int i = 0; i < Math.min(allowedCommentCount, sortedComments.size()); i++) {
+                        for (int i = 0; i < Math.min(allowedCommentCount,
+                                sortedComments.size()); i++) {
                             final Ticket.Comment comment = sortedComments.get(i);
                             final ObjectNode commentNode = MAPPER.createObjectNode();
                             commentNode.put("author", comment.getAuthor());
@@ -539,6 +712,12 @@ public class IOUtil {
         outputs.add(commandNode);
     }
 
+    /**
+     * Outputs an assignment error.
+     *
+     * @param command   The command that caused the error
+     * @param errorType The type of assignment error
+     */
     public static void assignError(final CommandInput command, final String errorType) {
         final ObjectNode error = createOutputHeader(command);
 
@@ -546,19 +725,21 @@ public class IOUtil {
             case "STATUS" ->
                 error.put("error", "Only OPEN tickets can be assigned.");
             case "SENIORITY" ->
-                error.put("error", "Developer " + command.username() + " cannot assign ticket " + command.ticketID()
-                        + " due to seniority level. Required: "
+                error.put("error", "Developer " + command.username() + " cannot assign ticket "
+                        + command.ticketID() + " due to seniority level. Required: "
                         + db.getTicket(command.ticketID()).getRequiredSeniority() + "; Current: "
                         + ((Developer) db.getUser(command.username())).getSeniority() + ".");
             case "ASSIGNMENT" ->
-                error.put("error", "Developer " + command.username() + " is not assigned to milestone "
+                error.put("error", "Developer " + command.username()
+                        + " is not assigned to milestone "
                         + db.getMilestoneNameFromTicketID(command.ticketID()) + ".");
             case "LOCKED" ->
-                error.put("error", "Cannot assign ticket " + command.ticketID() + " from blocked milestone "
+                error.put("error", "Cannot assign ticket " + command.ticketID()
+                        + " from blocked milestone "
                         + db.getMilestoneNameFromTicketID(command.ticketID()) + ".");
             case "EXPERTISE" ->
-                error.put("error", "Developer " + command.username() + " cannot assign ticket " + command.ticketID()
-                        + " due to expertise area. Required: "
+                error.put("error", "Developer " + command.username() + " cannot assign ticket "
+                        + command.ticketID() + " due to expertise area. Required: "
                         + db.getTicket(command.ticketID()).getRequiredExpertise() + "; Current: "
                         + ((Developer) db.getUser(command.username())).getExpertiseArea() + ".");
             default ->
@@ -567,6 +748,12 @@ public class IOUtil {
         outputs.add(error);
     }
 
+    /**
+     * Outputs a comment error.
+     *
+     * @param command   The command that caused the error
+     * @param errorType The type of comment error
+     */
     public static void commentError(final CommandInput command, final String errorType) {
         final ObjectNode error = createOutputHeader(command);
         String message;
@@ -576,12 +763,13 @@ public class IOUtil {
             case "CLOSED" ->
                 message = "Reporters cannot comment on CLOSED tickets.";
             case "MIN_LENGTH" ->
-                message = "Comment must be at least 10 characters long.";
+                message = "Comment must be at least " + MIN_COMMENT_LENGTH + " characters long.";
             case "ASSIGNMENT_DEVELOPER" ->
-                message = "Ticket " + command.ticketID() + " is not assigned to the developer " + command.username()
-                        + ".";
+                message = "Ticket " + command.ticketID() + " is not assigned to the developer "
+                        + command.username() + ".";
             case "ASSIGNMENT_REPORTER" ->
-                message = "Reporter " + command.username() + " cannot comment on ticket " + command.ticketID() + ".";
+                message = "Reporter " + command.username() + " cannot comment on ticket "
+                        + command.ticketID() + ".";
             default ->
                 message = "DEFAULT";
         }
@@ -590,6 +778,12 @@ public class IOUtil {
         outputs.add(error);
     }
 
+    /**
+     * Outputs a milestone error.
+     *
+     * @param command   The command that caused the error
+     * @param errorType The type of milestone error
+     */
     public static void milestoneError(final CommandInput command, final String errorType) {
         final ObjectNode error = createOutputHeader(command);
 
@@ -600,26 +794,36 @@ public class IOUtil {
                 error.put("error", "The user " + command.username() + " does not exist.");
             case "WRONG_USER_DEVELOPER" ->
                 error.put("error",
-                        "The user does not have permission to execute this command: required role MANAGER; user role DEVELOPER.");
+                        "The user does not have permission to execute this command: "
+                                + "required role MANAGER; user role DEVELOPER.");
             case "WRONG_USER_REPORTER" ->
                 error.put("error",
-                        "The user does not have permission to execute this command: required role MANAGER; user role REPORTER.");
+                        "The user does not have permission to execute this command: "
+                                + "required role MANAGER; user role REPORTER.");
             default -> {
                 final String[] parts = errorType.split("_");
-                error.put("error", "Tickets " + parts[2] + " already assigned to milestone " + parts[1] + ".");
+                error.put("error", "Tickets " + parts[2] + " already assigned to milestone "
+                        + parts[1] + ".");
             }
         }
 
         outputs.add(error);
     }
 
+    /**
+     * Outputs a status change error.
+     *
+     * @param command   The command that caused the error
+     * @param errorType The type of status change error
+     */
     public static void changeError(final CommandInput command, final String errorType) {
         final ObjectNode error = createOutputHeader(command);
 
         switch (errorType) {
             case "ASSIGNMENT" ->
                 error.put("error",
-                        "Ticket " + command.ticketID() + " is not assigned to developer " + command.username() + ".");
+                        "Ticket " + command.ticketID() + " is not assigned to developer "
+                                + command.username() + ".");
             default -> {
                 error.put("error", "DEFAULT");
             }
@@ -628,6 +832,12 @@ public class IOUtil {
         outputs.add(error);
     }
 
+    /**
+     * Outputs a ticket error.
+     *
+     * @param command   The command that caused the error
+     * @param errorType The type of ticket error
+     */
     public static void ticketError(final CommandInput command, final String errorType) {
         final ObjectNode error = createOutputHeader(command);
         switch (errorType) {
@@ -644,6 +854,9 @@ public class IOUtil {
         outputs.add(error);
     }
 
+    /**
+     * Writes all output data to the output JSON file.
+     */
     public static void writeOutput() {
         try {
             final File outputFile = new File(outputPath);
@@ -654,14 +867,30 @@ public class IOUtil {
         }
     }
 
+    /**
+     * Sets the input file path.
+     *
+     * @param path The input file path
+     */
     public static void setInputPath(final String path) {
         inputPath = path;
     }
 
+    /**
+     * Sets the output file path.
+     *
+     * @param path The output file path
+     */
     public static void setOutputPath(final String path) {
         outputPath = path;
     }
 
+    /**
+     * Sets both input and output file paths.
+     *
+     * @param input  The input file path
+     * @param output The output file path
+     */
     public static void setPaths(final String input, final String output) {
         setInputPath(input);
         setOutputPath(output);

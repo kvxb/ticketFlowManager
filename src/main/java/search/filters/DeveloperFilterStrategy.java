@@ -1,8 +1,13 @@
 package search.filters;
 
 import users.Developer;
-import java.util.List;
 
+/**
+ * Strategy for Developer search
+ */
 public interface DeveloperFilterStrategy extends FilterStrategy<Developer> {
+    /**
+     * Get filter name
+     */
     String getFilterName();
 }

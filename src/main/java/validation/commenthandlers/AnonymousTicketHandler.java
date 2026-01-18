@@ -2,10 +2,12 @@ package validation.commenthandlers;
 
 import io.CommandInput;
 import io.IOUtil;
-import database.Database;
 import tickets.Ticket;
 
-public class AnonymousTicketHandler extends CommentValidationHandler {
+/**
+ * Checks if a ticket is anonymous
+ */
+public final class AnonymousTicketHandler extends CommentValidationHandler {
     @Override
     protected boolean appliesTo(final CommandInput command) {
         return true;

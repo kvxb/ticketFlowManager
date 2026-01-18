@@ -1,8 +1,13 @@
 package search.filters;
 
 import tickets.Ticket;
-import java.util.List;
 
+/**
+ * Strategy for Ticket search
+ */
 public interface TicketFilterStrategy extends FilterStrategy<Ticket> {
+    /**
+     * Get filter name
+     */
     String getFilterName();
 }

@@ -5,7 +5,10 @@ import tickets.Ticket;
 import java.util.List;
 import java.util.ArrayList;
 
-public class TypeFilter implements TicketFilterStrategy {
+/**
+ * Filters tickets based on their type (e.g., BUG, FEATURE_REQUEST).
+ */
+public final class TypeFilter implements TicketFilterStrategy {
 
     @Override
     public List<Ticket> filter(final List<Ticket> tickets, final String filterValue) {

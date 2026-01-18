@@ -5,7 +5,10 @@ import io.IOUtil;
 import tickets.Ticket;
 import users.User;
 
-public class ReporterOwnershipHandler extends CommentValidationHandler {
+/**
+ * Checks if the reporter is the one who reported the ticket
+ */
+public final class ReporterOwnershipHandler extends CommentValidationHandler {
     @Override
     protected boolean appliesTo(final CommandInput command) {
         final User user = db.getUser(command.username());

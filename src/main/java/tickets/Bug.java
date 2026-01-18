@@ -5,81 +5,107 @@ import java.time.temporal.ChronoUnit;
 
 import mathutils.MathUtil;
 
-final public class Bug extends Ticket {
+/**
+ * Represents a Bug ticket in the system.
+ */
+public final class Bug extends Ticket {
+    private static final double SCORE_RARE = 1.0;
+    private static final double SCORE_OCCASIONAL = 2.0;
+    private static final double SCORE_FREQUENT = 3.0;
+    private static final double SCORE_ALWAYS = 4.0;
+    private static final double SCORE_DEFAULT = -1.0;
+
+    private static final double SCORE_LOW = 1.0;
+    private static final double SCORE_MEDIUM = 2.0;
+    private static final double SCORE_HIGH = 3.0;
+    private static final double SCORE_CRITICAL = 4.0;
+
+    private static final double SCORE_MINOR = 1.0;
+    private static final double SCORE_MODERATE = 2.0;
+    private static final double SCORE_SEVERE = 3.0;
+
+    private static final double IMPACT_NORM = 48.0;
+    private static final double EFFICIENCY_SCALE = 10.0;
+    private static final double EFFICIENCY_NORM = 70.0;
+    private static final double RISK_NORM = 12.0;
+
     private final String expectedBehaviour;
     private final String actualBehaviour;
 
     @Override
     public double getImpact() {
         final double frequencyScore = switch (frequency.name()) {
-            case "RARE" -> 1.0;
-            case "OCCASIONAL" -> 2.0;
-            case "FREQUENT" -> 3.0;
-            case "ALWAYS" -> 4.0;
-            default -> -1.0;
+            case "RARE" -> SCORE_RARE;
+            case "OCCASIONAL" -> SCORE_OCCASIONAL;
+            case "FREQUENT" -> SCORE_FREQUENT;
+            case "ALWAYS" -> SCORE_ALWAYS;
+            default -> SCORE_DEFAULT;
         };
 
         final double priorityScore = switch (businessPriority.name()) {
-            case "LOW" -> 1.0;
-            case "MEDIUM" -> 2.0;
-            case "HIGH" -> 3.0;
-            case "CRITICAL" -> 4.0;
-            default -> -1.0;
+            case "LOW" -> SCORE_LOW;
+            case "MEDIUM" -> SCORE_MEDIUM;
+            case "HIGH" -> SCORE_HIGH;
+            case "CRITICAL" -> SCORE_CRITICAL;
+            default -> SCORE_DEFAULT;
         };
 
         final double severityScore = switch (severity.name()) {
-            case "MINOR" -> 1.0;
-            case "MODERATE" -> 2.0;
-            case "SEVERE" -> 3.0;
-            default -> -1.0;
+            case "MINOR" -> SCORE_MINOR;
+            case "MODERATE" -> SCORE_MODERATE;
+            case "SEVERE" -> SCORE_SEVERE;
+            default -> SCORE_DEFAULT;
         };
-        return MathUtil.normalize(frequencyScore * priorityScore * severityScore, 48);
+        return MathUtil.normalize(frequencyScore * priorityScore * severityScore, IMPACT_NORM);
     }
 
     @Override
     public double getEfficiency() {
         final double frequencyScore = switch (frequency.name()) {
-            case "RARE" -> 1.0;
-            case "OCCASIONAL" -> 2.0;
-            case "FREQUENT" -> 3.0;
-            case "ALWAYS" -> 4.0;
-            default -> -1.0;
+            case "RARE" -> SCORE_RARE;
+            case "OCCASIONAL" -> SCORE_OCCASIONAL;
+            case "FREQUENT" -> SCORE_FREQUENT;
+            case "ALWAYS" -> SCORE_ALWAYS;
+            default -> SCORE_DEFAULT;
         };
 
         final double severityScore = switch (severity.name()) {
-            case "MINOR" -> 1.0;
-            case "MODERATE" -> 2.0;
-            case "SEVERE" -> 3.0;
-            default -> -1.0;
+            case "MINOR" -> SCORE_MINOR;
+            case "MODERATE" -> SCORE_MODERATE;
+            case "SEVERE" -> SCORE_SEVERE;
+            default -> SCORE_DEFAULT;
         };
 
         int daysToResolve = -(int) ChronoUnit.DAYS.between(LocalDate.parse(this.getSolvedAt()),
                 LocalDate.parse(this.getAssignedAt()));
         daysToResolve++;
 
-        return MathUtil.normalize(((frequencyScore + severityScore) * 10 /
-                daysToResolve), 70);
+        return MathUtil.normalize(((frequencyScore + severityScore) * EFFICIENCY_SCALE)
+                / daysToResolve, EFFICIENCY_NORM);
     }
 
     @Override
     public double getRisk() {
         final double frequencyScore = switch (frequency.name()) {
-            case "RARE" -> 1.0;
-            case "OCCASIONAL" -> 2.0;
-            case "FREQUENT" -> 3.0;
-            case "ALWAYS" -> 4.0;
-            default -> -1.0;
+            case "RARE" -> SCORE_RARE;
+            case "OCCASIONAL" -> SCORE_OCCASIONAL;
+            case "FREQUENT" -> SCORE_FREQUENT;
+            case "ALWAYS" -> SCORE_ALWAYS;
+            default -> SCORE_DEFAULT;
         };
 
         final double severityScore = switch (severity.name()) {
-            case "MINOR" -> 1.0;
-            case "MODERATE" -> 2.0;
-            case "SEVERE" -> 3.0;
-            default -> -1.0;
+            case "MINOR" -> SCORE_MINOR;
+            case "MODERATE" -> SCORE_MODERATE;
+            case "SEVERE" -> SCORE_SEVERE;
+            default -> SCORE_DEFAULT;
         };
-        return MathUtil.normalize(frequencyScore * severityScore, 12);
+        return MathUtil.normalize(frequencyScore * severityScore, RISK_NORM);
     }
 
+    /**
+     * Enum representing the frequency of a bug.
+     */
     public enum Frequency {
         RARE,
         OCCASIONAL,
@@ -87,6 +113,9 @@ final public class Bug extends Ticket {
         ALWAYS
     }
 
+    /**
+     * Enum representing the severity of a bug.
+     */
     public enum Severity {
         MINOR,
         MODERATE,
@@ -108,7 +137,10 @@ final public class Bug extends Ticket {
         this.errorCode = builder.errorCode;
     }
 
-    public static class Builder extends Ticket.Builder<Builder> {
+    /**
+     * Builder class for creating Bug tickets.
+     */
+    public static final class Builder extends Ticket.Builder<Builder> {
         private String expectedBehaviour;
         private String actualBehaviour;
         private Frequency frequency;
@@ -116,37 +148,76 @@ final public class Bug extends Ticket {
         private String environment;
         private int errorCode;
 
+        /**
+         * Default constructor initializing type to BUG.
+         */
         public Builder() {
             super.type("BUG");
         }
 
-        public Builder expectedBehaviour(final String expectedBehaviour) {
-            this.expectedBehaviour = expectedBehaviour;
+        /**
+         * Sets the expected behaviour.
+         *
+         * @param value the expected behaviour description
+         * @return the builder instance
+         */
+        public Builder expectedBehaviour(final String value) {
+            this.expectedBehaviour = value;
             return this;
         }
 
-        public Builder actualBehaviour(final String actualBehaviour) {
-            this.actualBehaviour = actualBehaviour;
+        /**
+         * Sets the actual behaviour.
+         *
+         * @param value the actual behaviour description
+         * @return the builder instance
+         */
+        public Builder actualBehaviour(final String value) {
+            this.actualBehaviour = value;
             return this;
         }
 
-        public Builder frequency(final Frequency frequency) {
-            this.frequency = frequency;
+        /**
+         * Sets the frequency of the bug.
+         *
+         * @param value the frequency
+         * @return the builder instance
+         */
+        public Builder frequency(final Frequency value) {
+            this.frequency = value;
             return this;
         }
 
-        public Builder severity(final Severity severity) {
-            this.severity = severity;
+        /**
+         * Sets the severity of the bug.
+         *
+         * @param value the severity
+         * @return the builder instance
+         */
+        public Builder severity(final Severity value) {
+            this.severity = value;
             return this;
         }
 
-        public Builder environment(final String environment) {
-            this.environment = environment;
+        /**
+         * Sets the environment where the bug occurred.
+         *
+         * @param value the environment description
+         * @return the builder instance
+         */
+        public Builder environment(final String value) {
+            this.environment = value;
             return this;
         }
 
-        public Builder errorCode(final Integer errorCode) {
-            this.errorCode = errorCode;
+        /**
+         * Sets the error code associated with the bug.
+         *
+         * @param value the error code
+         * @return the builder instance
+         */
+        public Builder errorCode(final Integer value) {
+            this.errorCode = value;
             return this;
         }
 

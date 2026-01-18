@@ -6,10 +6,17 @@ import users.Developer;
 import java.util.List;
 import java.util.ArrayList;
 
-public class AvailableForAssignmentFilter implements TicketFilterStrategy {
+/**
+ * Filters tickets based on whether they can be assigned to the current developer.
+ */
+public final class AvailableForAssignmentFilter implements TicketFilterStrategy {
 
     private final Developer currentDeveloper;
 
+    /**
+     * Constructor.
+     * @param currentDeveloper The developer checking for assignable tickets.
+     */
     public AvailableForAssignmentFilter(final Developer currentDeveloper) {
         this.currentDeveloper = currentDeveloper;
     }
@@ -30,10 +37,12 @@ public class AvailableForAssignmentFilter implements TicketFilterStrategy {
     }
 
     private boolean canBeAssigned(final Ticket ticket) {
-        if (currentDeveloper == null)
+        if (currentDeveloper == null) {
             return false;
-        if (ticket.getStatus() != Ticket.Status.OPEN)
+        }
+        if (ticket.getStatus() != Ticket.Status.OPEN) {
             return false;
+        }
 
         return currentDeveloper.canHandleTicket(ticket);
     }

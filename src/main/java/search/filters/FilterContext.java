@@ -5,17 +5,26 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 
-public class FilterContext<T> {
+/**
+ * Context for the search command
+ */
+public final class FilterContext<T> {
     private final Map<String, FilterStrategy<T>> strategies;
 
     public FilterContext() {
         this.strategies = new HashMap<>();
     }
 
+    /**
+     * Adds a strategy to the filter context
+     */
     public void addStrategy(final String filterName, final FilterStrategy<T> strategy) {
         strategies.put(filterName, strategy);
     }
 
+    /**
+     * Apply the filters and return the tickets/devs that match the needs
+     */
     public List<T> applyFilters(final List<T> items, final Map<String, String> filters) {
         List<T> result = new ArrayList<>(items);
 

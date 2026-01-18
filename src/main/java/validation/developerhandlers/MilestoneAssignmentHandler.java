@@ -6,9 +6,14 @@ import io.CommandInput;
 import milestones.Milestone;
 import io.IOUtil;
 
-public class MilestoneAssignmentHandler extends DeveloperValidationHandler {
+/**
+ * Checks if the developer is assigned to the milestone of the ticket
+ */
+public final class MilestoneAssignmentHandler extends DeveloperValidationHandler {
+
     @Override
-    protected int validate(final Developer developer, final Ticket ticket, final Milestone milestone) {
+    protected int validate(final Developer developer, final Ticket ticket,
+            final Milestone milestone) {
         return milestone.hasDeveloper(developer.getUsername()) ? 0 : -1;
     }
 

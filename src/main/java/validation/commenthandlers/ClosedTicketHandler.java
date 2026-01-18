@@ -5,7 +5,10 @@ import io.IOUtil;
 import tickets.Ticket;
 import users.User;
 
-public class ClosedTicketHandler extends CommentValidationHandler {
+/**
+ * Checks if a ticket is closed
+ */
+public final class ClosedTicketHandler extends CommentValidationHandler {
     @Override
     protected boolean appliesTo(final CommandInput command) {
         final User user = db.getUser(command.username());

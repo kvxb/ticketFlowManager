@@ -6,63 +6,72 @@ import java.time.temporal.ChronoUnit;
 
 import java.time.LocalDate;
 
-public class UIFeedback extends Ticket {
+/**
+ * Represents a UI Feedback ticket.
+ */
+public final class UIFeedback extends Ticket {
+    private static final double SCORE_S = 1.0;
+    private static final double SCORE_M = 3.0;
+    private static final double SCORE_L = 6.0;
+    private static final double SCORE_XL = 10.0;
+    private static final double SCORE_DEFAULT = -1.0;
+
+    private static final double NORM_IMPACT = 100.0;
+    private static final double NORM_RISK = 100.0;
+    private static final double NORM_EFFICIENCY = 20.0;
+
+    private static final int MAX_USABILITY_FACTOR = 11;
+
     private final String uiElementId;
-    private final int usabilityScore;// 1-10
+    private final int usabilityScore; // 1-10
     private final String screenshotUrl;
     private final String suggestedFix;
-
-    public enum businessValue {
-        S,
-        M,
-        L,
-        XL
-    }
+    private final BusinessValue businessValue;
 
     @Override
     public double getImpact() {
         final double businessScore = switch (businessValue.name()) {
-            case "S" -> 1.0;
-            case "M" -> 3.0;
-            case "L" -> 6.0;
-            case "XL" -> 10.0;
-            default -> -1.0;
+            case "S" -> SCORE_S;
+            case "M" -> SCORE_M;
+            case "L" -> SCORE_L;
+            case "XL" -> SCORE_XL;
+            default -> SCORE_DEFAULT;
         };
 
-        return MathUtil.normalize(businessScore * usabilityScore, 100);
+        return MathUtil.normalize(businessScore * usabilityScore, NORM_IMPACT);
     }
 
     @Override
     public double getRisk() {
         final double businessScore = switch (businessValue.name()) {
-            case "S" -> 1.0;
-            case "M" -> 3.0;
-            case "L" -> 6.0;
-            case "XL" -> 10.0;
-            default -> -1.0;
+            case "S" -> SCORE_S;
+            case "M" -> SCORE_M;
+            case "L" -> SCORE_L;
+            case "XL" -> SCORE_XL;
+            default -> SCORE_DEFAULT;
         };
 
-        return MathUtil.normalize(businessScore * (11 - usabilityScore), 100);
+        return MathUtil.normalize(businessScore * (MAX_USABILITY_FACTOR - usabilityScore),
+                NORM_RISK);
     }
 
     @Override
     public double getEfficiency() {
         final double businessScore = switch (businessValue.name()) {
-            case "S" -> 1.0;
-            case "M" -> 3.0;
-            case "L" -> 6.0;
-            case "XL" -> 10.0;
-            default -> -1.0;
+            case "S" -> SCORE_S;
+            case "M" -> SCORE_M;
+            case "L" -> SCORE_L;
+            case "XL" -> SCORE_XL;
+            default -> SCORE_DEFAULT;
         };
 
         int daysToResolve = -(int) ChronoUnit.DAYS.between(LocalDate.parse(this.getSolvedAt()),
                 LocalDate.parse(this.getAssignedAt()));
         daysToResolve++;
 
-        return MathUtil.normalize(((businessScore + usabilityScore) / daysToResolve), 20);
+        return MathUtil.normalize(((businessScore + usabilityScore) / daysToResolve),
+                NORM_EFFICIENCY);
     }
-
-    private final BusinessValue businessValue;
 
     private UIFeedback(final Builder builder) {
         super(builder);
@@ -73,39 +82,75 @@ public class UIFeedback extends Ticket {
         this.businessValue = builder.businessValue;
     }
 
-    public static class Builder extends Ticket.Builder<Builder> {
+    /**
+     * Builder for UIFeedback tickets.
+     */
+    public static final class Builder extends Ticket.Builder<Builder> {
         private String uiElementId;
-        private int usabilityScore;// 1-10
+        private int usabilityScore; // 1-10
         private String screenshotUrl;
         private String suggestedFix;
         private BusinessValue businessValue;
 
+        /**
+         * Default constructor.
+         */
         public Builder() {
             super.type("FEATURE_REQUEST");
         }
 
-        public Builder uiElementId(final String uiElementId) {
-            this.uiElementId = uiElementId;
+        /**
+         * Sets the UI element ID.
+         *
+         * @param val the UI element ID
+         * @return the builder instance
+         */
+        public Builder uiElementId(final String val) {
+            this.uiElementId = val;
             return this;
         }
 
-        public Builder usabilityScore(final int usabilityScore) {
-            this.usabilityScore = usabilityScore;
+        /**
+         * Sets the usability score.
+         *
+         * @param val the usability score (1-10)
+         * @return the builder instance
+         */
+        public Builder usabilityScore(final int val) {
+            this.usabilityScore = val;
             return this;
         }
 
-        public Builder screenshotUrl(final String screenshotUrl) {
-            this.screenshotUrl = screenshotUrl;
+        /**
+         * Sets the screenshot URL.
+         *
+         * @param val the screenshot URL
+         * @return the builder instance
+         */
+        public Builder screenshotUrl(final String val) {
+            this.screenshotUrl = val;
             return this;
         }
 
-        public Builder suggestedFix(final String suggestedFix) {
-            this.suggestedFix = suggestedFix;
+        /**
+         * Sets the suggested fix.
+         *
+         * @param val the suggested fix description
+         * @return the builder instance
+         */
+        public Builder suggestedFix(final String val) {
+            this.suggestedFix = val;
             return this;
         }
 
-        public Builder businessValue(final BusinessValue businessValue) {
-            this.businessValue = businessValue;
+        /**
+         * Sets the business value.
+         *
+         * @param val the business value
+         * @return the builder instance
+         */
+        public Builder businessValue(final BusinessValue val) {
+            this.businessValue = val;
             return this;
         }
 

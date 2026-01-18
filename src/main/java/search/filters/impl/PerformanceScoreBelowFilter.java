@@ -5,7 +5,10 @@ import users.Developer;
 import java.util.List;
 import java.util.ArrayList;
 
-public class PerformanceScoreBelowFilter implements DeveloperFilterStrategy {
+/**
+ * Filters developers with a performance score below a certain threshold.
+ */
+public final class PerformanceScoreBelowFilter implements DeveloperFilterStrategy {
 
     @Override
     public List<Developer> filter(final List<Developer> developers, final String filterValue) {

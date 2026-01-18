@@ -6,9 +6,13 @@ import io.CommandInput;
 import io.IOUtil;
 import milestones.Milestone;
 
-public class TicketStatusHandler extends DeveloperValidationHandler {
+/**
+ * Checks if the ticket is open for (re)assignment
+ */
+public final class TicketStatusHandler extends DeveloperValidationHandler {
     @Override
-    protected int validate(final Developer developer, final Ticket ticket, final Milestone milestone) {
+    protected int validate(final Developer developer, final Ticket ticket,
+            final Milestone milestone) {
         return ticket.getStatus().name().equals("OPEN") ? 0 : 1;
     }
 

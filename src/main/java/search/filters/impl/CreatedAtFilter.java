@@ -6,7 +6,10 @@ import java.util.List;
 import java.util.ArrayList;
 import java.time.LocalDate;
 
-public class CreatedAtFilter implements TicketFilterStrategy {
+/**
+ * Filters tickets created on a specific date.
+ */
+public final class CreatedAtFilter implements TicketFilterStrategy {
 
     @Override
     public List<Ticket> filter(final List<Ticket> tickets, final String filterValue) {

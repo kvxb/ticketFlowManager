@@ -6,7 +6,10 @@ import java.util.List;
 import java.util.ArrayList;
 import java.time.LocalDate;
 
-public class CreatedBeforeFilter implements TicketFilterStrategy {
+/**
+ * Filters tickets created before a specific date.
+ */
+public final class CreatedBeforeFilter implements TicketFilterStrategy {
 
     @Override
     public List<Ticket> filter(final List<Ticket> tickets, final String filterValue) {

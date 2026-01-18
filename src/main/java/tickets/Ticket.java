@@ -4,15 +4,40 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.CommandInput;
+import lombok.Getter;
+import lombok.Setter;
 
+/**
+ * Abstract class representing a generic Ticket.
+ */
+@Getter
+@Setter
 public abstract class Ticket {
 
+    /**
+     * Calculates the impact score of the ticket.
+     *
+     * @return the impact score
+     */
     public abstract double getImpact();
 
+    /**
+     * Calculates the risk score of the ticket.
+     *
+     * @return the risk score
+     */
     public abstract double getRisk();
 
+    /**
+     * Calculates the efficiency score of the ticket.
+     *
+     * @return the efficiency score
+     */
     public abstract double getEfficiency();
 
+    /**
+     * Enum for Business Priority.
+     */
     public enum BusinessPriority {
         LOW,
         MEDIUM,
@@ -20,6 +45,9 @@ public abstract class Ticket {
         CRITICAL
     }
 
+    /**
+     * Enum for Ticket Status.
+     */
     public enum Status {
         OPEN,
         IN_PROGRESS,
@@ -27,6 +55,9 @@ public abstract class Ticket {
         CLOSED
     }
 
+    /**
+     * Enum for Expertise Area.
+     */
     public enum ExpertiseArea {
         FRONTEND,
         BACKEND,
@@ -35,7 +66,11 @@ public abstract class Ticket {
         DB
     }
 
-    // maybe get this the fuck out of here
+    /**
+     * Abstract Builder class for Ticket.
+     *
+     * @param <T> the type of the builder
+     */
     public abstract static class Builder<T extends Builder<T>> {
         protected int id;
         protected String type;
@@ -45,142 +80,311 @@ public abstract class Ticket {
         protected ExpertiseArea expertiseArea;
         protected String description;
         protected String reportedBy;
-        // TODO: shouldnt this be a LocalDate?
         protected String createdAt;
 
-        public T id(final int id) {
-            this.id = id;
+        /**
+         * Sets the ID.
+         *
+         * @param val the id
+         * @return the builder
+         */
+        public T id(final int val) {
+            this.id = val;
             return self();
         }
 
-        public T createdAt(final String createdAt) {
-            this.createdAt = createdAt;
+        /**
+         * Sets the creation date.
+         *
+         * @param val the date string
+         * @return the builder
+         */
+        public T createdAt(final String val) {
+            this.createdAt = val;
             return self();
         }
 
-        public T type(final String type) {
-            this.type = type;
+        /**
+         * Sets the type.
+         *
+         * @param val the type string
+         * @return the builder
+         */
+        public T type(final String val) {
+            this.type = val;
             return self();
         }
 
-        public T title(final String title) {
-            this.title = title;
+        /**
+         * Sets the title.
+         *
+         * @param val the title
+         * @return the builder
+         */
+        public T title(final String val) {
+            this.title = val;
             return self();
         }
 
-        public T businessPriority(final BusinessPriority priority) {
-            this.businessPriority = priority;
+        /**
+         * Sets the business priority.
+         *
+         * @param val the priority
+         * @return the builder
+         */
+        public T businessPriority(final BusinessPriority val) {
+            this.businessPriority = val;
             return self();
         }
 
-        public T status(final Status status) {
-            this.status = status;
+        /**
+         * Sets the status.
+         *
+         * @param val the status
+         * @return the builder
+         */
+        public T status(final Status val) {
+            this.status = val;
             return self();
         }
 
-        public T expertiseArea(final ExpertiseArea area) {
-            this.expertiseArea = area;
+        /**
+         * Sets the expertise area.
+         *
+         * @param val the area
+         * @return the builder
+         */
+        public T expertiseArea(final ExpertiseArea val) {
+            this.expertiseArea = val;
             return self();
         }
 
-        public T description(final String description) {
-            this.description = description;
+        /**
+         * Sets the description.
+         *
+         * @param val the description
+         * @return the builder
+         */
+        public T description(final String val) {
+            this.description = val;
             return self();
         }
 
-        public T reportedBy(final String reportedBy) {
-            this.reportedBy = reportedBy;
+        /**
+         * Sets the reporter.
+         *
+         * @param val the reporter username
+         * @return the builder
+         */
+        public T reportedBy(final String val) {
+            this.reportedBy = val;
             return self();
         }
 
+        /**
+         * Builds the ticket.
+         *
+         * @return the ticket
+         */
         public abstract Ticket build();
 
+        /**
+         * Gets the ID.
+         *
+         * @return the id
+         */
         public int getId() {
             return id;
         }
 
+        /**
+         * Sets the ID.
+         *
+         * @param id the id
+         */
         public void setId(final int id) {
             this.id = id;
         }
 
+        /**
+         * Gets the type.
+         *
+         * @return the type
+         */
         public String getType() {
             return type;
         }
 
+        /**
+         * Sets the type.
+         *
+         * @param type the type
+         */
         public void setType(final String type) {
             this.type = type;
         }
 
+        /**
+         * Gets the title.
+         *
+         * @return the title
+         */
         public String getTitle() {
             return title;
         }
 
+        /**
+         * Sets the title.
+         *
+         * @param title the title
+         */
         public void setTitle(final String title) {
             this.title = title;
         }
 
+        /**
+         * Gets the business priority.
+         *
+         * @return the priority
+         */
         public BusinessPriority getBusinessPriority() {
             return businessPriority;
         }
 
+        /**
+         * Sets the business priority.
+         *
+         * @param businessPriority the priority
+         */
         public void setBusinessPriority(final BusinessPriority businessPriority) {
             this.businessPriority = businessPriority;
         }
 
+        /**
+         * Gets the status.
+         *
+         * @return the status
+         */
         public Status getStatus() {
             return status;
         }
 
+        /**
+         * Sets the status.
+         *
+         * @param status the status
+         */
         public void setStatus(final Status status) {
             this.status = status;
         }
 
+        /**
+         * Gets the expertise area.
+         *
+         * @return the area
+         */
         public ExpertiseArea getExpertiseArea() {
             return expertiseArea;
         }
 
+        /**
+         * Sets the expertise area.
+         *
+         * @param expertiseArea the area
+         */
         public void setExpertiseArea(final ExpertiseArea expertiseArea) {
             this.expertiseArea = expertiseArea;
         }
 
+        /**
+         * Gets the description.
+         *
+         * @return the description
+         */
         public String getDescription() {
             return description;
         }
 
+        /**
+         * Sets the description.
+         *
+         * @param description the description
+         */
         public void setDescription(final String description) {
             this.description = description;
         }
 
+        /**
+         * Gets the reporter.
+         *
+         * @return the reporter
+         */
         public String getReportedBy() {
             return reportedBy;
         }
 
+        /**
+         * Sets the reporter.
+         *
+         * @param reportedBy the reporter
+         */
         public void setReportedBy(final String reportedBy) {
             this.reportedBy = reportedBy;
         }
 
+        /**
+         * Returns the builder instance.
+         *
+         * @return this
+         */
         protected abstract T self();
     }
 
+    /**
+     * Represents an action taken on a ticket.
+     */
+    @Setter
+    @Getter
     public class Action {
-        String milestone;
-        String by;
-        String timestamp;
-        String action;
-        Status from;
-        Status to;
+        private String milestone;
+        private String by;
+        private String timestamp;
+        private String action;
+        private Status from;
+        private Status to;
 
+        /**
+         * Default constructor.
+         */
         public Action() {
 
         }
 
-        public Action(final String milestone, final String by, final String timestamp, final String action) {
+        /**
+         * Constructor for milestone actions.
+         *
+         * @param milestone the milestone name
+         * @param by        the user
+         * @param timestamp the time
+         * @param action    the action type
+         */
+        public Action(final String milestone, final String by, final String timestamp,
+                final String action) {
             this.milestone = milestone;
             this.by = by;
             this.timestamp = timestamp;
             this.action = action;
         }
 
+        /**
+         * Constructor for status change actions.
+         *
+         * @param from      old status
+         * @param to        new status
+         * @param by        the user
+         * @param timestamp the time
+         * @param action    the action type
+         */
         public Action(final Status from, final Status to, final String by, final String timestamp,
                 final String action) {
             this.from = from;
@@ -190,156 +394,122 @@ public abstract class Ticket {
             this.action = action;
         }
 
+        /**
+         * Constructor for simple actions.
+         *
+         * @param by        the user
+         * @param timestamp the time
+         * @param action    the action type
+         */
         public Action(final String by, final String timestamp, final String action) {
             this.by = by;
             this.timestamp = timestamp;
             this.action = action;
         }
 
-        public String getMilestone() {
-            return milestone;
-        }
-
-        public void setMilestone(final String milestone) {
-            this.milestone = milestone;
-        }
-
-        public String getBy() {
-            return by;
-        }
-
-        public void setBy(final String by) {
-            this.by = by;
-        }
-
-        public String getTimestamp() {
-            return timestamp;
-        }
-
-        public void setTimestamp(final String timestamp) {
-            this.timestamp = timestamp;
-        }
-
-        public String getAction() {
-            return action;
-        }
-
-        public void setAction(final String action) {
-            this.action = action;
-        }
-
-        public Status getFrom() {
-            return from;
-        }
-
-        public void setFrom(final Status from) {
-            this.from = from;
-        }
-
-        public Status getTo() {
-            return to;
-        }
-
-        public void setTo(final Status to) {
-            this.to = to;
-        }
     }
 
+    /**
+     * Represents the history of a ticket.
+     */
+    @Getter
+    @Setter
     public class TicketHistory {
 
-        int id;
-        String title;
-        Status status;
+        private int historyId;
+        private String historyTitle;
+        private Status historyStatus;
         private List<Action> actions = new ArrayList<Action>();
 
-        public int getId() {
-            return id;
-        }
-
+        /**
+         * Sets the history ID.
+         *
+         * @param id the id
+         */
         public void setId(final int id) {
-            this.id = id;
+            this.historyId = id;
         }
 
-        public String getTitle() {
-            return title;
-        }
-
+        /**
+         * Sets the history title.
+         *
+         * @param title the title
+         */
         public void setTitle(final String title) {
-            this.title = title;
+            this.historyTitle = title;
         }
 
-        public Status getStatus() {
-            return status;
-        }
-
+        /**
+         * Sets the history status.
+         *
+         * @param status the status
+         */
         public void setStatus(final Status status) {
-            this.status = status;
+            this.historyStatus = status;
         }
-
-        public List<Action> getActions() {
-            return actions;
-        }
-
-        public void setActions(final List<Action> actions) {
-            this.actions = actions;
-        }
-
     }
 
+    /**
+     * Represents a comment on a ticket.
+     */
+    @Setter
+    @Getter
     public class Comment {
-        String author;
-        String content;
-        String createdAt;
+        private String author;
+        private String content;
+        private String createdAt;
 
+        /**
+         * Constructor for Comment.
+         *
+         * @param author    the author
+         * @param content   the content
+         * @param createdAt the creation time
+         */
         public Comment(final String author, final String content, final String createdAt) {
             this.author = author;
             this.createdAt = createdAt;
             this.content = content;
         }
 
-        public String getAuthor() {
-            return author;
-        }
-
-        public void setAuthor(final String author) {
-            this.author = author;
-        }
-
-        public String getContent() {
-            return content;
-        }
-
-        public void setContent(final String content) {
-            this.content = content;
-        }
-
-        public String getCreatedAt() {
-            return createdAt;
-        }
-
-        public void setCreatedAt(final String createdAt) {
-            this.createdAt = createdAt;
-        }
     }
 
-    private static int ticketId = 0;
+    private static int ticketIdCounter = 0;
 
+    /**
+     * Gets the next ticket ID and increments the counter.
+     *
+     * @return the next ID
+     */
     public static int getNextTicketId() {
-        final int answer = ticketId;
-        ticketId++;
+        final int answer = ticketIdCounter;
+        ticketIdCounter++;
         return answer;
     }
 
+    /**
+     * Resets the ticket ID counter.
+     */
     public static void clearTicket() {
-        ticketId = 0;
+        ticketIdCounter = 0;
     }
 
+    /**
+     * Gets the current ticket ID counter.
+     *
+     * @return the counter
+     */
     public static int getTicketId() {
-        return ticketId;
+        return ticketIdCounter;
     }
 
-    public static void setTicketId(final int ticketId) {
-        Ticket.ticketId = ticketId;
+    /**
+     * Sets the ticket ID counter.
+     *
+     * @param val the value
+     */
+    public static void setTicketId(final int val) {
+        Ticket.ticketIdCounter = val;
     }
 
     private int id;
@@ -357,6 +527,11 @@ public abstract class Ticket {
     private List<Comment> comments = new ArrayList<Comment>();
     private TicketHistory ticketHistory;
 
+    /**
+     * Constructor using Builder.
+     *
+     * @param b the builder
+     */
     public Ticket(final Builder<?> b) {
         this.id = b.id;
         this.type = b.type;
@@ -375,20 +550,41 @@ public abstract class Ticket {
 
     }
 
-    public void addActionMilestone(final String milestone, final String by, final String timestamp) {
+    /**
+     * Adds a milestone action to the history.
+     *
+     * @param milestone the milestone name
+     * @param by        the user
+     * @param timestamp the time
+     */
+    public void addActionMilestone(final String milestone, final String by,
+            final String timestamp) {
         ticketHistory.actions.add(new Action(milestone, by, timestamp, "ADDED_TO_MILESTONE"));
     }
 
+    /**
+     * Gets the list of comments.
+     *
+     * @return the comments
+     */
     public List<Comment> getComments() {
         return comments;
     }
 
-    // TODO imlement the comments part
-
+    /**
+     * Sets the list of comments.
+     *
+     * @param comments the comments
+     */
     public void setComments(final List<Comment> comments) {
         this.comments = comments;
     }
 
+    /**
+     * Assigns a developer to the ticket.
+     *
+     * @param command the command containing assignment details
+     */
     public void assignDeveloper(final CommandInput command) {
         final Action assignAction = new Action(command.username(), command.timestamp(), "ASSIGNED");
         ticketHistory.getActions().add(assignAction);
@@ -402,8 +598,14 @@ public abstract class Ticket {
         this.assignedAt = command.timestamp();
     }
 
+    /**
+     * Undoes the assignment of a developer.
+     *
+     * @param command the command containing undo details
+     */
     public void undoAssignDeveloper(final CommandInput command) {
-        final Action assignAction = new Action(command.username(), command.timestamp(), "DE-ASSIGNED");
+        final Action assignAction = new Action(command.username(), command.timestamp(),
+                "DE-ASSIGNED");
         ticketHistory.getActions().add(assignAction);
 
         final Action statusAction = new Action(Status.IN_PROGRESS, Status.OPEN,
@@ -415,9 +617,17 @@ public abstract class Ticket {
         this.assignedAt = null;
     }
 
+    /**
+     * Changes the status of the ticket.
+     *
+     * @param newStatus the new status
+     * @param by        the user changing the status
+     * @param timestamp the time of change
+     */
     public void changeStatus(final Status newStatus, final String by, final String timestamp) {
         if (this.ticketHistory != null) {
-            final Action statusAction = new Action(this.status, newStatus, by, timestamp, "STATUS_CHANGED");
+            final Action statusAction = new Action(this.status, newStatus, by, timestamp,
+                    "STATUS_CHANGED");
             this.ticketHistory.getActions().add(statusAction);
         }
         this.status = newStatus;
@@ -426,6 +636,9 @@ public abstract class Ticket {
         }
     }
 
+    /**
+     * Increases the priority of the ticket.
+     */
     public void upPriority() {
         businessPriority = switch (businessPriority) {
             case BusinessPriority.LOW -> BusinessPriority.MEDIUM;
@@ -435,7 +648,15 @@ public abstract class Ticket {
         };
     }
 
+    /**
+     * Gets the required expertise string representation.
+     *
+     * @return the required expertise
+     */
     public String getRequiredExpertise() {
+        if (this.getExpertiseArea() == null) {
+            return "";
+        }
         switch (this.getExpertiseArea()) {
             case FRONTEND:
                 return "FRONTEND, FULLSTACK, DESIGN";
@@ -452,7 +673,15 @@ public abstract class Ticket {
         }
     }
 
+    /**
+     * Gets the required seniority string representation.
+     *
+     * @return the required seniority
+     */
     public String getRequiredSeniority() {
+        if (this.getBusinessPriority() == null) {
+            return "";
+        }
         switch (this.getBusinessPriority()) {
             case LOW:
                 return "JUNIOR, MID, SENIOR";
@@ -467,14 +696,22 @@ public abstract class Ticket {
         }
     }
 
-    public String getCreatedAt() {
-        return createdAt;
-    }
-
+    /**
+     * Adds a comment to the ticket.
+     *
+     * @param author  the author
+     * @param comment the content
+     * @param date    the date
+     */
     public void addComment(final String author, final String comment, final String date) {
         comments.add(new Comment(author, comment, date));
     }
 
+    /**
+     * Undoes the last comment by the author.
+     *
+     * @param author the author
+     */
     public void undoAddComment(final String author) {
         Comment remove = null;
         for (final Comment c : comments) {
@@ -490,111 +727,4 @@ public abstract class Ticket {
 
     private List<String> matchingWords = new ArrayList<>();
 
-    public List<String> getMatchingWords() {
-        return matchingWords;
-    }
-
-    public void setMatchingWords(final List<String> matchingWords) {
-        this.matchingWords = matchingWords;
-    }
-
-    public void setCreatedAt(final String createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public String getAssignedTo() {
-        return assignedTo;
-    }
-
-    public void setAssignedTo(final String assignedTo) {
-        this.assignedTo = assignedTo;
-    }
-
-    public String getAssignedAt() {
-        return assignedAt;
-    }
-
-    public void setAssignedAt(final String assignedAt) {
-        this.assignedAt = assignedAt;
-    }
-
-    public String getSolvedAt() {
-        return solvedAt;
-    }
-
-    public void setSolvedAt(final String solvedAt) {
-        this.solvedAt = solvedAt;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(final int id) {
-        this.id = id;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(final String type) {
-        this.type = type;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(final String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
-    public String getReportedBy() {
-        return reportedBy;
-    }
-
-    public void setReportedBy(final String reportedBy) {
-        this.reportedBy = reportedBy;
-    }
-
-    public BusinessPriority getBusinessPriority() {
-        return businessPriority;
-    }
-
-    public void setBusinessPriority(final BusinessPriority businessPriority) {
-        this.businessPriority = businessPriority;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(final Status status) {
-        this.status = status;
-    }
-
-    public ExpertiseArea getExpertiseArea() {
-        return expertiseArea;
-    }
-
-    public void setExpertiseArea(final ExpertiseArea expertiseArea) {
-        this.expertiseArea = expertiseArea;
-    }
-
-    public TicketHistory getTicketHistory() {
-        return ticketHistory;
-    }
-
-    public void setTicketHistory(final TicketHistory ticketHistory) {
-        this.ticketHistory = ticketHistory;
-    }
 }

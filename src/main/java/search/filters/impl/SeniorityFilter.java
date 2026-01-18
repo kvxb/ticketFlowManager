@@ -5,7 +5,10 @@ import users.Developer;
 import java.util.List;
 import java.util.ArrayList;
 
-public class SeniorityFilter implements DeveloperFilterStrategy {
+/**
+ * Filters developers based on their seniority level.
+ */
+public final class SeniorityFilter implements DeveloperFilterStrategy {
 
     @Override
     public List<Developer> filter(final List<Developer> developers, final String filterValue) {

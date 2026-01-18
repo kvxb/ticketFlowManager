@@ -1,19 +1,50 @@
 package search;
 
 import search.filters.FilterContext;
-import search.filters.impl.*;
+import search.filters.impl.AvailableForAssignmentFilter;
+import search.filters.impl.BusinessPriorityFilter;
+import search.filters.impl.CreatedAfterFilter;
+import search.filters.impl.CreatedAtFilter;
+import search.filters.impl.CreatedBeforeFilter;
+import search.filters.impl.ExpertiseAreaFilter;
+import search.filters.impl.KeywordsFilter;
+import search.filters.impl.PerformanceScoreAboveFilter;
+import search.filters.impl.PerformanceScoreBelowFilter;
+import search.filters.impl.SeniorityFilter;
+import search.filters.impl.TypeFilter;
 import tickets.Ticket;
 import milestones.Milestone;
 import users.Developer;
 import users.Manager;
 import users.User;
 import io.FiltersInput;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import database.Database;
 
-public class SearchService {
+/**
+ * Service class for handling search operations on tickets and developers.
+ */
+public final class SearchService {
 
-    public static List<?> getSearchResults(io.CommandInput command) {
+    /**
+     * Private constructor to prevent instantiation.
+     */
+    private SearchService() {
+    }
+
+    /**
+     * Executes a search based on the provided command and filters.
+     *
+     * @param command The command containing search criteria and filters.
+     * @return A list of objects (Tickets or Developers) matching the search
+     *         criteria.
+     */
+    public static List<?> getSearchResults(final io.CommandInput command) {
         Database db = Database.getInstance();
         User user = db.getUser(command.username());
         FiltersInput filters = command.filters();
@@ -41,7 +72,6 @@ public class SearchService {
             final List<Milestone> allMilestones = db.getMilestones();
 
             for (final Milestone milestone : allMilestones) {
-                // Check if developer is assigned to this milestone
                 boolean isAssigned = false;
                 if (milestone.getAssignedDevs() != null) {
                     for (String assignee : milestone.getAssignedDevs()) {
@@ -55,8 +85,8 @@ public class SearchService {
                 if (isAssigned) {
                     for (final int ticketId : milestone.getTickets()) {
                         for (final Ticket ticket : allTickets) {
-                            if (ticket.getId() == ticketId &&
-                                    ticket.getStatus() == Ticket.Status.OPEN) {
+                            if (ticket.getId() == ticketId
+                                    && ticket.getStatus() == Ticket.Status.OPEN) {
 
                                 boolean alreadyAdded = false;
                                 for (final Ticket addedTicket : accessibleTickets) {
@@ -103,8 +133,8 @@ public class SearchService {
         return filtered;
     }
 
-    private static List<Developer> filterDevelopers(final Manager manager, final List<Developer> allDevelopers,
-            final FiltersInput filters) {
+    private static List<Developer> filterDevelopers(final Manager manager,
+            final List<Developer> allDevelopers, final FiltersInput filters) {
         final List<Developer> subordinates = new ArrayList<>();
         String[] subArr = manager.getSubordinates();
 

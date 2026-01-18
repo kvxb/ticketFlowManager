@@ -1,9 +1,0 @@
-check if you can split the soup of variables in the input files based on the type of input so its more tidy
-
-INPUT:            TICKET       SEARCH
-a                   a            b
-b                   b            c
-c     ------->      d
-d                   e
-e
-

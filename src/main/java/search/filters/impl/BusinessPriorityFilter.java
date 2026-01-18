@@ -5,7 +5,10 @@ import tickets.Ticket;
 import java.util.List;
 import java.util.ArrayList;
 
-public class BusinessPriorityFilter implements TicketFilterStrategy {
+/**
+ * Filters tickets based on their business priority.
+ */
+public final class BusinessPriorityFilter implements TicketFilterStrategy {
 
     @Override
     public List<Ticket> filter(final List<Ticket> tickets, final String filterValue) {

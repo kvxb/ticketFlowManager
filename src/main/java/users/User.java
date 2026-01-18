@@ -1,5 +1,10 @@
 package users;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
 public class User {
     protected String username;
     private String email;
@@ -18,27 +23,4 @@ public class User {
         this.role = Role.valueOf(role);
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(final String username) {
-        this.username = username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(final String email) {
-        this.email = email;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(final Role role) {
-        this.role = role;
-    }
 }

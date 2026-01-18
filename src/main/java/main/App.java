@@ -11,7 +11,15 @@ import java.time.LocalDate;
 import tickets.Ticket;
 import users.Developer;
 
-public class App {
+/**
+ * Main application class that orchestrates the ticket management system.
+ * Contains the core logic for processing commands during testing and
+ * development periods.
+ */
+public final class App {
+    /**
+     * Private constructor to prevent instantiation.
+     */
     private App() {
     }
 
@@ -19,8 +27,15 @@ public class App {
     private static int it = 0;
     private static Database db = Database.getInstance();
 
+    private static final int TESTING_PERIOD_DAYS = 12;
+    private static final int DEV_PERIOD_DAYS = 1000;
+
+    /**
+     * Processes commands during the testing period (first 12 days).
+     * Only handles ticket reporting and viewing commands.
+     */
     public static void testingPeriod() {
-        final LocalDate endDate = currentDate.plusDays(12);
+        final LocalDate endDate = currentDate.plusDays(TESTING_PERIOD_DAYS);
 
         while (it < db.getSize("commands")) {
             final CommandInput currentCommand = db.getCommands().get(it);
@@ -48,8 +63,13 @@ public class App {
         }
     }
 
+    /**
+     * Processes commands during the development period (after testing).
+     * Handles all system commands including milestone management, assignments, and
+     * analytics.
+     */
     public static void developPeriod() {
-        final LocalDate endDate = currentDate.plusDays(1000);
+        final LocalDate endDate = currentDate.plusDays(DEV_PERIOD_DAYS);
 
         while (it < db.getSize("commands")) {
             final CommandInput currentCommand = db.getCommands().get(it);
@@ -70,13 +90,15 @@ public class App {
                     db.addMilestone(currentCommand);
                     break;
                 case "viewMilestones":
-                    IOUtil.viewMilestones(currentCommand, db.getMilestones(currentCommand.username()));
+                    IOUtil.viewMilestones(currentCommand,
+                            db.getMilestones(currentCommand.username()));
                     break;
                 case "assignTicket":
                     db.assignTicket(currentCommand);
                     break;
                 case "viewAssignedTickets":
-                    IOUtil.viewAssignedTickets(currentCommand, db.getAssignedTickets(currentCommand.username()));
+                    IOUtil.viewAssignedTickets(currentCommand,
+                            db.getAssignedTickets(currentCommand.username()));
                     break;
                 case "undoAssignTicket":
                     db.undoAssignedTicket(currentCommand);
@@ -91,7 +113,8 @@ public class App {
                     db.changeStatus(currentCommand);
                     break;
                 case "viewTicketHistory":
-                    IOUtil.viewTicketHistory(currentCommand, db.getTicketsConcerningUser(currentCommand.username()));
+                    IOUtil.viewTicketHistory(currentCommand,
+                            db.getTicketsConcerningUser(currentCommand.username()));
                     break;
                 case "undoChangeStatus":
                     db.undoChangeStatus(currentCommand);
@@ -112,13 +135,15 @@ public class App {
                     IOUtil.generateTicketRiskReport(currentCommand, db.getTicketRisk());
                     break;
                 case "generateResolutionEfficiencyReport":
-                    IOUtil.generateResolutionEfficiencyReport(currentCommand, db.getResolutionEfficiency());
+                    IOUtil.generateResolutionEfficiencyReport(currentCommand,
+                            db.getResolutionEfficiency());
                     break;
                 case "appStabilityReport":
                     IOUtil.generateAppStabilityReport(currentCommand, db.getAppStability());
                     break;
                 case "generatePerformanceReport":
-                    IOUtil.generatePerformanceReport(currentCommand, db.getPerformance(currentCommand));
+                    IOUtil.generatePerformanceReport(currentCommand,
+                            db.getPerformance(currentCommand));
                     break;
                 case "startTestingPhase":
                     testingPeriod();
@@ -130,6 +155,13 @@ public class App {
 
     }
 
+    /**
+     * Main entry point for running the application.
+     * Initializes the system, processes commands, and manages the workflow.
+     *
+     * @param inputPath  Path to the input JSON files
+     * @param outputPath Path where output should be written
+     */
     public static void run(final String inputPath, final String outputPath) {
         db.clearDatabase();
         IOUtil.clearIO();

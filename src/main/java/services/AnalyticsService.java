@@ -7,10 +7,34 @@ import mathutils.MathUtil;
 
 import database.Database;
 
-public class AnalyticsService {
-    private static final Database db = Database.getInstance();
+/**
+ * Service class for calculating analytics and statistics.
+ */
+public final class AnalyticsService {
+    private static final Database DB = Database.getInstance();
 
-    public static List<Number> getCustomerImpact(List<Ticket> tickets) {
+    private static final int RISK_NEGLIGIBLE_MAX = 24;
+    private static final int RISK_MODERATE_MIN = 25;
+    private static final int RISK_MODERATE_MAX = 49;
+    private static final int RISK_SIGNIFICANT_MIN = 50;
+    private static final int RISK_SIGNIFICANT_MAX = 74;
+    private static final int RISK_MAJOR_MIN = 75;
+    private static final int RISK_MAJOR_MAX = 100;
+    private static final int IMPACT_THRESHOLD = 50;
+
+    /**
+     * Default constructor.
+     */
+    public AnalyticsService() {
+    }
+
+    /**
+     * Calculates customer impact metrics based on a list of tickets.
+     *
+     * @param tickets The list of tickets to analyze.
+     * @return A list containing impact statistics.
+     */
+    public static List<Number> getCustomerImpact(final List<Ticket> tickets) {
         final List<Number> report = new ArrayList<>();
 
         int totalTickets = 0;
@@ -53,6 +77,8 @@ public class AnalyticsService {
                     uiFeedbackCount++;
                     uiFeedbackImpact += impact;
                     break;
+                default:
+                    break;
             }
 
             switch (priority) {
@@ -67,6 +93,8 @@ public class AnalyticsService {
                     break;
                 case "CRITICAL":
                     criticalPriority++;
+                    break;
+                default:
                     break;
             }
         }
@@ -88,7 +116,13 @@ public class AnalyticsService {
         return report;
     }
 
-    public static List<Number> getResolutionEfficiency(List<Ticket> tickets) {
+    /**
+     * Calculates resolution efficiency metrics based on a list of tickets.
+     *
+     * @param tickets The list of tickets to analyze.
+     * @return A list containing efficiency statistics.
+     */
+    public static List<Number> getResolutionEfficiency(final List<Ticket> tickets) {
         final List<Number> report = new ArrayList<>();
 
         int totalTickets = 0;
@@ -131,6 +165,8 @@ public class AnalyticsService {
                     uiFeedbackCount++;
                     uiFeedbackImpact += impact;
                     break;
+                default:
+                    break;
             }
 
             switch (priority) {
@@ -145,6 +181,8 @@ public class AnalyticsService {
                     break;
                 case "CRITICAL":
                     criticalPriority++;
+                    break;
+                default:
                     break;
             }
         }
@@ -166,6 +204,12 @@ public class AnalyticsService {
         return report;
     }
 
+    /**
+     * Calculates application stability metrics based on open and in-progress
+     * tickets.
+     *
+     * @return A list containing stability statistics.
+     */
     public List<Object> getAppStability() {
         final List<Object> report = new ArrayList<>();
 
@@ -187,9 +231,9 @@ public class AnalyticsService {
         double featureRequestRiskScore = 0.0;
         double uiFeedbackRiskScore = 0.0;
 
-        for (final Ticket ticket : db.getTickets()) {
-            if (!ticket.getStatus().name().equals("OPEN") &&
-                    !ticket.getStatus().name().equals("IN_PROGRESS")) {
+        for (final Ticket ticket : DB.getTickets()) {
+            if (!ticket.getStatus().name().equals("OPEN")
+                    && !ticket.getStatus().name().equals("IN_PROGRESS")) {
                 continue;
             }
 
@@ -213,6 +257,8 @@ public class AnalyticsService {
                     uiFeedbackImpact += ticket.getImpact();
                     uiFeedbackRiskScore += ticket.getRisk();
                     break;
+                default:
+                    break;
             }
 
             switch (priority) {
@@ -227,6 +273,8 @@ public class AnalyticsService {
                     break;
                 case "CRITICAL":
                     criticalPriority++;
+                    break;
+                default:
                     break;
             }
         }
@@ -243,8 +291,12 @@ public class AnalyticsService {
         report.add(criticalPriority);
 
         final double avgBugRisk = bugCount > 0 ? bugRiskScore / bugCount : 0;
-        final double avgFeatureRisk = featureRequestCount > 0 ? featureRequestRiskScore / featureRequestCount : 0;
-        final double avgUIRisk = uiFeedbackCount > 0 ? uiFeedbackRiskScore / uiFeedbackCount : 0;
+        final double avgFeatureRisk = featureRequestCount > 0
+                ? featureRequestRiskScore / featureRequestCount
+                : 0;
+        final double avgUIRisk = uiFeedbackCount > 0
+                ? uiFeedbackRiskScore / uiFeedbackCount
+                : 0;
 
         final String bugRiskLevel = getRiskLevel(avgBugRisk);
         final String featureRiskLevel = getRiskLevel(avgFeatureRisk);
@@ -255,8 +307,12 @@ public class AnalyticsService {
         report.add(uiRiskLevel);
 
         final double avgBugImpact = bugCount > 0 ? bugImpact / bugCount : 0;
-        final double avgFeatureImpact = featureRequestCount > 0 ? featureRequestImpact / featureRequestCount : 0;
-        final double avgUIImpact = uiFeedbackCount > 0 ? uiFeedbackImpact / uiFeedbackCount : 0;
+        final double avgFeatureImpact = featureRequestCount > 0
+                ? featureRequestImpact / featureRequestCount
+                : 0;
+        final double avgUIImpact = uiFeedbackCount > 0
+                ? uiFeedbackImpact / uiFeedbackCount
+                : 0;
 
         report.add(MathUtil.round(avgBugImpact));
         report.add(MathUtil.round(avgFeatureImpact));
@@ -270,32 +326,39 @@ public class AnalyticsService {
     }
 
     private String getRiskLevel(final double impact) {
-        if (impact >= 0 && impact <= 24)
+        if (impact >= 0 && impact <= RISK_NEGLIGIBLE_MAX) {
             return "NEGLIGIBLE";
-        if (impact >= 25 && impact <= 49)
+        }
+        if (impact >= RISK_MODERATE_MIN && impact <= RISK_MODERATE_MAX) {
             return "MODERATE";
-        if (impact >= 50 && impact <= 74)
+        }
+        if (impact >= RISK_SIGNIFICANT_MIN && impact <= RISK_SIGNIFICANT_MAX) {
             return "SIGNIFICANT";
-        if (impact >= 75 && impact <= 100)
+        }
+        if (impact >= RISK_MAJOR_MIN && impact <= RISK_MAJOR_MAX) {
             return "MAJOR";
+        }
         return "NEGLIGIBLE";
     }
 
-    private String determineStability(final String bugRisk, final String featureRisk, final String uiRisk,
-            final double bugImpact, final double featureImpact, final double uiImpact) {
+    private String determineStability(final String bugRisk, final String featureRisk,
+            final String uiRisk, final double bugImpact,
+            final double featureImpact, final double uiImpact) {
 
-        final boolean hasSignificantRisk = bugRisk.equals("SIGNIFICANT") ||
-                bugRisk.equals("MAJOR") ||
-                featureRisk.equals("SIGNIFICANT") ||
-                featureRisk.equals("MAJOR") ||
-                uiRisk.equals("SIGNIFICANT") ||
-                uiRisk.equals("MAJOR");
+        final boolean hasSignificantRisk = bugRisk.equals("SIGNIFICANT")
+                || bugRisk.equals("MAJOR")
+                || featureRisk.equals("SIGNIFICANT")
+                || featureRisk.equals("MAJOR")
+                || uiRisk.equals("SIGNIFICANT")
+                || uiRisk.equals("MAJOR");
 
-        final boolean allNegligible = bugRisk.equals("NEGLIGIBLE") &&
-                featureRisk.equals("NEGLIGIBLE") &&
-                uiRisk.equals("NEGLIGIBLE");
+        final boolean allNegligible = bugRisk.equals("NEGLIGIBLE")
+                && featureRisk.equals("NEGLIGIBLE")
+                && uiRisk.equals("NEGLIGIBLE");
 
-        final boolean allImpactBelow50 = bugImpact < 50 && featureImpact < 50 && uiImpact < 50;
+        final boolean allImpactBelow50 = bugImpact < IMPACT_THRESHOLD
+                && featureImpact < IMPACT_THRESHOLD
+                && uiImpact < IMPACT_THRESHOLD;
 
         if (hasSignificantRisk) {
             return "UNSTABLE";
@@ -308,6 +371,11 @@ public class AnalyticsService {
         return "PARTIALLY STABLE";
     }
 
+    /**
+     * Calculates ticket risk metrics for all tickets in the database.
+     *
+     * @return A list containing risk statistics.
+     */
     public List<Object> getTicketRisk() {
         final List<Object> report = new ArrayList<>();
 
@@ -326,7 +394,7 @@ public class AnalyticsService {
         double featureRequestImpact = 0.0;
         double uiFeedbackImpact = 0.0;
 
-        for (final Ticket ticket : db.getTickets()) {
+        for (final Ticket ticket : DB.getTickets()) {
             if (ticket.getStatus().name().equals("RESOLVED")) {
                 continue;
             }
@@ -351,6 +419,8 @@ public class AnalyticsService {
                     uiFeedbackCount++;
                     uiFeedbackImpact += impact;
                     break;
+                default:
+                    break;
             }
 
             switch (priority) {
@@ -366,6 +436,8 @@ public class AnalyticsService {
                 case "CRITICAL":
                     criticalPriority++;
                     break;
+                default:
+                    break;
             }
         }
         report.add(totalTickets);
@@ -380,7 +452,8 @@ public class AnalyticsService {
         report.add(criticalPriority);
 
         bugImpact = (MathUtil.round(MathUtil.average(bugImpact, bugCount)));
-        featureRequestImpact = (MathUtil.round(MathUtil.average(featureRequestImpact, featureRequestCount)));
+        featureRequestImpact = (MathUtil.round(MathUtil
+                .average(featureRequestImpact, featureRequestCount)));
         uiFeedbackImpact = (MathUtil.round(MathUtil.average(uiFeedbackImpact, uiFeedbackCount)));
 
         final String bugRiskLevel = getRiskLevel(bugImpact);

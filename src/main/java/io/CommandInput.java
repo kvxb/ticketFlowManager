@@ -2,6 +2,9 @@ package io;
 
 import java.time.LocalDate;
 
+/**
+ * Holds the command fields
+ */
 public record CommandInput(
         String command,
         String username,
@@ -18,6 +21,9 @@ public record CommandInput(
         String name
 
 ) {
+    /**
+     * error checker
+     */
     public CommandInput {
         if (timestamp == null) {
             System.out.println("invalid timestamp");

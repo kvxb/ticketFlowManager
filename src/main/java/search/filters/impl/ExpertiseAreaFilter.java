@@ -5,7 +5,10 @@ import users.Developer;
 import java.util.List;
 import java.util.ArrayList;
 
-public class ExpertiseAreaFilter implements DeveloperFilterStrategy {
+/**
+ * Filters developers based on their expertise area.
+ */
+public final class ExpertiseAreaFilter implements DeveloperFilterStrategy {
 
     @Override
     public List<Developer> filter(final List<Developer> developers, final String filterValue) {
